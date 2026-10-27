@@ -1,9 +1,15 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import logo from '#lib/assets/logo.png';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { resolve } from '$app/paths';
+
+	interface Props {
+		sidebar?: boolean;
+	}
+
+	const { sidebar = false }: Props = $props();
 
 	let title = $state('');
 
@@ -17,10 +23,14 @@
 	afterNavigate(updateTitle);
 </script>
 
-<header class="relative flex items-center justify-between border-b border-b-border py-2 pr-6 pl-2">
-	<Sidebar.Trigger />
+<header class="relative flex h-12 items-center justify-between border-b border-b-border pr-6 pl-2">
+	{#if sidebar}
+		<Sidebar.Trigger />
+	{:else}
+		<span></span>
+	{/if}
 	<h2 class="absolute top-1/2 left-1/2 -translate-1/2">{title}</h2>
-	<a href={resolve('/')} class="relative">
+	<a href={resolve('/(protected)')} class="relative">
 		<img alt="INNOVAID" src={logo} class="h-4" />
 
 		<!-- To Make the clickable area larger -->

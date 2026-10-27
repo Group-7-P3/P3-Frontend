@@ -12,9 +12,9 @@ export const staff = pgTable("staff", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role", { enum: ["owner", "admin", "moderator"] })
-    .default("moderator")
-    .notNull(),
+  role: text("role", { enum: ["owner", "admin", "moderator"] }).default(
+    "moderator",
+  ),
   group: text("group").notNull(),
 });
 
