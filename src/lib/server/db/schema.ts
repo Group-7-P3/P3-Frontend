@@ -53,13 +53,16 @@ export const subscriptionToProduct = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
 	subscription: many(subscription)
 }));
+
 export const subscriptionRelations = relations(subscription, ({ many, one }) => ({
 	user: one(user),
 	subscriptionToProduct: many(subscriptionToProduct)
 }));
+
 export const productRelations = relations(product, ({ many }) => ({
 	subscriptionToProduct: many(subscriptionToProduct)
 }));
+
 export const subscriptionToProductRelations = relations(subscriptionToProduct, ({ one }) => ({
 	subscription: one(subscription),
 	product: one(product)

@@ -2,7 +2,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar/index.js';
-	import { ChevronsUpDown, Sparkles, BadgeCheck, CreditCard, Bell, LogOut } from '@lucide/svelte';
+	import { ChevronsUpDown, LogOut, Cog } from '@lucide/svelte';
 </script>
 
 <Sidebar.MenuItem>
@@ -30,7 +30,7 @@
 
 		<DropdownMenu.Content
 			class="w-[--bits-dropdown-menu-anchor-width] min-w-56 rounded-lg"
-			side="bottom"
+			side="right"
 			align="end"
 			sideOffset={4}
 		>
@@ -51,25 +51,8 @@
 
 			<DropdownMenu.Group>
 				<DropdownMenu.Item>
-					<Sparkles class="mr-2 size-4" />
-					Upgrade to Pro
-				</DropdownMenu.Item>
-			</DropdownMenu.Group>
-
-			<DropdownMenu.Separator />
-
-			<DropdownMenu.Group>
-				<DropdownMenu.Item>
-					<BadgeCheck class="mr-2 size-4" />
-					Account
-				</DropdownMenu.Item>
-				<DropdownMenu.Item>
-					<CreditCard class="mr-2 size-4" />
-					Billing
-				</DropdownMenu.Item>
-				<DropdownMenu.Item>
-					<Bell class="mr-2 size-4" />
-					Notifications
+					<Cog class="mr-2 size-4" />
+					Settings
 				</DropdownMenu.Item>
 			</DropdownMenu.Group>
 

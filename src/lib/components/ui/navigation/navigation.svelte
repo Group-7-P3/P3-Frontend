@@ -5,6 +5,7 @@
 	import { House, CalendarClock, Users, Package } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import ThemeSwitcher from '../theme-switcher.svelte';
 
 	const sidebar = Sidebar.useSidebar();
 </script>
@@ -110,6 +111,7 @@
 	</Sidebar.Content>
 	<Sidebar.Footer>
 		<Sidebar.Menu>
+			<ThemeSwitcher />
 			<NavigationProfile />
 		</Sidebar.Menu>
 	</Sidebar.Footer>
