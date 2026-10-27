@@ -14,18 +14,19 @@ export const auth = betterAuth({
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
 	],
 	user: {
+    modelName: "staff",
 		additionalFields: {
-			customerId: {
-				type: 'number',
+			role: {
+				type: ['owner', 'admin', 'moderator'],
 				required: true,
-				defaultValue: 0,
-				input: false
+				defaultValue: 'moderator',
+				input: false,
+        returned: true
 			},
-			managedBy: {
+			group: {
 				type: 'string',
-				required: true,
-				defaultValue: 'global',
-				input: false
+				input: false,
+        returned: true
 			}
 		}
 	}

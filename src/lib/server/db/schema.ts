@@ -1,18 +1,28 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, serial, integer, text, date, boolean, primaryKey } from 'drizzle-orm/pg-core';
-import { user } from './auth.schema';
+import {
+	pgTable,
+	pgEnum,
+	serial,
+	integer,
+	text,
+	date,
+	boolean,
+	primaryKey
+} from 'drizzle-orm/pg-core';
 
-export const staff = pgTable('staff', {
+export const subscriptionType = pgEnum('subscription_type', ['home', 'home+', 'pro', 'pro+']);
+export const staffRoleType = pgEnum('staff_type', ['owner', 'admin', 'moderator']);
+export const productType = pgEnum('product_type', ['pad', 'pod']);
+
+export const user = pgTable('user', {
 	id: serial('id').primaryKey(),
-	email: text('email').notNull(),
-	password: text('password').notNull(),
-	group: text('group').notNull(),
-	type: integer('type').notNull().default(0)
+	customerId: integer('customer_id').notNull(),
+	managedBy: text('managed_by').notNull().default('global')
 });
 
 export const subscription = pgTable('subscription', {
 	license_key: serial('license_key').primaryKey(),
-	userId: text('user_id')
+	userId: integer('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	type: integer('type').notNull(),
