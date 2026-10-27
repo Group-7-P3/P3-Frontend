@@ -3,6 +3,7 @@ import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
+import path from 'path';
 
 export default defineConfig({
 	plugins: [
@@ -16,6 +17,11 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	],
+	resolve: {
+		alias: {
+			$lib: path.resolve('./src/lib')
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
