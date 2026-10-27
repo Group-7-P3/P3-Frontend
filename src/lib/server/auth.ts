@@ -12,5 +12,21 @@ export const auth = betterAuth({
 	emailAndPassword: { enabled: true },
 	plugins: [
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
-	]
+	],
+	user: {
+		additionalFields: {
+			customerId: {
+				type: 'number',
+				required: true,
+				defaultValue: 0,
+				input: false
+			},
+			managedBy: {
+				type: 'string',
+				required: true,
+				defaultValue: 'global',
+				input: false
+			}
+		}
+	}
 });
