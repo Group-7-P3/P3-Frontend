@@ -19,7 +19,7 @@
 	<Navigation />
 	<div class="flex min-h-screen w-full flex-col bg-background">
 		<Header sidebar />
-		<main class="flex flex-1 flex-col items-center justify-center">
+		<main class="flex flex-1 flex-col items-center">
 			<ModeWatcher />
 			{@render children()}
 		</main>
