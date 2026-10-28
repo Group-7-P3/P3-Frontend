@@ -37,3 +37,13 @@ Example:
 ```sh
 npx tsx scripts/create-user.ts "example@mail.dk" "John Doe" "owner" "global" "123456"
 ```
+
+## Libraries
+
+- [shadcn-svelte](https://www.shadcn-svelte.com/docs/components)
+- [lucide](https://lucide.dev/icons/)
+- better-auth
+- sveltekit
+- tailwind
+- drizzle
+- tsx
