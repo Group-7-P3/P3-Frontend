@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import * as Chart from '$lib/components/ui/chart';
 
@@ -6,6 +6,18 @@
 
 	import { curveNatural } from 'd3-shape';
 	import { AreaChart, LineChart } from 'layerchart';
+
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import { getLocalTimeZone, today, type CalendarDate } from '@internationalized/date';
+	import * as Popover from '$lib/components/ui/popover/index.js';
+	import Calendar from '$lib/components/ui/calendar/calendar.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	const id = $props.id();
+	let startOpen = $state(false);
+	let startDate = $state<CalendarDate | undefined>();
+	let endOpen = $state(false);
+	let endDate = $state<CalendarDate | undefined>();
 
 	const chartData = [
 		{ month: 'January', Home: 50, 'Home+': 20, Pro: 130, 'Pro+': 60 },
@@ -20,13 +32,6 @@
 		{ month: 'October', Home: 270, 'Home+': 130, Pro: 130, 'Pro+': 131 },
 		{ month: 'November', Home: 290, 'Home+': 140, Pro: 140, 'Pro+': 125 },
 		{ month: 'December', Home: 300, 'Home+': 140, Pro: 160, 'Pro+': 118 }
-	];
-
-	const pieData = [
-		{ plan: 'Home', value: 100, color: '#ffb000' },
-		{ plan: 'Home+', value: 100, color: '#fe6100' },
-		{ plan: 'Pro', value: 100, color: '#dc267f' },
-		{ plan: 'Pro+', value: 100, color: '#785ef0' }
 	];
 
 	const chartConfig = {
@@ -52,6 +57,57 @@
 <svelte:head>
 	<title>Dashboard</title>
 </svelte:head>
+
+<div class="flex w-full gap-10 pt-5 pl-10">
+	<div class="flex flex-col gap-3">
+		<Label for="{id}-date" class="px-1">Start date</Label>
+		<Popover.Root bind:open={startOpen}>
+			<Popover.Trigger id="{id}-start-date">
+				{#snippet child({ props })}
+					<Button {...props} variant="outline" class="w-48 justify-between font-normal">
+						{startDate ? startDate.toDate(getLocalTimeZone()).toLocaleDateString() : 'Select date'}
+						<ChevronDownIcon />
+					</Button>
+				{/snippet}
+			</Popover.Trigger>
+			<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+				<Calendar
+					type="single"
+					bind:value={startDate}
+					captionLayout="dropdown"
+					onValueChange={() => {
+						startOpen = false;
+					}}
+					maxValue={today(getLocalTimeZone())}
+				/>
+			</Popover.Content>
+		</Popover.Root>
+	</div>
+	<div class="flex flex-col gap-3">
+		<Label for="{id}-date" class="px-1">End date</Label>
+		<Popover.Root bind:open={endOpen}>
+			<Popover.Trigger id="{id}-end-date">
+				{#snippet child({ props })}
+					<Button {...props} variant="outline" class="w-48 justify-between font-normal">
+						{endDate ? endDate.toDate(getLocalTimeZone()).toLocaleDateString() : 'Select date'}
+						<ChevronDownIcon />
+					</Button>
+				{/snippet}
+			</Popover.Trigger>
+			<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+				<Calendar
+					type="single"
+					bind:value={endDate}
+					captionLayout="dropdown"
+					onValueChange={() => {
+						endOpen = false;
+					}}
+					maxValue={today(getLocalTimeZone())}
+				/>
+			</Popover.Content>
+		</Popover.Root>
+	</div>
+</div>
 
 <!-- Statistic cards -->
 <div class="flex w-full gap-10 p-10">
@@ -160,7 +216,7 @@
 		</Card.Header>
 
 		<Card.Content>
-			<Chart.Container config={chartConfig} class="pl-5">
+			<Chart.Container config={chartConfig} class="h-[400px] pl-5">
 				<LineChart
 					data={chartData}
 					x="month"
@@ -193,6 +249,9 @@
 						xAxis: {
 							format: (v) => v.slice(0, 3)
 						},
+						yAxis: {
+							ticks: 5
+						},
 						highlight: { points: { r: 4 } }
 					}}
 				>
@@ -213,7 +272,7 @@
 		</Card.Header>
 
 		<Card.Content>
-			<Chart.Container config={chartConfig} class="pl-5">
+			<Chart.Container config={chartConfig} class="h-[400px] pl-5">
 				<AreaChart
 					data={chartData}
 					x="month"
@@ -245,6 +304,9 @@
 						spline: { curve: curveNatural, motion: 'tween', strokeWidth: 2 },
 						xAxis: {
 							format: (v) => v.slice(0, 3)
+						},
+						yAxis: {
+							ticks: 5
 						},
 						highlight: { points: { r: 4 } }
 					}}
