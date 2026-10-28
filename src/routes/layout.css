@@ -120,6 +120,15 @@
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
+		/* Prevents dragging the element itself */
+		-webkit-user-drag: none;
+		user-drag: none;
+
+		/* Optional: Prevents text/element selection highlighting while attempting to drag */
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
 	}
 	body {
 		@apply bg-background text-foreground;

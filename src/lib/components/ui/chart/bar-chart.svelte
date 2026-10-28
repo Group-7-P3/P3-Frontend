@@ -1,19 +1,22 @@
 <script lang="ts">
+	/* eslint-disable @typescript-eslint/no-explicit-any */
 	import * as Chart from '$lib/components/ui/chart/index.js';
-	import { BarChart, type Accessor } from 'layerchart';
+	import { cn } from 'cn';
+	import { BarChart, type Accessor, type BarsProps, type SeriesData } from 'layerchart';
+	import type { Component } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
 
 	interface Props {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		class?: string;
 		data?: any[];
 		config?: Chart.ChartConfig;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		x?: Accessor<any>;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		y?: Accessor<any>;
+		series?: SeriesData<any, Component<BarsProps>>[];
 	}
 
 	const {
+		class: className,
 		data = [
 			{ activity: 'Simon Says', started: 80 },
 			{ activity: 'Whack a Mole', started: 200 },
@@ -26,7 +29,14 @@
 			started: { label: 'Started' }
 		},
 		x = Object.keys(data[0])[0],
-		y = Object.keys(data[0])[1]
+		y = Object.keys(data[0])[1],
+		series = [
+			{
+				key: 'amount',
+				label: 'Amount',
+				color: 'var(--chart-1)'
+			}
+		]
 	}: Props = $props();
 
 	const chartColors = [
@@ -38,24 +48,36 @@
 	];
 </script>
 
-<Chart.Container {config} class="w-full max-w-7xl">
+<Chart.Container {config} class={cn('w-full max-w-7xl', className)}>
 	<BarChart
 		{data}
 		{x}
 		{y}
+		{series}
+		seriesLayout="group"
 		cRange={chartColors}
 		props={{
 			bars: {
 				stroke: 'none',
-				rounded: 'top',
-				radius: 8,
+				rounded: 'edge',
+				radius: 4,
 				motion: { type: 'tween', duration: 500, easing: cubicInOut }
 			},
-			highlight: { area: { fill: 'none' } }
+			highlight: { area: { fill: 'none' } },
+			xAxis: {
+				format: (v: Date) =>
+					v instanceof Date ? v.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : v
+			}
 		}}
 	>
 		{#snippet tooltip()}
-			<Chart.Tooltip />
+			<Chart.Tooltip
+				labelFormatter={(v: Date) =>
+					v instanceof Date
+						? v.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: '2-digit' })
+						: v}
+				indicator="line"
+			/>
 		{/snippet}
 	</BarChart>
 </Chart.Container>
