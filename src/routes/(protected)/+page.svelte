@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Overview</title>
+	<title>Dashboard</title>
 </svelte:head>
 
 <h2>Welcome to SvelteKit</h2>

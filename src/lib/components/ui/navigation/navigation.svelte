@@ -17,7 +17,7 @@
 	<Sidebar.Content>
 		<Sidebar.Group>
 			<Sidebar.Menu>
-				<!-- Home Page Link -->
+				<!-- Dashboard Page Link -->
 				<Sidebar.MenuItem>
 					<Tooltip.Root>
 						<Tooltip.Trigger>
@@ -27,7 +27,7 @@
 										{#snippet child({ props })}
 											<a href={resolve('/(protected)')} {...props}>
 												<House />
-												<span>Home</span>
+												<span>Dashboard</span>
 											</a>
 										{/snippet}
 									</Sidebar.MenuButton>
@@ -35,7 +35,7 @@
 							{/snippet}
 						</Tooltip.Trigger>
 						<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
-							<p>Home</p>
+							<p>Dashboard</p>
 						</Tooltip.Content>
 					</Tooltip.Root>
 				</Sidebar.MenuItem>
