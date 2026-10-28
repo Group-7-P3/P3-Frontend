@@ -8,6 +8,7 @@
 ## Setup
 
 Open Docker Desktop to run the Docker Engine.
+Make a copy of `.env.example` and rename it to `.env`.
 Then run the following:
 
 ```sh
