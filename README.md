@@ -1,54 +1,39 @@
-# sv
+# INNOVAID – Subscription Manager Frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## Prerequisites
 
-## Creating a project
+- [pnpm](https://pnpm.io/)
+- [docker](https://docs.docker.com/desktop/setup/install/windows-install/)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Setup
 
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+Open Docker Desktop to run the Docker Engine.
+Then run the following:
 
 ```sh
-# recreate this project
-pnpm dlx sv@1.1.1 create --template minimal --types ts --add tailwindcss="plugins:forms" prettier eslint vitest="usages:unit,component" playwright="demo:no" drizzle="database:postgresql+postgresql:postgres.js+docker:yes" sveltekit-adapter="adapter:node" better-auth="demo:password" --install pnpm subscription-manager-frontend
+pnpm install
+pnpm run db:start
+pnpm run db:push
 ```
 
-## Adding features
-
-Add features to your project with `sv add`:
+And then to run the project perform:
 
 ```sh
-npx sv add
+pnpm run dev
 ```
 
-For example, to add Tailwind CSS:
+The frontend should now be available at [localhost:5173](http://localhost:5173).
+
+## Creating a user
+
+Run the following command, and change the parameters to be in a valid format:
 
 ```sh
-npx sv add tailwindcss
+npx tsx scripts/create-user.ts "{email}" "{username}" "{role}" "{group}" "{password}"
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Example:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+npx tsx scripts/create-user.ts "example@mail.dk" "John Doe" "owner" "global" "123456"
 ```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
