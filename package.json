@@ -74,6 +74,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"@tanstack/svelte-table": "^9.3.1",
 		"d3-scale": "^4.0.2",
 		"d3-shape": "^3.2.0",
 		"mode-watcher": "^1.1.0"
