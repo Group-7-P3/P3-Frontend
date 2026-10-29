@@ -16,10 +16,10 @@ async function main() {
 	console.log('🌱 Starting database seeding...');
 
 	// 1. Clear existing data if needed (in reverse order of foreign keys)
-	// console.log('🧹 Cleaning existing data...');
-	// await db.delete(schema.subscription);
-	// await db.delete(schema.product);
-	// await db.delete(schema.user);
+	console.log('🧹 Cleaning existing data...');
+	await db.delete(schema.subscription);
+	await db.delete(schema.product);
+	await db.delete(schema.user);
 
 	// 2. Seed Products
 	console.log('📦 Inserting dummy products...');
@@ -35,7 +35,7 @@ async function main() {
 	console.log('👤 Inserting dummy users...');
 	const dummyUsers = Array.from({ length: 10 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
-		managedBy: faker.person.firstName()
+		managedBy: faker.company.name()
 	}));
 
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
