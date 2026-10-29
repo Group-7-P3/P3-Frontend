@@ -23,9 +23,11 @@ async function main() {
 
 	// 2. Seed Products
 	console.log('📦 Inserting dummy products...');
-	const dummyProducts = Array.from({ length: 5 }).map(() => ({
+	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
-		status: faker.number.int({ min: 0, max: 2 })
+		status: faker.number.int({ min: 0, max: 2 }),
+		createdAt: faker.date.past().toISOString(),
+		updatedAt: faker.date.past().toISOString()
 	}));
 
 	const insertedProducts = await db.insert(schema.product).values(dummyProducts).returning();
@@ -33,9 +35,11 @@ async function main() {
 
 	// 3. Seed Users
 	console.log('👤 Inserting dummy users...');
-	const dummyUsers = Array.from({ length: 10 }).map(() => ({
+	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
-		managedBy: faker.company.name()
+		managedBy: faker.company.name(),
+		createdAt: faker.date.past().toISOString(),
+		updatedAt: faker.date.past().toISOString()
 	}));
 
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
@@ -53,6 +57,7 @@ async function main() {
 			license_key: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
 			maxDevices: faker.number.int({ min: 1, max: 5 }),
 			createdAt: faker.date.past().toISOString(),
+			updatedAt: faker.date.past().toISOString(),
 			autoRenew: faker.datatype.boolean()
 		}));
 	});

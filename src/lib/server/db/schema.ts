@@ -17,7 +17,9 @@ export const productType = pgEnum('product_type', ['pad', 'pod']);
 export const user = pgTable('user', {
 	id: serial('id').primaryKey(),
 	customerId: integer('customer_id').notNull(),
-	managedBy: text('managed_by').notNull().default('global')
+	managedBy: text('managed_by').notNull().default('global'),
+	createdAt: date('created_at').notNull().defaultNow(),
+	updatedAt: date('updated_at').notNull().defaultNow()
 });
 
 export const subscription = pgTable('subscription', {
@@ -28,13 +30,16 @@ export const subscription = pgTable('subscription', {
 	type: integer('type').notNull(),
 	maxDevices: integer('max_devices').notNull().default(6),
 	createdAt: date('created_at').notNull().defaultNow(),
+	updatedAt: date('updated_at').notNull().defaultNow(),
 	expiresAt: date('expires_at').notNull(),
 	autoRenew: boolean('auto_renew').notNull().default(false)
 });
 
 export const product = pgTable('product', {
 	serialNumber: serial('serial_number').primaryKey(),
-	status: integer('status').notNull().default(0)
+	status: integer('status').notNull().default(0),
+	createdAt: date('created_at').notNull().defaultNow(),
+	updatedAt: date('updated_at').notNull().defaultNow()
 });
 
 export const subscriptionToProduct = pgTable(
