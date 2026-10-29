@@ -1,20 +1,21 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
+	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
+	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import { resolve } from '$app/paths';
-	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-	import { getLocalTimeZone, today, type CalendarDate } from '@internationalized/date';
-	import * as Popover from '$lib/components/ui/popover/index.js';
-	import Calendar from '$lib/components/ui/calendar/calendar.svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import AreaChart from '#lib/components/ui/chart/area-chart.svelte';
 	import LineChart from '#lib/components/ui/chart/line-chart.svelte';
 	import BarChart from '#lib/components/ui/chart/bar-chart.svelte';
-	const id = $props.id();
-	let startOpen = $state(false);
-	let startDate = $state<CalendarDate | undefined>();
-	let endOpen = $state(false);
-	let endDate = $state<CalendarDate | undefined>();
+	import { ArrowLeft, ArrowRight } from '@lucide/svelte';
+	import PopoverRangeCalendar from '#lib/components/ui/popover-range-calendar.svelte';
+	import { Button } from '#lib/components/ui/button/index.ts';
+	import type { DateRange } from 'bits-ui';
+	import { today, getLocalTimeZone } from '@internationalized/date';
+
+	const start = today(getLocalTimeZone()).subtract({ months: 1, days: -1 });
+	const end = today(getLocalTimeZone());
+	let dateRange: DateRange | undefined = $state({ start, end });
+	let rangeType: 'week' | 'month' | 'year' | 'ytd' = $state('month');
 
 	const chartData = [
 		{ month: new Date('2026-01-01'), home: 50, 'home+': 20, pro: 130, 'pro+': 60 },
@@ -55,55 +56,131 @@
 	<title>Dashboard</title>
 </svelte:head>
 
-<div class="flex w-full gap-6">
-	<div class="flex flex-col gap-3">
-		<Label for="{id}-date" class="px-1">Start date</Label>
-		<Popover.Root bind:open={startOpen}>
-			<Popover.Trigger id="{id}-start-date">
-				{#snippet child({ props })}
-					<Button {...props} variant="outline" class="w-48 justify-between font-normal">
-						{startDate ? startDate.toDate(getLocalTimeZone()).toLocaleDateString() : 'Select date'}
-						<ChevronDownIcon />
-					</Button>
-				{/snippet}
-			</Popover.Trigger>
-			<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-				<Calendar
-					type="single"
-					bind:value={startDate}
-					captionLayout="dropdown"
-					onValueChange={() => {
-						startOpen = false;
-					}}
-					maxValue={today(getLocalTimeZone())}
-				/>
-			</Popover.Content>
-		</Popover.Root>
+<div class="flex w-full justify-between">
+	<div class="flex gap-6">
+		<ToggleGroup.Root bind:value={rangeType} type="single" variant="outline">
+			<!-- <ToggleGroup.Item
+				value="day"
+				onclick={() => {
+					dateRange = {
+						start: today(getLocalTimeZone()).set({ month: 1, day: 1 }),
+						end: today(getLocalTimeZone())
+					};
+				}}
+			>
+				Day
+			</ToggleGroup.Item> -->
+			<ToggleGroup.Item
+				value="week"
+				onclick={() => {
+					dateRange = {
+						start: today(getLocalTimeZone()).subtract({ weeks: 1 }),
+						end: today(getLocalTimeZone())
+					};
+				}}
+			>
+				Week
+			</ToggleGroup.Item>
+			<ToggleGroup.Item
+				value="month"
+				onclick={() => {
+					dateRange = {
+						start: today(getLocalTimeZone()).subtract({ months: 1 }),
+						end: today(getLocalTimeZone())
+					};
+				}}
+			>
+				Month
+			</ToggleGroup.Item>
+			<ToggleGroup.Item
+				value="year"
+				onclick={() => {
+					dateRange = {
+						start: today(getLocalTimeZone()).subtract({ years: 1 }),
+						end: today(getLocalTimeZone())
+					};
+				}}
+			>
+				Year
+			</ToggleGroup.Item>
+			<ToggleGroup.Item
+				value="ytd"
+				onclick={() => {
+					dateRange = {
+						start: today(getLocalTimeZone()).set({ month: 1, day: 1 }),
+						end: today(getLocalTimeZone())
+					};
+				}}
+			>
+				YTD
+			</ToggleGroup.Item>
+		</ToggleGroup.Root>
+
+		<PopoverRangeCalendar bind:value={dateRange} />
 	</div>
-	<div class="flex flex-col gap-3">
-		<Label for="{id}-date" class="px-1">End date</Label>
-		<Popover.Root bind:open={endOpen}>
-			<Popover.Trigger id="{id}-end-date">
-				{#snippet child({ props })}
-					<Button {...props} variant="outline" class="w-48 justify-between font-normal">
-						{endDate ? endDate.toDate(getLocalTimeZone()).toLocaleDateString() : 'Select date'}
-						<ChevronDownIcon />
-					</Button>
-				{/snippet}
-			</Popover.Trigger>
-			<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-				<Calendar
-					type="single"
-					bind:value={endDate}
-					captionLayout="dropdown"
-					onValueChange={() => {
-						endOpen = false;
-					}}
-					maxValue={today(getLocalTimeZone())}
-				/>
-			</Popover.Content>
-		</Popover.Root>
-	</div>
+
+	<ButtonGroup.Root>
+		<Button
+			variant="outline"
+			size="icon"
+			onclick={() => {
+				if (!dateRange?.start || !dateRange?.end) return;
+				switch (rangeType) {
+					case 'week':
+						dateRange = {
+							start: dateRange.start.subtract({ weeks: 1 }),
+							end: dateRange.end.subtract({ weeks: 1 })
+						};
+						break;
+					case 'month':
+						dateRange = {
+							start: dateRange.start.subtract({ months: 1 }),
+							end: dateRange.end.subtract({ months: 1 })
+						};
+						break;
+					case 'year':
+					case 'ytd':
+						dateRange = {
+							start: dateRange.start.subtract({ years: 1 }),
+							end: dateRange.end.subtract({ years: 1 })
+						};
+						break;
+				}
+			}}
+		>
+			<ArrowLeft />
+		</Button>
+		<Button
+			variant="outline"
+			size="icon"
+			onclick={() => {
+				if (!dateRange?.start || !dateRange?.end) return;
+				switch (rangeType) {
+					case 'week':
+						dateRange = {
+							start: dateRange.start.add({ weeks: 1 }),
+							end: dateRange.end.add({ weeks: 1 })
+						};
+						break;
+					case 'month':
+						dateRange = {
+							start: dateRange.start.add({ months: 1 }),
+							end: dateRange.end.add({ months: 1 })
+						};
+						break;
+					case 'year':
+					case 'ytd':
+						dateRange = {
+							start: dateRange.start.add({ years: 1 }),
+							end: dateRange.end.add({ years: 1 })
+						};
+						break;
+				}
+			}}
+		>
+			<ArrowRight />
+		</Button>
+	</ButtonGroup.Root>
 </div>
 
 <!-- Statistic cards -->
@@ -215,7 +292,7 @@
 <div class="w-full">
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>Sales</Card.Title>
+			<Card.Title>Activities</Card.Title>
 		</Card.Header>
 
 		<Card.Content>
@@ -293,7 +370,7 @@
 <div class="w-full">
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>Sales</Card.Title>
+			<Card.Title>Revenue</Card.Title>
 		</Card.Header>
 
 		<Card.Content>
