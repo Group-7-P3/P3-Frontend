@@ -22,10 +22,12 @@
 		"db:studio": "drizzle-kit studio",
 		"db:drop": "tsx scripts/reset-db.ts",
 		"db:reset": "pnpm db:drop && pnpm db:push",
+		"db:seed": "tsx scripts/seed.ts",
 		"auth:schema": "auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@faker-js/faker": "^10.6.0",
 		"@fontsource-variable/inter": "^5.3.0",
 		"@internationalized/date": "^3.12.4",
 		"@lucide/svelte": "^1.63.0",
