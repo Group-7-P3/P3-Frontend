@@ -43,7 +43,7 @@
 	<LineChart
 		{data}
 		{x}
-		// axis="x"
+		legend
 		xScale={scaleUtc()}
 		{series}
 		props={{

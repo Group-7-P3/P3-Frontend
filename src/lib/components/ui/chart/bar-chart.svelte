@@ -54,6 +54,7 @@
 		{x}
 		{y}
 		{series}
+		legend
 		seriesLayout="group"
 		cRange={chartColors}
 		props={{

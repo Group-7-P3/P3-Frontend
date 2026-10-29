@@ -55,7 +55,7 @@
 	<title>Dashboard</title>
 </svelte:head>
 
-<div class="flex w-full gap-10">
+<div class="flex w-full gap-6">
 	<div class="flex flex-col gap-3">
 		<Label for="{id}-date" class="px-1">Start date</Label>
 		<Popover.Root bind:open={startOpen}>
@@ -107,7 +107,7 @@
 </div>
 
 <!-- Statistic cards -->
-<div class="flex w-full gap-10">
+<div class="flex w-full gap-6">
 	<!-- Users card -->
 	<a href={resolve('/(protected)/users')} class="flex-1">
 		<Card.Root class="w-full gap-5">
