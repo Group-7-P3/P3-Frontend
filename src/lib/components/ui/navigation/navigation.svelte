@@ -40,29 +40,6 @@
 					</Tooltip.Root>
 				</Sidebar.MenuItem>
 
-				<!-- Subscriptions Page Link -->
-				<Sidebar.MenuItem>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props: tooltipProps })}
-								<div {...tooltipProps}>
-									<Sidebar.MenuButton isActive={page.url.pathname === '/subscriptions'}>
-										{#snippet child({ props })}
-											<a href={resolve('/(protected)/subscriptions')} {...props}>
-												<CalendarClock />
-												<span>Subscriptions</span>
-											</a>
-										{/snippet}
-									</Sidebar.MenuButton>
-								</div>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
-							<p>Subscriptions</p>
-						</Tooltip.Content>
-					</Tooltip.Root>
-				</Sidebar.MenuItem>
-
 				<!-- Users Page Link -->
 				<Sidebar.MenuItem>
 					<Tooltip.Root>
@@ -82,6 +59,29 @@
 						</Tooltip.Trigger>
 						<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
 							<p>Users</p>
+						</Tooltip.Content>
+					</Tooltip.Root>
+				</Sidebar.MenuItem>
+
+				<!-- Subscriptions Page Link -->
+				<Sidebar.MenuItem>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props: tooltipProps })}
+								<div {...tooltipProps}>
+									<Sidebar.MenuButton isActive={page.url.pathname === '/subscriptions'}>
+										{#snippet child({ props })}
+											<a href={resolve('/(protected)/subscriptions')} {...props}>
+												<CalendarClock />
+												<span>Subscriptions</span>
+											</a>
+										{/snippet}
+									</Sidebar.MenuButton>
+								</div>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
+							<p>Subscriptions</p>
 						</Tooltip.Content>
 					</Tooltip.Root>
 				</Sidebar.MenuItem>

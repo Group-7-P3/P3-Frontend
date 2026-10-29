@@ -2,6 +2,7 @@
 
 ## Prerequisites
 
+- [node.js](https://nodejs.org/en/download)
 - [pnpm](https://pnpm.io/)
 - [docker](https://docs.docker.com/desktop/setup/install/windows-install/)
 

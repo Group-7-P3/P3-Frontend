@@ -43,6 +43,13 @@
       "when": 1793136564484,
       "tag": "0005_dazzling_radioactive_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793285085577,
+      "tag": "0006_modern_living_tribunal",
+      "breakpoints": true
     }
   ]
 }
