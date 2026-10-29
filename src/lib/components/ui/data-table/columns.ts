@@ -1,7 +1,7 @@
 import { createColumnHelper, renderComponent } from '@tanstack/svelte-table';
 import type { DataTableFeatures } from './data-table-features.js';
 import type { user } from '#lib/server/db/schema.js';
-import DataTableEmailButton from './data-table-button.svelte';
+import DataTableButton from './data-table-button.svelte';
 import DataTableCheckbox from './data-table-checkbox.svelte';
 
 const columnHelper = createColumnHelper<DataTableFeatures, typeof user.$inferSelect>();
@@ -28,40 +28,45 @@ export const columns = columnHelper.columns([
 	columnHelper.accessor('id', {
 		id: 'ID',
 		header: ({ column }) =>
-			renderComponent(DataTableEmailButton, {
+			renderComponent(DataTableButton, {
 				label: 'ID',
+				sorted: column.getIsSorted(),
 				onclick: column.getToggleSortingHandler()
 			})
 	}),
 	columnHelper.accessor('customerId', {
 		id: 'Customer ID',
 		header: ({ column }) =>
-			renderComponent(DataTableEmailButton, {
+			renderComponent(DataTableButton, {
 				label: 'Customer ID',
+				sorted: column.getIsSorted(),
 				onclick: column.getToggleSortingHandler()
 			})
 	}),
 	columnHelper.accessor('managedBy', {
 		id: 'Managed By',
 		header: ({ column }) =>
-			renderComponent(DataTableEmailButton, {
+			renderComponent(DataTableButton, {
 				label: 'Managed By',
+				sorted: column.getIsSorted(),
 				onclick: column.getToggleSortingHandler()
 			})
 	}),
 	columnHelper.accessor('createdAt', {
 		id: 'Created At',
 		header: ({ column }) =>
-			renderComponent(DataTableEmailButton, {
+			renderComponent(DataTableButton, {
 				label: 'Created At',
+				sorted: column.getIsSorted(),
 				onclick: column.getToggleSortingHandler()
 			})
 	}),
 	columnHelper.accessor('updatedAt', {
 		id: 'Updated At',
 		header: ({ column }) =>
-			renderComponent(DataTableEmailButton, {
+			renderComponent(DataTableButton, {
 				label: 'Updated At',
+				sorted: column.getIsSorted(),
 				onclick: column.getToggleSortingHandler()
 			})
 	})
