@@ -16,7 +16,6 @@
 
 	let { data, columns, class: className }: DataTableProps<TData> = $props();
 
-	// 1. Declare globalFilter using Svelte 5 $state rune
 	let globalFilter = $state('');
 
 	const table = createTable({
@@ -24,8 +23,9 @@
 		get data() {
 			return data;
 		},
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
 		columns,
-		// 2. Wire up the state and change handler to the table
 		state: {
 			get globalFilter() {
 				return globalFilter;

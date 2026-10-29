@@ -1,10 +1,10 @@
 // scripts/seed.ts
+import 'dotenv';
+import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { faker } from '@faker-js/faker';
 import * as schema from '../src/lib/server/db/schema';
-import 'dotenv';
-import 'dotenv/config';
 
 const connectionString =
 	process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/local';
@@ -26,8 +26,8 @@ async function main() {
 	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
 		status: faker.number.int({ min: 0, max: 2 }),
-		createdAt: faker.date.past().toISOString(),
-		updatedAt: faker.date.past().toISOString()
+		createdAt: faker.date.past(),
+		updatedAt: faker.date.past()
 	}));
 
 	const insertedProducts = await db.insert(schema.product).values(dummyProducts).returning();
@@ -38,8 +38,8 @@ async function main() {
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
 		managedBy: faker.company.name(),
-		createdAt: faker.date.past().toISOString(),
-		updatedAt: faker.date.past().toISOString()
+		createdAt: faker.date.past(),
+		updatedAt: faker.date.past()
 	}));
 
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
@@ -56,8 +56,8 @@ async function main() {
 			expiresAt: faker.date.future().toISOString(),
 			license_key: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
 			maxDevices: faker.number.int({ min: 1, max: 5 }),
-			createdAt: faker.date.past().toISOString(),
-			updatedAt: faker.date.past().toISOString(),
+			createdAt: faker.date.past(),
+			updatedAt: faker.date.past(),
 			autoRenew: faker.datatype.boolean()
 		}));
 	});

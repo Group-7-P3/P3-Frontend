@@ -1,4 +1,5 @@
 // scripts/create-user.ts
+import 'dotenv';
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
@@ -6,7 +7,6 @@ import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '../src/lib/server/db/auth.schema.ts';
 import { eq } from 'drizzle-orm';
-import 'dotenv';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
