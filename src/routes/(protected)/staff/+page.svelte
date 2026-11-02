@@ -10,4 +10,12 @@
 	<title>Staff</title>
 </svelte:head>
 
-<DataTable data={data.staff} {columns} class="max-w-6xl" />
+<DataTable
+	data={data.staff}
+	{columns}
+	class="max-w-6xl"
+	onRowClick={(cells) => {
+		const values = Object.fromEntries(cells.map((cell) => [cell.column.id, cell.getValue()]));
+		console.log(values);
+	}}
+/>
