@@ -25,7 +25,7 @@ async function main() {
 	console.log('📦 Inserting dummy products...');
 	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
-		status: faker.number.int({ min: 0, max: 2 }),
+		status: faker.helpers.arrayElement(['inactive', 'active', 'deactivated'] as const),
 		createdAt: faker.date.past(),
 		updatedAt: faker.date.past()
 	}));
@@ -54,7 +54,7 @@ async function main() {
 			userId: user.id,
 			type: faker.number.int({ min: 1, max: 3 }),
 			expiresAt: faker.date.future().toISOString(),
-			license_key: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
+			licenseKey: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
 			maxDevices: faker.number.int({ min: 1, max: 5 }),
 			createdAt: faker.date.past(),
 			updatedAt: faker.date.past(),

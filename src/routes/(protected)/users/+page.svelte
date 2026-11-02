@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { columns } from '#lib/components/ui/data-table/columns.ts';
 	import DataTable from '#lib/components/ui/data-table/data-table.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let columns = $derived(Object.keys(data.users[0]));
+	$effect(() => console.log(columns));
 </script>
 
 <svelte:head>

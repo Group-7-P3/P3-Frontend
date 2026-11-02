@@ -1,5 +1,11 @@
 <script lang="ts" generics="TData extends RowData">
-	import { type ColumnDef, type RowData, createTable, FlexRender } from '@tanstack/svelte-table';
+	import {
+		type RowData,
+		createColumnHelper,
+		createTable,
+		FlexRender,
+		renderComponent
+	} from '@tanstack/svelte-table';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { features, type DataTableFeatures } from './data-table-features.js';
@@ -7,25 +13,90 @@
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
 	import { ChevronDown } from '@lucide/svelte';
+	import DataTableCheckbox from './data-table-checkbox.svelte';
+	import DataTableButton from './data-table-button.svelte';
+	import { camelToTitleCase } from '#lib/utils.js';
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
-		columns: ColumnDef<DataTableFeatures, TData>[];
+		columns: string[];
 		data: TData[];
 	};
 
 	let { data, columns, class: className }: DataTableProps<TData> = $props();
 
 	let globalFilter = $state('');
+	const columnHelper = createColumnHelper<DataTableFeatures, RowData>();
+	const cols = columnHelper.columns([
+		columnHelper.display({
+			id: 'select',
+			meta: {
+				class: 'mr-4 pr-4',
+				className: 'mr-4 pr-4'
+			},
+			header: ({ table }) =>
+				renderComponent(DataTableCheckbox, {
+					checked: table.getIsAllPageRowsSelected(),
+					indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
+					onCheckedChange: (value: boolean) => table.toggleAllPageRowsSelected(!!value),
+					'aria-label': 'Select all'
+				}),
+			cell: ({ row }) =>
+				renderComponent(DataTableCheckbox, {
+					checked: row.getIsSelected(),
+					onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
+					'aria-label': 'Select row'
+				}),
+			enableSorting: false,
+			enableHiding: false
+		}),
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
+		...columns.map((col) => {
+			const label = camelToTitleCase(col);
+			const isTimestamp = /At$|Date$|Time$/i.test(col);
+
+			return columnHelper.accessor(col, {
+				id: label,
+				header: ({ column }) => {
+					const sorted = column.getIsSorted();
+					const onclick = column.getToggleSortingHandler();
+
+					return renderComponent(DataTableButton, {
+						label,
+						sorted,
+						onclick
+					});
+				},
+				...(isTimestamp && {
+					cell: ({ getValue }) => {
+						const value = getValue();
+						if (!value) return '';
+
+						// Handles numbers (epochs), ISO strings, or Date objects
+						const date = new Date(
+							typeof value === 'number' && value.toString().length === 10 ? value * 1000 : value
+						);
+
+						// Format nicely, e.g., "Nov 2, 2026, 11:15 AM"
+						return isNaN(date.getTime())
+							? String(value)
+							: new Intl.DateTimeFormat('en-US', {
+									dateStyle: 'medium',
+									timeStyle: 'short'
+								}).format(date);
+					}
+				})
+			});
+		})
+	]);
 
 	const table = createTable({
 		features,
 		get data() {
 			return data;
 		},
-		// eslint-disable-next-line svelte/no-unused-svelte-ignore
-		// svelte-ignore state_referenced_locally
-		columns,
+		columns: cols,
 		state: {
 			get globalFilter() {
 				return globalFilter;
@@ -75,7 +146,7 @@
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					<Table.Row>
 						{#each headerGroup.headers as header (header.id)}
-							<Table.Head colspan={header.colSpan}>
+							<Table.Head colspan={header.colSpan} class="px-3">
 								{#if !header.isPlaceholder}
 									<FlexRender {header} />
 								{/if}
@@ -88,7 +159,7 @@
 				{#each table.getRowModel().rows as row (row.id)}
 					<Table.Row data-state={row.getIsSelected() && 'selected'}>
 						{#each row.getVisibleCells() as cell (cell.id)}
-							<Table.Cell>
+							<Table.Cell class="px-3">
 								<FlexRender {cell} />
 							</Table.Cell>
 						{/each}
