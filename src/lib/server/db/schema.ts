@@ -12,8 +12,6 @@ import {
 } from 'drizzle-orm/pg-core';
 
 export const subscriptionType = pgEnum('subscription_type', ['home', 'home+', 'pro', 'pro+']);
-export const staffRoleType = pgEnum('staff_type', ['owner', 'admin', 'moderator']);
-export const productType = pgEnum('product_type', ['pad', 'pod']);
 export const productStatus = pgEnum('product_status', ['inactive', 'active', 'deactivated']);
 
 export const user = pgTable('user', {
@@ -29,7 +27,7 @@ export const subscription = pgTable('subscription', {
 	userId: integer('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	type: integer('type').notNull(),
+	type: subscriptionType('type').notNull().default('home'),
 	maxDevices: integer('max_devices').notNull().default(6),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
