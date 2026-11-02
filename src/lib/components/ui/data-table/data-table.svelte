@@ -21,10 +21,11 @@
 		class?: string;
 		columns: string[];
 		data: TData[];
+		onRowClick?: () => void;
 		onAddClick?: () => void;
 	};
 
-	let { data, columns, class: className, onAddClick }: DataTableProps<TData> = $props();
+	let { data, columns, class: className, onRowClick, onAddClick }: DataTableProps<TData> = $props();
 
 	let globalFilter = $state('');
 	const columnHelper = createColumnHelper<DataTableFeatures, RowData>();
@@ -163,7 +164,7 @@
 			</Table.Header>
 			<Table.Body>
 				{#each table.getRowModel().rows as row (row.id)}
-					<Table.Row data-state={row.getIsSelected() && 'selected'}>
+					<Table.Row data-state={row.getIsSelected() && 'selected'} onclick={onRowClick}>
 						{#each row.getVisibleCells() as cell (cell.id)}
 							<Table.Cell class="px-3">
 								<FlexRender {cell} />
