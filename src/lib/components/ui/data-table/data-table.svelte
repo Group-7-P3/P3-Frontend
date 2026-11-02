@@ -12,7 +12,7 @@
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
-	import { ChevronDown } from '@lucide/svelte';
+	import { ChevronDown, Plus } from '@lucide/svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
@@ -21,9 +21,10 @@
 		class?: string;
 		columns: string[];
 		data: TData[];
+		onAddClick?: () => void;
 	};
 
-	let { data, columns, class: className }: DataTableProps<TData> = $props();
+	let { data, columns, class: className, onAddClick }: DataTableProps<TData> = $props();
 
 	let globalFilter = $state('');
 	const columnHelper = createColumnHelper<DataTableFeatures, RowData>();
@@ -110,7 +111,7 @@
 </script>
 
 <div class={cn('w-full', className)}>
-	<div class="flex items-center py-4">
+	<div class="flex items-center justify-between py-4">
 		<Input
 			placeholder="Filter columns..."
 			value={globalFilter}
@@ -122,23 +123,28 @@
 			}}
 			class="max-w-sm"
 		/>
-		<DropdownMenu.Root>
-			<DropdownMenu.Trigger>
-				{#snippet child({ props })}
-					<Button {...props} variant="outline" class="ms-auto">Columns <ChevronDown /></Button>
-				{/snippet}
-			</DropdownMenu.Trigger>
-			<DropdownMenu.Content align="end" class="w-max">
-				{#each table.getAllColumns().filter((col) => col.getCanHide()) as column (column.id)}
-					<DropdownMenu.CheckboxItem
-						class="capitalize"
-						bind:checked={() => column.getIsVisible(), (v) => column.toggleVisibility(!!v)}
-					>
-						{column.id}
-					</DropdownMenu.CheckboxItem>
-				{/each}
-			</DropdownMenu.Content>
-		</DropdownMenu.Root>
+		<div class="flex items-center gap-2">
+			{#if onAddClick}
+				<Button size="icon" onclick={onAddClick}><Plus /></Button>
+			{/if}
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} variant="outline" class="ms-auto">Columns <ChevronDown /></Button>
+					{/snippet}
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="end" class="w-max">
+					{#each table.getAllColumns().filter((col) => col.getCanHide()) as column (column.id)}
+						<DropdownMenu.CheckboxItem
+							class="capitalize"
+							bind:checked={() => column.getIsVisible(), (v) => column.toggleVisibility(!!v)}
+						>
+							{column.id}
+						</DropdownMenu.CheckboxItem>
+					{/each}
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
+		</div>
 	</div>
 	<div class="rounded-md border">
 		<Table.Root>
