@@ -3,7 +3,16 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	let columns = $derived(Object.keys(data.subscriptions[0]));
+	const columns = [
+		'licenseKey',
+		'userId',
+		'type',
+		'maxDevices',
+		'createdAt',
+		'updatedAt',
+		'expiresAt',
+		'autoRenew'
+	];
 </script>
 
 <svelte:head>

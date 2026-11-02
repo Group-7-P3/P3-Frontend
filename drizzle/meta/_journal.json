@@ -64,6 +64,13 @@
       "when": 1793619856080,
       "tag": "0008_fast_scalphunter",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793623464954,
+      "tag": "0009_messy_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }

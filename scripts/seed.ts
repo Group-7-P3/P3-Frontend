@@ -52,7 +52,7 @@ async function main() {
 
 		return Array.from({ length: subCount }).map(() => ({
 			userId: user.id,
-			type: faker.number.int({ min: 1, max: 3 }),
+			type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
 			expiresAt: faker.date.future().toISOString(),
 			licenseKey: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
 			maxDevices: faker.number.int({ min: 1, max: 5 }),

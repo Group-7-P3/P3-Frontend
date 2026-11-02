@@ -3,9 +3,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	let columns = $derived(
-		Object.keys(data.staff[0]).filter((col) => !['emailVerified', 'image'].includes(col))
-	);
+	const columns = ['id', 'name', 'email', 'createdAt', 'updatedAt', 'role', 'group'];
 </script>
 
 <svelte:head>
