@@ -35,7 +35,7 @@
 			globalFilter = typeof updater === 'function' ? updater(globalFilter) : updater;
 		}
 	});
-	table.setPageSize(24);
+	table.setPageSize(12);
 </script>
 
 <div class={cn('w-full', className)}>

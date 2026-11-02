@@ -1,7 +1,9 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/label/label.svelte';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -9,6 +11,7 @@
 
 	let email = $state('');
 	let password = $state('');
+	let rememberMe = $state(false);
 	let loading = $state(false);
 	let errorMessage = $state('');
 
@@ -18,7 +21,7 @@
 		errorMessage = '';
 
 		await authClient.signIn.email(
-			{ email, password },
+			{ email, password, rememberMe },
 			{
 				onRequest: () => {
 					loading = true;
@@ -47,7 +50,7 @@
 
 	<form id="login-form" onsubmit={handleLogin}>
 		<Card.Content>
-			<div class="flex flex-col gap-6">
+			<Field.Group>
 				{#if errorMessage}
 					<div
 						class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-200"
@@ -57,21 +60,27 @@
 				{/if}
 
 				<!-- Email Field -->
-				<div class="grid gap-2">
+				<Field.Field>
 					<Label for="email">Email</Label>
 					<div class="relative w-full">
 						<Input id="email" type="email" bind:value={email} required />
 					</div>
-				</div>
+				</Field.Field>
 
 				<!-- Password Field -->
-				<div class="grid gap-2">
+				<Field.Field>
 					<Label for="password">Password</Label>
 					<div class="relative w-full">
 						<Input id="password" type="password" bind:value={password} required />
 					</div>
-				</div>
-			</div>
+				</Field.Field>
+
+				<!-- Remember Me -->
+				<Field.Field orientation="horizontal">
+					<Checkbox id="remember-me" bind:checked={rememberMe} />
+					<Field.Label for="remember-me">Remember me</Field.Label>
+				</Field.Field>
+			</Field.Group>
 		</Card.Content>
 	</form>
 
