@@ -1,6 +1,5 @@
 <script lang="ts" generics="TData extends RowData">
 	import {
-		type Cell,
 		type RowData,
 		createColumnHelper,
 		createTable,
@@ -22,7 +21,7 @@
 		class?: string;
 		columns: string[];
 		data: TData[];
-		onRowClick?: (cells: Cell<DataTableFeatures, TData, unknown>[]) => void;
+		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
 	};
 
@@ -175,7 +174,7 @@
 						data-state={row.getIsSelected() && 'selected'}
 						onclick={() => {
 							if (!onRowClick) return;
-							onRowClick(row.getAllCells());
+							onRowClick(row.original);
 						}}
 					>
 						{#each row.getVisibleCells() as cell (cell.id)}
