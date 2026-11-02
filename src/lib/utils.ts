@@ -20,3 +20,12 @@ export function stringToHex(str: string): string {
 
 	return '#' + rgb.map((val) => Math.round(val).toString(16).padStart(2, '0')).join('');
 }
+
+export function camelToTitleCase(str: string) {
+	const result = str.replace(/([A-Z])/g, ' $1').replace(/^./, (match) => match.toUpperCase());
+
+	return result
+		.replace(/\bId\b/g, 'ID')
+		.replace(/\bApi\b/g, 'API')
+		.replace(/\bUrl\b/g, 'URL');
+}

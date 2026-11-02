@@ -54,7 +54,7 @@ async function main() {
 			userId: user.id,
 			type: faker.number.int({ min: 1, max: 3 }),
 			expiresAt: faker.date.future().toISOString(),
-			license_key: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
+			licenseKey: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
 			maxDevices: faker.number.int({ min: 1, max: 5 }),
 			createdAt: faker.date.past(),
 			updatedAt: faker.date.past(),

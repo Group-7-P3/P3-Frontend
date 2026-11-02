@@ -24,7 +24,7 @@ export const user = pgTable('user', {
 });
 
 export const subscription = pgTable('subscription', {
-	license_key: serial('license_key').primaryKey(),
+	licenseKey: serial('license_key').primaryKey(),
 	userId: integer('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
@@ -46,14 +46,14 @@ export const product = pgTable('product', {
 export const subscriptionToProduct = pgTable(
 	'subscription_to_product',
 	{
-		license_key: integer('license_key')
+		licenseKey: integer('license_key')
 			.notNull()
-			.references(() => subscription.license_key, { onDelete: 'cascade' }),
+			.references(() => subscription.licenseKey, { onDelete: 'cascade' }),
 		serialNumber: integer('serial_number')
 			.notNull()
 			.references(() => product.serialNumber, { onDelete: 'cascade' })
 	},
-	(t) => [primaryKey({ columns: [t.license_key, t.serialNumber] })]
+	(t) => [primaryKey({ columns: [t.licenseKey, t.serialNumber] })]
 );
 
 export const userRelations = relations(user, ({ many }) => ({
