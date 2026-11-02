@@ -14,8 +14,7 @@
 	data={data.staff}
 	{columns}
 	class="max-w-6xl"
-	onRowClick={(cells) => {
-		const values = Object.fromEntries(cells.map((cell) => [cell.column.id, cell.getValue()]));
-		console.log(values);
+	onRowClick={(staff) => {
+		console.log(staff.id);
 	}}
 />
