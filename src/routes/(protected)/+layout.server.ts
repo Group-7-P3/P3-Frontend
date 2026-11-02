@@ -1,4 +1,3 @@
-// src/routes/(protected)/+layout.server.ts
 import { auth } from '#lib/server/auth.js';
 import { redirect } from '@sveltejs/kit';
 

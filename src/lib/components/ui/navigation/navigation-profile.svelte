@@ -24,7 +24,7 @@
 				<Sidebar.MenuButton
 					{...props}
 					size="lg"
-					class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+					class="rounded-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
 					<Avatar class="h-8 w-8 overflow-clip rounded-full">
 						<div style:background-color={color} class="p-0.5">
