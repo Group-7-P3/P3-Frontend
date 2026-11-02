@@ -2,7 +2,6 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
@@ -61,18 +60,14 @@
 
 				<!-- Email Field -->
 				<Field.Field>
-					<Label for="email">Email</Label>
-					<div class="relative w-full">
-						<Input id="email" type="email" bind:value={email} required />
-					</div>
+					<Field.Label for="email">Email</Field.Label>
+					<Input id="email" type="email" bind:value={email} required />
 				</Field.Field>
 
 				<!-- Password Field -->
 				<Field.Field>
-					<Label for="password">Password</Label>
-					<div class="relative w-full">
-						<Input id="password" type="password" bind:value={password} required />
-					</div>
+					<Field.Label for="password">Password</Field.Label>
+					<Input id="password" type="password" bind:value={password} required />
 				</Field.Field>
 
 				<!-- Remember Me -->
