@@ -14,6 +14,7 @@ import {
 export const subscriptionType = pgEnum('subscription_type', ['home', 'home+', 'pro', 'pro+']);
 export const staffRoleType = pgEnum('staff_type', ['owner', 'admin', 'moderator']);
 export const productType = pgEnum('product_type', ['pad', 'pod']);
+export const productStatus = pgEnum('product_status', ['inactive', 'active', 'deactivated']);
 
 export const user = pgTable('user', {
 	id: serial('id').primaryKey(),
@@ -38,7 +39,7 @@ export const subscription = pgTable('subscription', {
 
 export const product = pgTable('product', {
 	serialNumber: serial('serial_number').primaryKey(),
-	status: integer('status').notNull().default(0),
+	status: productStatus('status').notNull().default('inactive'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

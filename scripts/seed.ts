@@ -25,7 +25,7 @@ async function main() {
 	console.log('📦 Inserting dummy products...');
 	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
-		status: faker.number.int({ min: 0, max: 2 }),
+		status: faker.helpers.arrayElement(['inactive', 'active', 'deactivated'] as const),
 		createdAt: faker.date.past(),
 		updatedAt: faker.date.past()
 	}));
