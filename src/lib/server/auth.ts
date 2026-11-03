@@ -20,7 +20,7 @@ export const auth = betterAuth({
 				type: ['owner', 'admin', 'moderator'],
 				required: false,
 				defaultValue: 'moderator',
-				input: true,
+				input: false,
 				returned: true
 			},
 			group: {
