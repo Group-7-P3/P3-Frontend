@@ -139,11 +139,11 @@
 							<Tooltip.Trigger>
 								{#snippet child({ props: tooltipProps })}
 									<div {...tooltipProps}>
-										<Sidebar.MenuButton isActive={page.url.pathname === '/sql'}>
+										<Sidebar.MenuButton isActive={page.url.pathname === '/database'}>
 											{#snippet child({ props })}
-												<a href={resolve('/(protected)/sql')} {...props}>
+												<a href={resolve('/(protected)/database')} {...props}>
 													<Database />
-													<span>SQL</span>
+													<span>Database</span>
 												</a>
 											{/snippet}
 										</Sidebar.MenuButton>
@@ -151,7 +151,7 @@
 								{/snippet}
 							</Tooltip.Trigger>
 							<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
-								<p>SQL</p>
+								<p>Database</p>
 							</Tooltip.Content>
 						</Tooltip.Root>
 					</Sidebar.MenuItem>
