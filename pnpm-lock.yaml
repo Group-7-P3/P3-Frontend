@@ -87,6 +87,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.4(kysely@0.29.7)(postgres@3.4.9)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       eslint:
         specifier: ^10.4.1
         version: 10.13.0(jiti@2.7.0)
