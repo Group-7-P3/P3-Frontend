@@ -199,6 +199,23 @@ ORDER BY s.expires_at ASC;`;
 		return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 
+	function editDistance(left: string, right: string) {
+		const distances = Array.from({ length: right.length + 1 }, (_, index) => index);
+		for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+			let previous = distances[0];
+			distances[0] = leftIndex;
+			for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+				const current = distances[rightIndex];
+				distances[rightIndex] =
+					left[leftIndex - 1].toLowerCase() === right[rightIndex - 1].toLowerCase()
+						? previous
+						: Math.min(previous, distances[rightIndex - 1], distances[rightIndex]) + 1;
+				previous = current;
+			}
+		}
+		return distances[right.length];
+	}
+
 	function analyzeSql(value: string): SqlDiagnostic[] {
 		const result: SqlDiagnostic[] = [];
 		const parentheses: number[] = [];
@@ -252,32 +269,6 @@ ORDER BY s.expires_at ASC;`;
 			result.push({ start, end: start + 1, message: 'Unclosed parenthesis' });
 		}
 
-		const firstToken = value.match(/^\s*([A-Za-z_][\w$]*)/);
-		if (firstToken && !knownKeywords.has(firstToken[1].toUpperCase())) {
-			const start = firstToken.index! + firstToken[0].length - firstToken[1].length;
-			const expectedKeyword = firstToken[1].toUpperCase().startsWith('SEL')
-				? 'SELECT'
-				: 'a SQL statement keyword';
-			result.push({
-				start,
-				end: start + firstToken[1].length,
-				message: `Expected ${expectedKeyword}`
-			});
-		}
-
-		const invalidKeywordPatterns = [
-			{ pattern: /\bFRO\b/gi, message: 'Expected FROM' },
-			{ pattern: /\bJOI\b/gi, message: 'Expected JOIN' },
-			{ pattern: /\bWHER\b/gi, message: 'Expected WHERE' },
-			{ pattern: /\bORDER\s+B\b/gi, message: 'Expected ORDER BY' }
-		];
-		for (const { pattern, message } of invalidKeywordPatterns) {
-			for (const match of value.matchAll(pattern)) {
-				const start = match.index ?? 0;
-				result.push({ start, end: start + match[0].length, message });
-			}
-		}
-
 		const tableReferencePattern = /\b(?:FROM|JOIN|UPDATE|INTO)\s+([A-Za-z_][\w$]*)/gi;
 		for (const match of value.matchAll(tableReferencePattern)) {
 			const tableName = match[1];
@@ -287,6 +278,28 @@ ORDER BY s.expires_at ASC;`;
 				start,
 				end: start + tableName.length,
 				message: `Unknown table "${tableName}"`
+			});
+		}
+
+		const keywordCandidates = keywords.filter((keyword) => !keyword.includes(' '));
+		const missingKeywordPattern =
+			/\b(?:FROM|JOIN)\s+(?:"[^"]+"|[A-Za-z_][\w$]*)\s+([A-Za-z_][\w$]*)\s+([A-Za-z_][\w$]*)/gi;
+		for (const match of value.matchAll(missingKeywordPattern)) {
+			const missingKeyword = match[1];
+			const followingIdentifier = match[2];
+			if (keywordCandidates.some((keyword) => keyword.toLowerCase() === missingKeyword.toLowerCase()))
+				continue;
+			if (keywordCandidates.some((keyword) => keyword.toLowerCase() === followingIdentifier.toLowerCase()))
+				continue;
+			const candidate = keywordCandidates
+				.map((keyword) => ({ keyword, distance: editDistance(missingKeyword, keyword) }))
+				.sort((left, right) => left.distance - right.distance)[0];
+			if (!candidate || candidate.distance > Math.max(1, Math.floor(missingKeyword.length / 4))) continue;
+			const start = (match.index ?? 0) + match[0].lastIndexOf(missingKeyword);
+			result.push({
+				start,
+				end: start + missingKeyword.length,
+				message: `Did you mean ${candidate.keyword}?`
 			});
 		}
 
@@ -329,6 +342,64 @@ ORDER BY s.expires_at ASC;`;
 			});
 		}
 
+		const knownIdentifiers = new Set([
+			...knownKeywords,
+			...tables.flatMap((table) => [table.name, ...table.columns]),
+			...aliases
+		].map((identifier) => identifier.toLowerCase()));
+		const typoCandidates = [
+			...keywords.filter((keyword) => !keyword.includes(' ')),
+			...tables.flatMap((table) => [table.name, ...table.columns])
+		];
+		for (const match of value.matchAll(/\b[A-Za-z_][\w$]*\b/g)) {
+			const token = match[0];
+			const normalizedToken = token.toLowerCase();
+			if (knownIdentifiers.has(normalizedToken)) continue;
+			const candidates = typoCandidates
+				.filter((knownIdentifier) => Math.abs(knownIdentifier.length - token.length) <= 2)
+				.map((knownIdentifier) => ({
+					value: knownIdentifier,
+					distance: editDistance(token, knownIdentifier)
+				}))
+				.sort((left, right) => left.distance - right.distance);
+			const candidate = candidates[0];
+			if (
+				!candidate ||
+				candidate.distance === 0 ||
+				candidate.distance > Math.max(1, Math.floor(token.length / 4))
+			)
+				continue;
+			const start = match.index ?? 0;
+			if (result.some((diagnostic) => diagnostic.start <= start && diagnostic.end >= start + token.length))
+				continue;
+			result.push({
+				start,
+				end: start + token.length,
+				message: `Did you mean ${candidate.value}?`
+			});
+		}
+
+		for (const keyword of keywords.filter((candidate) => candidate.includes(' '))) {
+			const [firstWord, expectedWord] = keyword.split(/\s+/);
+			const pattern = new RegExp(`\\b${escapeRegex(firstWord)}\\s+([A-Za-z_][\\w$]*)`, 'gi');
+			for (const match of value.matchAll(pattern)) {
+				const actualWord = match[1];
+				if (
+					actualWord.toUpperCase() === expectedWord.toUpperCase() ||
+					editDistance(actualWord, expectedWord) > Math.max(1, Math.floor(expectedWord.length / 4))
+				)
+					continue;
+				const start = (match.index ?? 0) + match[0].lastIndexOf(actualWord);
+				if (result.some((diagnostic) => diagnostic.start <= start && diagnostic.end >= start + actualWord.length))
+					continue;
+				result.push({
+					start,
+					end: start + actualWord.length,
+					message: `Did you mean ${keyword}?`
+				});
+			}
+		}
+
 		const trailingClausePattern =
 			/\b(?:SELECT|FROM|WHERE|AND|OR|JOIN|ON|AS|ORDER\s+BY|GROUP\s+BY|HAVING|LIMIT|OFFSET|SET|VALUES|INTO)\s*$/i;
 		const trailingClause = value.match(trailingClausePattern);
@@ -353,7 +424,7 @@ ORDER BY s.expires_at ASC;`;
 				result.push({
 					start,
 					end: start + orderDirection[1].length,
-					message: 'Expected ASC or DESC'
+					message: 'Did you mean ASC or DESC?'
 				});
 			}
 		}
@@ -442,11 +513,26 @@ ORDER BY s.expires_at ASC;`;
 		const qualifiedColumns = qualifiedTable?.columns ?? [];
 		const candidateSuggestions = qualifiedTable ? qualifiedColumns : allSuggestions;
 		const nextSuggestions = [...new Set(candidateSuggestions)]
+			.map((suggestion, index) => ({
+				suggestion,
+				index,
+				distance: editDistance(lowerWord, suggestion.toLowerCase()),
+				isPrefix: suggestion.toLowerCase().startsWith(lowerWord)
+			}))
 			.filter(
-				(suggestion) =>
-					showAll || (suggestion.toLowerCase().startsWith(lowerWord) && suggestion !== word)
+				({ suggestion, distance, isPrefix }) =>
+					showAll ||
+					(suggestion.toLowerCase() !== lowerWord &&
+						(isPrefix || distance <= Math.max(1, Math.floor(lowerWord.length / 4))))
 			)
-			.slice(0, 8);
+			.sort(
+				(left, right) =>
+					Number(right.isPrefix) - Number(left.isPrefix) ||
+					left.distance - right.distance ||
+					left.index - right.index
+			)
+			.slice(0, 8)
+			.map(({ suggestion }) => suggestion);
 		const selectedValue = suggestions[selectedSuggestion];
 		suggestions = nextSuggestions;
 		selectedSuggestion = selectedValue ? Math.max(0, nextSuggestions.indexOf(selectedValue)) : 0;
