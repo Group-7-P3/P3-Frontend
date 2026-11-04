@@ -3,9 +3,20 @@
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { wordsToTitleCase } from '#lib/utils.ts';
 
 	let { data }: { data: PageData } = $props();
 	const columns = ['id', 'customerId', 'managedBy', 'createdAt', 'updatedAt'];
+
+	/*
+	 * formattedStaff changes data.staff to uppercase
+	 */
+	const formattedUser = $derived(
+		data.users.map((user) => ({
+			...user,
+			managedBy: wordsToTitleCase(user.managedBy)
+		}))
+	);
 
 	type UserRecord = (typeof data.users)[number];
 
@@ -22,5 +33,5 @@
 </svelte:head>
 
 <div class="max-w-6xl space-y-6">
-	<DataTable data={data.users} {columns} class="max-w-6xl" onRowClick={handleRowClick} />
+	<DataTable data={formattedUser} {columns} class="max-w-6xl" onRowClick={handleRowClick} />
 </div>

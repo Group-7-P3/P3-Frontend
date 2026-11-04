@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { resolve } from '$app/paths';
+	import { wordsToTitleCase } from '#lib/utils.ts';
 
 	let { data }: { data: PageData } = $props();
 </script>
@@ -36,7 +37,7 @@
 					<div class="rounded-lg border bg-background p-4">
 						<div>
 							<p class="text-base font-semibold">
-								License Key: #{sub.licenseKey} (Type: {sub.type})
+								License Key: #{sub.licenseKey} (Type: {wordsToTitleCase(sub.type)})
 							</p>
 							<p class="text-xs text-muted-foreground">
 								Max Devices: {sub.maxDevices} | Auto-Renew: {sub.autoRenew ? 'Yes' : 'No'}
