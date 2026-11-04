@@ -1,21 +1,41 @@
 <script lang="ts">
 	import DataTable from '$lib/components/ui/data-table/data-table.svelte';
 	import type { PageData } from './$types';
-	import {
-		Dialog,
-		DialogContent,
-		DialogHeader,
-		DialogTitle,
-	} from '$lib/components/ui/dialog';
+	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '#lib/components/ui/button/button.svelte';
-	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+	import { authClient } from '#lib/client.ts';
 	//import { authClient } from '$lib/auth-client';
 
+	// Staff Table, i think
 	let { data }: { data: PageData } = $props();
 	const columns = ['id', 'name', 'email', 'createdAt', 'updatedAt', 'role', 'group'];
-	
+
+	const session = authClient.useSession();
+
+	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'moderator' | undefined);
+
+	const canCreate = $derived(
+		role
+			? authClient.admin.checkRolePermission({
+					role,
+					permissions: { staff: ['createModerator'] }
+				})
+			: false
+	);
+	// Server side still needs to check for permission
+
+	const canCreateAdmin = $derived(
+		role
+			? authClient.admin.checkRolePermission({
+					role,
+					permissions: { staff: ['createAdmin'] }
+				})
+			: false
+	);
+
 	// Opens the dialog for creating a new staff member
 	let open = $state(false);
 
@@ -23,12 +43,6 @@
 	let newStaffEmail = $state('');
 	let newStaffPassword = $state('');
 	let giveAdmin = $state(false);
-
-	// TODO: Actually check for authority, remember to also do so server side
-	let authority = $state(true); 
-
-	// TODO: Actually check for super authority, remember to also do so server side
-	let superAuthority = $state(true); 
 
 	// Form submission handler for creating a new staff member
 	function handleStaffCreation(e: SubmitEvent) {
@@ -54,9 +68,11 @@
 		console.log(staff.id);
 	}}
 	/* Add new staff member button, conditional to if user has auth to do so, check for auth */
-	onAddClick={authority ? () => {
-		open = !open;
-	} : undefined}
+	onAddClick={canCreate
+		? () => {
+				open = !open;
+			}
+		: undefined}
 />
 
 <Dialog bind:open>
@@ -64,7 +80,7 @@
 	-->
 	<DialogContent class="gap-2">
 		<DialogHeader>
-			<DialogTitle class="text-2xl text-center">Create a new staff member</DialogTitle>
+			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
 		<Field.Group>
 			<form onsubmit={handleStaffCreation}>
@@ -93,10 +109,10 @@
 								<Field.Error>Emails must match</Field.Error>
 							{/if}-->
 						</Field.Field>
-						{#if superAuthority}
+						{#if canCreateAdmin}
 							<Field.Field orientation="horizontal" class="justify-start gap-1">
 								<Field.Label for="makeAdmin" class="w-auto flex-none">Make admin?</Field.Label>
-								<Checkbox id="makeAdmin" bind:checked={giveAdmin}/>
+								<Checkbox id="makeAdmin" bind:checked={giveAdmin} />
 							</Field.Field>
 						{/if}
 						<Button type="submit" class="w-full">Create</Button>
