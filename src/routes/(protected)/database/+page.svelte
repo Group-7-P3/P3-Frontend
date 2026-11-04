@@ -4,7 +4,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Check, Code, Copy, Play, Table2 } from '@lucide/svelte';
+	import { Check, Code, Copy, Play, Redo2, Table2, Undo2 } from '@lucide/svelte';
 	import { tick } from 'svelte';
 
 	type TableSchema = {
@@ -12,6 +12,11 @@
 		columns: string[];
 	};
 	type QueryRow = Record<string, unknown>;
+	type QuerySnapshot = {
+		value: string;
+		start: number;
+		end: number;
+	};
 
 	/**
 	 * All tables in the database and their attributes.\
@@ -123,7 +128,7 @@
 	/**
 	 * The current query, which also holds the default value.
 	 */
-	let query = $state(`SELECT
+	const initialQuery = `SELECT
   u.id,
   u.customer_id,
   s.type,
@@ -131,7 +136,12 @@
 FROM "user" AS u
 JOIN subscription AS s ON s.user_id = u.id
 WHERE s.expires_at >= CURRENT_DATE
-ORDER BY s.expires_at ASC;`);
+ORDER BY s.expires_at ASC;`;
+	let query = $state(initialQuery);
+	let queryHistory = $state<QuerySnapshot[]>([
+		{ value: initialQuery, start: initialQuery.length, end: initialQuery.length }
+	]);
+	let queryHistoryIndex = $state(0);
 
 	let editor = $state<HTMLTextAreaElement>();
 	let lineNumbers = $state<HTMLDivElement>();
@@ -143,9 +153,23 @@ ORDER BY s.expires_at ASC;`);
 	let queryError = $state('');
 	let queryRows = $state<QueryRow[]>([]);
 	let queryRowCount = $state(0);
+	let queryRowsRead = $state<number | undefined>();
+	let queryExecutionTimeMs = $state(0);
 	let suggestionPosition = $state({ top: 16, left: 64 });
+	let suggestionsOpen = $state(false);
+	let selectionBeforeInput = $state<{ start: number; end: number } | undefined>();
 	let dialogOpen = $state(false);
 	let querySeverity: 'delete' | 'modify' | false = $state(false);
+
+	/**
+	 * These values control the offset of the popover.
+	 */
+	const suggestionCaretOffset = {
+		top: 12,
+		left: 54,
+		lineHeight: 24,
+		characterWidth: 7.8
+	};
 
 	/**
 	 * An array containing all possible suggestions.
@@ -198,22 +222,54 @@ ORDER BY s.expires_at ASC;`);
 	/**
 	 * Updates the suggestions to match what's being written.
 	 */
-	function updateSuggestions() {
+	function updateSuggestions(showAll = false) {
 		const cursor = editor?.selectionStart ?? query.length;
 		const word = query.slice(0, cursor).match(/[A-Za-z_][\w$]*$/)?.[0] ?? '';
-		if (!word) {
+		if (!word && !showAll) {
+			updateSuggestionPosition(cursor);
 			suggestions = [];
+			suggestionsOpen = true;
 			return;
 		}
 
 		updateSuggestionPosition(cursor);
 		const lowerWord = word.toLowerCase();
-		const nextSuggestions = allSuggestions
-			.filter((suggestion) => suggestion.toLowerCase().startsWith(lowerWord) && suggestion !== word)
+		const nextSuggestions = [...new Set(allSuggestions)]
+			.filter(
+				(suggestion) =>
+					showAll || (suggestion.toLowerCase().startsWith(lowerWord) && suggestion !== word)
+			)
 			.slice(0, 8);
 		const selectedValue = suggestions[selectedSuggestion];
 		suggestions = nextSuggestions;
 		selectedSuggestion = selectedValue ? Math.max(0, nextSuggestions.indexOf(selectedValue)) : 0;
+		suggestionsOpen = true;
+	}
+
+	function captureSelectionBeforeInput() {
+		if (!editor) return;
+		selectionBeforeInput = { start: editor.selectionStart, end: editor.selectionEnd };
+	}
+
+	async function handleInput() {
+		recordQueryEdit(selectionBeforeInput);
+		selectionBeforeInput = undefined;
+		updateSuggestions();
+	}
+
+	function recordQueryEdit(previousSelection?: { start: number; end: number }) {
+		const snapshot = {
+			value: query,
+			start: editor?.selectionStart ?? query.length,
+			end: editor?.selectionEnd ?? query.length
+		};
+		const current = queryHistory[queryHistoryIndex];
+		if (current?.value === snapshot.value) return;
+		if (current && previousSelection) {
+			queryHistory[queryHistoryIndex] = { ...current, ...previousSelection };
+		}
+		queryHistory = [...queryHistory.slice(0, queryHistoryIndex + 1), snapshot];
+		queryHistoryIndex += 1;
 	}
 
 	/**
@@ -225,26 +281,56 @@ ORDER BY s.expires_at ASC;`);
 		const beforeCursor = query.slice(0, cursor);
 		const lineIndex = beforeCursor.split('\n').length - 1;
 		const column = beforeCursor.length - (beforeCursor.lastIndexOf('\n') + 1);
-		const lineHeight = 24;
-		const characterWidth = 7.8;
-		const editorPadding = 16;
-		const gutterWidth = 48;
 		const menuHeight = 220;
-		const topBelowCaret = editorPadding + (lineIndex + 1) * lineHeight - editor.scrollTop;
-		const topAboveCaret = editorPadding + lineIndex * lineHeight - editor.scrollTop - menuHeight;
-		const top =
-			topBelowCaret + menuHeight > editor.clientHeight
-				? Math.max(editorPadding, topAboveCaret)
-				: topBelowCaret;
+		const menuWidth = 240;
+		const editorRect = editor.getBoundingClientRect();
+		const topBelowCaret =
+			editorRect.top +
+			suggestionCaretOffset.top +
+			(lineIndex + 1) * suggestionCaretOffset.lineHeight -
+			editor.scrollTop;
+		const topAboveCaret =
+			editorRect.top +
+			suggestionCaretOffset.top +
+			lineIndex * suggestionCaretOffset.lineHeight -
+			editor.scrollTop -
+			menuHeight;
+		const preferredTop =
+			topBelowCaret + menuHeight <= window.innerHeight - 8 ? topBelowCaret : topAboveCaret;
+		const top = Math.min(
+			Math.max(preferredTop, 8),
+			Math.max(8, window.innerHeight - menuHeight - 8)
+		);
+		const preferredLeft =
+			editorRect.left +
+			suggestionCaretOffset.left +
+			column * suggestionCaretOffset.characterWidth -
+			editor.scrollLeft;
 		const left = Math.min(
-			Math.max(
-				gutterWidth + editorPadding + column * characterWidth - editor.scrollLeft,
-				gutterWidth
-			),
-			Math.max(gutterWidth, editor.clientWidth - 240)
+			Math.max(preferredLeft, 8),
+			Math.max(8, window.innerWidth - menuWidth - 8)
 		);
 
 		suggestionPosition = { top, left };
+	}
+
+	function updateSuggestionPositionFromCaret() {
+		if (suggestionsOpen && editor) {
+			updateSuggestionPosition(editor.selectionStart);
+		}
+	}
+
+	function closeSuggestions() {
+		suggestionsOpen = false;
+	}
+
+	function updateSuggestionsFromCaret(event: KeyboardEvent) {
+		if (event.ctrlKey && event.code === 'Space') return;
+		if (['ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) {
+			closeSuggestions();
+			return;
+		}
+		if (suggestionsOpen) updateSuggestions();
 	}
 
 	/**
@@ -260,6 +346,7 @@ ORDER BY s.expires_at ASC;`);
 			highlightedQuery.scrollTop = target.scrollTop;
 			highlightedQuery.scrollLeft = target.scrollLeft;
 		}
+		updateSuggestionPositionFromCaret();
 	}
 
 	/**
@@ -269,12 +356,16 @@ ORDER BY s.expires_at ASC;`);
 		const cursor = editor?.selectionStart ?? query.length;
 		const match = query.slice(0, cursor).match(/[A-Za-z_][\w$]*$/);
 		const start = match ? cursor - match[0].length : cursor;
-		query = `${query.slice(0, start)}${suggestion}${query.slice(cursor)}`;
+		if (!editor) return;
+		replaceEditorRange(suggestion, start, cursor, { start: cursor, end: cursor });
 		suggestions = [];
-		void tick().then(() => {
+		suggestionsOpen = false;
+		void tick()
+			.then(() => tick())
+			.then(() => {
 			editor?.focus();
 			editor?.setSelectionRange(start + suggestion.length, start + suggestion.length);
-		});
+			});
 	}
 
 	/**
@@ -282,7 +373,29 @@ ORDER BY s.expires_at ASC;`);
 	 * Arrow-up, arrow-down, tab, enter, and escape.
 	 */
 	function handleKeydown(event: KeyboardEvent) {
-		if (!suggestions.length) return;
+		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+			event.preventDefault();
+			if (event.shiftKey) redoQuery();
+			else undoQuery();
+			return;
+		}
+
+		if (
+			(event.ctrlKey || event.metaKey) &&
+			(event.key.toLowerCase() === 'y' || (event.shiftKey && event.key.toLowerCase() === 'z'))
+		) {
+			event.preventDefault();
+			redoQuery();
+			return;
+		}
+
+		if (event.ctrlKey && event.code === 'Space') {
+			event.preventDefault();
+			updateSuggestions(true);
+			return;
+		}
+
+		if (!suggestionsOpen) return;
 		if (event.key === 'ArrowDown') {
 			event.preventDefault();
 			selectedSuggestion = selectedSuggestion + 1 < suggestions.length ? selectedSuggestion + 1 : 0;
@@ -296,14 +409,14 @@ ORDER BY s.expires_at ASC;`);
 			return;
 		}
 
-		if (event.key === 'Tab' || event.key === 'Enter') {
+		if ((event.key === 'Tab' || event.key === 'Enter') && suggestions.length > 0) {
 			event.preventDefault();
 			chooseSuggestion(suggestions[selectedSuggestion]);
 			return;
 		}
 
 		if (event.key !== 'Escape') return;
-		suggestions = [];
+		suggestionsOpen = false;
 	}
 
 	/**
@@ -311,10 +424,68 @@ ORDER BY s.expires_at ASC;`);
 	 */
 	function insertText(value: string) {
 		const cursor = editor?.selectionStart ?? query.length;
-		query = `${query.slice(0, cursor)}${value}${query.slice(cursor)}`;
+		if (!editor) return;
+		replaceEditorRange(value, cursor, cursor);
 		void tick().then(() => {
 			editor?.focus();
 			editor?.setSelectionRange(cursor + value.length, cursor + value.length);
+		});
+	}
+
+	function replaceEditorRange(
+		value: string,
+		start: number,
+		end: number,
+		undoSelection = { start, end }
+	) {
+		if (!editor) return;
+		updateCurrentSnapshotSelection(undoSelection.start, undoSelection.end);
+		query = `${query.slice(0, start)}${value}${query.slice(end)}`;
+		const cursor = start + value.length;
+		queryHistory = [
+			...queryHistory.slice(0, queryHistoryIndex + 1),
+			{ value: query, start: cursor, end: cursor }
+		];
+		queryHistoryIndex += 1;
+		void tick()
+			.then(() => tick())
+			.then(() => {
+			editor?.focus();
+			editor?.setSelectionRange(cursor, cursor);
+			});
+	}
+
+	function updateCurrentSnapshotSelection(start: number, end: number) {
+		const current = queryHistory[queryHistoryIndex];
+		if (!current) return;
+		queryHistory[queryHistoryIndex] = { ...current, start, end };
+		queryHistory = [...queryHistory];
+	}
+
+	/**
+	 * Moves through the query editor's history.
+	 */
+	function undoQuery() {
+		if (queryHistoryIndex === 0) return;
+		queryHistoryIndex -= 1;
+		restoreQuerySnapshot(queryHistory[queryHistoryIndex]);
+	}
+
+	function redoQuery() {
+		if (queryHistoryIndex >= queryHistory.length - 1) return;
+		queryHistoryIndex += 1;
+		restoreQuerySnapshot(queryHistory[queryHistoryIndex]);
+	}
+
+	function restoreQuerySnapshot(snapshot: QuerySnapshot) {
+		query = snapshot.value;
+		suggestions = [];
+		suggestionsOpen = false;
+		void tick().then(() => {
+			editor?.focus();
+			const start = Math.min(snapshot.start, snapshot.value.length);
+			const end = Math.min(snapshot.end, snapshot.value.length);
+			editor?.setSelectionRange(start, end);
 		});
 	}
 
@@ -368,6 +539,8 @@ ORDER BY s.expires_at ASC;`);
 		queryError = '';
 		queryRows = [];
 		queryRowCount = 0;
+		queryRowsRead = undefined;
+		queryExecutionTimeMs = 0;
 
 		try {
 			const response = await fetch('/database', {
@@ -375,12 +548,19 @@ ORDER BY s.expires_at ASC;`);
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ query })
 			});
-			const payload: { rows?: QueryRow[]; rowCount?: number; error?: string } =
-				await response.json();
+			const payload: {
+				rows?: QueryRow[];
+				rowCount?: number;
+				rowsRead?: number;
+				executionTimeMs?: number;
+				error?: string;
+			} = await response.json();
 			if (!response.ok) throw new Error(payload.error ?? 'The query could not be executed');
 
 			queryRows = payload.rows ?? [];
 			queryRowCount = payload.rowCount ?? queryRows.length;
+			queryRowsRead = payload.rowsRead;
+			queryExecutionTimeMs = payload.executionTimeMs ?? 0;
 			queryStatus = 'success';
 		} catch (cause) {
 			queryError = cause instanceof Error ? cause.message : 'The query could not be executed';
@@ -421,6 +601,12 @@ ORDER BY s.expires_at ASC;`);
 						Query
 					</div>
 					<div class="flex items-center gap-2">
+						<Button variant="outline" size="icon-sm" title="Undo" aria-label="Undo" onclick={undoQuery}>
+							<Undo2 size={14} />
+						</Button>
+						<Button variant="outline" size="icon-sm" title="Redo" aria-label="Redo" onclick={redoQuery}>
+							<Redo2 size={14} />
+						</Button>
 						<Button variant="outline" size="sm" onclick={copyQuery}>
 							{#if copied}<Check size={14} /> Copied{:else}<Copy size={14} /> Copy{/if}
 						</Button>
@@ -455,9 +641,7 @@ ORDER BY s.expires_at ASC;`);
 							<pre
 								bind:this={highlightedQuery}
 								class="sql-code-layer m-0 h-full overflow-hidden p-4 whitespace-pre text-foreground"
-								aria-hidden="true">
-                {@html highlightSql(query)}
-              </pre>
+								aria-hidden="true">{@html highlightSql(query)}</pre>
 						</div>
 						<!-- The SQL Textarea -->
 						<textarea
@@ -469,30 +653,37 @@ ORDER BY s.expires_at ASC;`);
 							data-grammarly="false"
 							wrap="off"
 							aria-label="SQL query editor"
-							oninput={updateSuggestions}
+							onbeforeinput={captureSelectionBeforeInput}
+							oninput={handleInput}
 							onkeydown={handleKeydown}
+							onkeyup={updateSuggestionsFromCaret}
+							onclick={closeSuggestions}
 							onscroll={syncEditorScroll}
-							onblur={() => setTimeout(() => (suggestions = []), 120)}></textarea>
+							onblur={() => setTimeout(() => (suggestionsOpen = false), 120)}></textarea>
 					</div>
 					<!-- Suggestion Popover -->
-					{#if suggestions.length}
+					{#if suggestionsOpen}
 						<div
-							class="absolute z-20 min-w-48 overflow-hidden rounded-md border border-border bg-popover text-xs text-popover-foreground shadow-md"
+							class="fixed z-20 min-w-48 overflow-hidden rounded-md border border-border bg-popover text-xs text-popover-foreground shadow-md"
 							style={`top: ${suggestionPosition.top}px; left: ${suggestionPosition.left}px`}
 						>
-							{#each suggestions as suggestion, index (`suggestion-${index}-${suggestion}`)}
-								<button
-									class:autocomplete-selected={index === selectedSuggestion}
-									class="block w-full px-3 py-1.5 text-left hover:bg-muted"
-									onmousedown={(event) => event.preventDefault()}
-									onclick={() => chooseSuggestion(suggestion)}
-								>
-									{suggestion}
-								</button>
-							{/each}
-							<div class="border-t border-border px-3 py-1 text-[10px] text-muted-foreground">
-								Enter to select · Esc to close
-							</div>
+							{#if suggestions.length === 0}
+								<div class="px-3 py-2 text-muted-foreground">No suggestions available.</div>
+							{:else}
+								{#each suggestions as suggestion, index (`suggestion-${index}-${suggestion}`)}
+									<button
+										class:autocomplete-selected={index === selectedSuggestion}
+										class="block w-full px-3 py-1.5 text-left hover:bg-muted"
+										onmousedown={(event) => event.preventDefault()}
+										onclick={() => chooseSuggestion(suggestion)}
+									>
+										{suggestion}
+									</button>
+								{/each}
+								<div class="border-t border-border px-3 py-1 text-[10px] text-muted-foreground">
+									Enter to select · Esc to close
+								</div>
+							{/if}
 						</div>
 					{/if}
 				</div>
@@ -518,6 +709,15 @@ ORDER BY s.expires_at ASC;`);
 							<Card.Description>Run a query to see its response here.</Card.Description>
 						{/if}
 					</div>
+					{#if queryStatus === 'success'}
+						<div class="flex items-center gap-3 text-xs text-muted-foreground">
+							{#if queryRowsRead !== undefined}
+								<span>{queryRowsRead} rows scanned</span>
+							{/if}
+							<span>{queryExecutionTimeMs.toFixed(2)} ms</span>
+						</div>
+					{/if}
+
 					{#if queryStatus === 'success'}
 						<span
 							class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
