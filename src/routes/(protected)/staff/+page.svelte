@@ -4,33 +4,41 @@
 	import {
 		Dialog,
 		DialogContent,
-		DialogDescription,
 		DialogHeader,
 		DialogTitle,
-		DialogTrigger
 	} from '$lib/components/ui/dialog';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '#lib/components/ui/button/button.svelte';
+	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
 	//import { authClient } from '$lib/auth-client';
 
 	let { data }: { data: PageData } = $props();
 	const columns = ['id', 'name', 'email', 'createdAt', 'updatedAt', 'role', 'group'];
+	
+	// Opens the dialog for creating a new staff member
 	let open = $state(false);
 
+	// Gets input from the form for creating a new staff member
 	let newStaffEmail = $state('');
 	let newStaffPassword = $state('');
+	let giveAdmin = $state(false);
 
-	// Check for authority, remember to also do so server side
-	//const session = authClient.useSession();
+	// TODO: Actually check for authority, remember to also do so server side
+	let authority = $state(true); 
 
+	// TODO: Actually check for super authority, remember to also do so server side
+	let superAuthority = $state(true); 
+
+	// Form submission handler for creating a new staff member
 	function handleStaffCreation(e: SubmitEvent) {
 		e.preventDefault();
 		// REMEMBER TO REMOVE THIS
 		console.log(newStaffEmail);
 		console.log(newStaffPassword);
+		console.log(giveAdmin);
 		// TODO: Actually change the email
-		// Remember to log the creation and who created the staff
+		// Remember to log the creation date/time and who created the staff
 	}
 </script>
 
@@ -45,24 +53,25 @@
 	onRowClick={(staff) => {
 		console.log(staff.id);
 	}}
-	onAddClick={() => {
+	/* Add new staff member button, conditional to if user has auth to do so, check for auth */
+	onAddClick={authority ? () => {
 		open = !open;
-	}}
+	} : undefined}
 />
 
 <Dialog bind:open>
-	<DialogTrigger></DialogTrigger>
-	<DialogContent>
+	<!--<DialogTrigger></DialogTrigger>
+	-->
+	<DialogContent class="gap-2">
 		<DialogHeader>
-			<DialogTitle class=".text-2xl"></DialogTitle>
-			<DialogDescription></DialogDescription>
+			<DialogTitle class="text-2xl text-center">Create a new staff member</DialogTitle>
 		</DialogHeader>
 		<Field.Group>
 			<form onsubmit={handleStaffCreation}>
 				<Field.Set>
-					<Field.Legend>Create a new staff member</Field.Legend>
-					<Field.Group>
-						<Field.Field>
+					<Field.Legend></Field.Legend>
+					<Field.Group class="gap-4">
+						<Field.Field class="gap-1">
 							<Field.Label for="newStaffEmail">New email</Field.Label>
 							<Input
 								id="newStaffEmail"
@@ -71,25 +80,25 @@
 								autocomplete="off"
 								placeholder="example@example.xyz"
 							/>
-							<!--
-							{#if newEmailError}
-								<Field.Error>Please enter a new email</Field.Error>
-							{/if}
-							-->
 						</Field.Field>
-						<Field.Field>
+						<Field.Field class="gap-1">
 							<Field.Label for="newStaffPassword">New password</Field.Label>
 							<Input
 								id="newStaffPassword"
 								bind:value={newStaffPassword}
 								type="password"
 								autocomplete="off"
-								//aria-invalid={emailPasswordError}
 							/>
 							<!--{#if repeatEmailError}
 								<Field.Error>Emails must match</Field.Error>
 							{/if}-->
 						</Field.Field>
+						{#if superAuthority}
+							<Field.Field orientation="horizontal" class="justify-start gap-1">
+								<Field.Label for="makeAdmin" class="w-auto flex-none">Make admin?</Field.Label>
+								<Checkbox id="makeAdmin" bind:checked={giveAdmin}/>
+							</Field.Field>
+						{/if}
 						<Button type="submit" class="w-full">Create</Button>
 					</Field.Group>
 				</Field.Set>
