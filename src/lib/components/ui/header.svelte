@@ -24,7 +24,7 @@
 </script>
 
 <header
-	class="sticky top-0 z-10 flex h-12 items-center justify-between border-b border-b-border bg-background pr-6 pl-2"
+	class="sticky top-0 z-50 flex h-12 items-center justify-between border-b border-b-border bg-background pr-6 pl-2"
 >
 	{#if sidebar}
 		<Sidebar.Trigger />
