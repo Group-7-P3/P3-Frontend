@@ -172,13 +172,21 @@
 				{#each table.getRowModel().rows as row (row.id)}
 					<Table.Row
 						data-state={row.getIsSelected() && 'selected'}
+						class={cn(onRowClick && 'cursor-pointer transition-colors hover:bg-muted/50')}
 						onclick={() => {
 							if (!onRowClick) return;
 							onRowClick(row.original);
 						}}
 					>
 						{#each row.getVisibleCells() as cell (cell.id)}
-							<Table.Cell class="px-3">
+							<Table.Cell
+								class="px-3"
+								onclick={(e: MouseEvent) => {
+									if (cell.column.id === 'select') {
+										e.stopPropagation();
+									}
+								}}
+							>
 								<FlexRender {cell} />
 							</Table.Cell>
 						{/each}
