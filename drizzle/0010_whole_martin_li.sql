@@ -1,0 +1,1 @@
+ALTER TABLE "user" ALTER COLUMN "managed_by" SET DEFAULT 'INNOVAID';

@@ -3,7 +3,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const columns = ['serialNumber', 'status', 'createdAt', 'updatedAt'];
+	const columns = ['serialNumber', 'status', 'createdAt', 'updatedAt', 'managedBy'];
 </script>
 
 <svelte:head>
