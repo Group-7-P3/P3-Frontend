@@ -10,20 +10,27 @@
 
 	import { authClient } from '#lib/client.ts';
 
+    // Keeps track of whether the form has been submitted and if the password has changed.
 	let passwordSubmitted = $state(false);
 	let passwordChanged = $state(false);
+
+    // Holds the thrown error, if any, after submitting the form.
 	let passwordFormError = $state('');
 
+    // Keeps track of when form inputs have been touched.
 	let newPasswordTouched = $state(false);
 	let newRepeatPasswordTouched = $state(false);
 	let passwordTouched = $state(false);
 
+    // Keeps track of the inputs in the form.
 	let newPassword = $state('');
 	let newRepeatPassword = $state('');
 	let password = $state('');
 
+    // Keeps track of whether the current password has been rejected.
 	let passwordRejected = $state(false);
 
+    // Rules for new passwords, uses regex to determine if strings include for example a number.
 	const groupRules = [
 		{
 			id: 'uppercase',
@@ -47,25 +54,42 @@
 		}
 	];
 
+    // Keeps track of whether the two main requirements have been met ('8 characters' and 'at least 3 of the following:').
 	const lengthOk = $derived(newPassword.length >= 8);
-	const groupOk = $derived(groupRules.filter((r) => r.test(newPassword)).length >= 3);
+	const groupOk = $derived(groupRules.filter((r) => r.test(newPassword)).length >= 3); // Counts how many subrequirements have been met and returns true if this count is 3 or above.
+
+    // Keeps track of whether the password meets its requirements and whether the repeated password is correct.
 	const newPasswordOk = $derived(lengthOk && groupOk);
 	const passwordRepeatOk = $derived(newPassword !== '' && newPassword === newRepeatPassword);
+
+    // Keeps track of whether the password form is ok. Like if all requirements are met and that the passwords are correctly repeated.
 	const passwordFormOk = $derived(newPasswordOk && passwordRepeatOk && password !== '' && !passwordRejected);
 
+    // Keeps track of the error status on each input field. Like whether the new password meets the requirements or whether the current password is correct.
 	const newPasswordError = $derived((newPasswordTouched || passwordSubmitted) && !newPasswordOk);
 	const repeatPasswordError = $derived((newRepeatPasswordTouched || passwordSubmitted) && !passwordRepeatOk);
 	const passwordError = $derived((passwordTouched || passwordSubmitted) && (password === '' || passwordRejected));
 
-	const showPasswordRules = $derived(newPassword !== '' || passwordSubmitted);
+    // Keeps track of whether password rules status should be shown (colors, red/green)
+	const showPasswordRulesStatus = $derived(newPassword !== '' || passwordSubmitted);
 
+    /**
+     * Colors a requirement green when it passes and red when it doesn't.
+     * Colors the fourth subrequirement grey with a line through if 3/4 subrequirements are already fulfilled (groupOk).
+     * @param passed Whether the requirement is passed or not.
+     * @param optional Whether the requirement is one of the 4 subrequirements.
+     */
 	function ruleClass(passed: boolean, optional = false) {
-		if (!showPasswordRules) return '';
+		if (!showPasswordRulesStatus) return '';
 		if (passed) return 'text-green-600';
-		if (optional && groupOk) return 'line-through text-muted-foreground';
+		if (optional && groupOk && !passed) return 'line-through text-muted-foreground';
 		return 'text-red-600';
 	}
 
+    /**
+     * Resets the password form.
+     * Empties the input fields and marks them 'not touched'.
+    */
 	function resetPasswordForm() {
 		newPassword = '';
 		newRepeatPassword = '';
@@ -77,6 +101,13 @@
 		passwordTouched = false;
 	}
 
+    /**
+     * Validates the password form, and if valid, changes the user's password.
+     * Other sessions are signed out upon password change.
+     * A wrong current password or any other error cancels the change,
+     * and displays an appropriate error message below the input field.
+     * @param e The form's submit event.
+     */
 	async function handlePasswordSubmit(e: SubmitEvent) {
 		e.preventDefault();
 		passwordSubmitted = true;
@@ -88,9 +119,10 @@
 		const { error } = await authClient.changePassword({
 			newPassword: newPassword,
 			currentPassword: password,
-			revokeOtherSessions: true,
+			revokeOtherSessions: true
 		});
 
+        // If an error occurs, mark the password as rejected or save the error message, then return.
 		if (error) {
 			if (error.code === 'INVALID_PASSWORD') {
 				passwordRejected = true;
@@ -100,12 +132,14 @@
 			return;
 		}
 
+        // If all succeeds, mark the password as changed and reset the form.
 		passwordChanged = true;
-
 		resetPasswordForm();
 	}
 </script>
 
+<!-- Snippet for the checkmark/x bullets on the requirement list -->
+ <!-- ok is true when a requirement has passed and 'returns' a checkmark, if false an x is 'returned' -->
 {#snippet bullet(ok: boolean)}
 	{#if ok}
 		<CheckIcon class="size-4" />
@@ -127,7 +161,7 @@
                             bind:value={newPassword}
                             type="password"
                             autocomplete="off"
-                            onblur={() => (newPasswordTouched = true)}
+                            onblur={() => (newPasswordTouched = true)} // Set newPasswordTouched to true when the user leaves the input field.
                             aria-invalid={newPasswordError}
                         />
                         {#if newPasswordError}
@@ -141,7 +175,7 @@
                             bind:value={newRepeatPassword}
                             type="password"
                             autocomplete="off"
-                            onblur={() => (newRepeatPasswordTouched = true)}
+                            onblur={() => (newRepeatPasswordTouched = true)} // Set newRepeatPasswordTouched to true when the user leaves the input field.
                             aria-invalid={repeatPasswordError}
                         />
                         {#if repeatPasswordError}
@@ -155,8 +189,8 @@
                             bind:value={password}
                             type="password"
                             autocomplete="off"
-                            onblur={() => (passwordTouched = true)}
-                            oninput={() => {passwordRejected = false; passwordFormError = '';}}
+                            onblur={() => (passwordTouched = true)} // Set passwordTouched to true when the user leaves the input field.
+                            oninput={() => {passwordRejected = false; passwordFormError = '';}} // Set passwordRejected to false and passwordFormError to empty when the user inputs something in the field.
                             aria-invalid={passwordError}
                         />
                         {#if passwordError}
@@ -179,20 +213,20 @@
                     <div>
                         <h3 class="mb-2 font-semibold">Password requirements</h3>
                         <ul class="space-y-2 text-muted-foreground">
-                            <li class={['flex items-center gap-2', ruleClass(lengthOk)]}>
-                                {@render bullet(lengthOk)}
+                            <li class={['flex items-center gap-2', ruleClass(lengthOk, false)]}>
+                                {@render bullet(lengthOk)} <!-- Dynamic bullet depending on whether the requirement has been met --> 
                                 At least 8 characters long
                             </li>
-                            <li class={ruleClass(groupOk)}>
+                            <li class={ruleClass(groupOk, false)}>
                                 <div class="flex items-center gap-2">
-                                    {@render bullet(groupOk)}
+                                    {@render bullet(groupOk)} <!-- Dynamic bullet depending on whether the requirement has been met -->
                                     At least 3 of the following:
                                 </div>
                                 <ul class="mt-1.5 space-y-1 pl-6">
-                                    {#each groupRules as rule (rule.id)}
-                                        {@const passed = rule.test(newPassword)}
-                                        <li class={['flex items-center gap-2', ruleClass(passed, true)]}>
-                                            {@render bullet(passed)}
+                                    {#each groupRules as rule (rule.id)} <!-- Creates a list item for each subrequirement -->
+                                        {@const passed = rule.test(newPassword)} <!-- Checks whether the current subrequirement has been met -->
+                                        <li class={['flex items-center gap-2', ruleClass(passed, true)]}> <!-- Gets the color from ruleClass() -->
+                                            {@render bullet(passed)} <!-- Dynamic bullet depending on whether the requirement has been met -->
                                             {rule.label}
                                         </li>
                                     {/each}
