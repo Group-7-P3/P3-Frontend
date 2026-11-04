@@ -6,7 +6,7 @@ import { eq, getTableColumns } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user;
-	if (!user) throw error(401, 'You must be signed in to view users');
+	if (!user) throw error(401, 'You must be signed in to view subscriptions');
 
 	const subscriptions = await db
 		.select({

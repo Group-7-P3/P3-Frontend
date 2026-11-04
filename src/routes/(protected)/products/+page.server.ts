@@ -6,7 +6,7 @@ import { eq, getTableColumns } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const staff = locals.user;
-	if (!staff) throw error(401, 'You must be signed in to view users');
+	if (!staff) throw error(401, 'You must be signed in to view products');
 
 	const products = await db
 		.selectDistinct({
