@@ -32,6 +32,4 @@
 	<title>Users</title>
 </svelte:head>
 
-<div class="max-w-6xl space-y-6">
-	<DataTable data={formattedUser} {columns} class="max-w-6xl" onRowClick={handleRowClick} />
-</div>
+<DataTable data={formattedUser} {columns} class="max-w-6xl" onRowClick={handleRowClick} />
