@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Check, Code, Copy, Play, Redo2, Table2, Undo2 } from '@lucide/svelte';
 	import { tick } from 'svelte';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	type TableSchema = {
 		name: string;
@@ -16,6 +17,11 @@
 		value: string;
 		start: number;
 		end: number;
+	};
+	type SqlDiagnostic = {
+		start: number;
+		end: number;
+		message: string;
 	};
 
 	/**
@@ -142,6 +148,7 @@ ORDER BY s.expires_at ASC;`;
 		{ value: initialQuery, start: initialQuery.length, end: initialQuery.length }
 	]);
 	let queryHistoryIndex = $state(0);
+	let diagnostics = $derived(analyzeSql(query));
 
 	let editor = $state<HTMLTextAreaElement>();
 	let lineNumbers = $state<HTMLDivElement>();
@@ -158,6 +165,7 @@ ORDER BY s.expires_at ASC;`;
 	let suggestionPosition = $state({ top: 16, left: 64 });
 	let suggestionsOpen = $state(false);
 	let selectionBeforeInput = $state<{ start: number; end: number } | undefined>();
+	let lineSelectionStart = $state<number | undefined>();
 	let dialogOpen = $state(false);
 	let querySeverity: 'delete' | 'modify' | false = $state(false);
 
@@ -165,8 +173,8 @@ ORDER BY s.expires_at ASC;`;
 	 * These values control the offset of the popover.
 	 */
 	const suggestionCaretOffset = {
-		top: 12,
-		left: 54,
+		top: 16,
+		left: 40,
 		lineHeight: 24,
 		characterWidth: 7.8
 	};
@@ -191,6 +199,168 @@ ORDER BY s.expires_at ASC;`;
 		return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 
+	function analyzeSql(value: string): SqlDiagnostic[] {
+		const result: SqlDiagnostic[] = [];
+		const parentheses: number[] = [];
+		const knownTables = new Set(tables.map((table) => table.name.toLowerCase()));
+		const knownKeywords = new Set(keywords.filter((keyword) => !keyword.includes(' ')));
+		let index = 0;
+
+		while (index < value.length) {
+			if (value.startsWith('--', index)) {
+				const lineEnd = value.indexOf('\n', index);
+				index = lineEnd === -1 ? value.length : lineEnd + 1;
+				continue;
+			}
+
+			const character = value[index];
+			if (character === "'" || character === '"' || character === '`') {
+				const quoteStart = index;
+				index += 1;
+				let closed = false;
+				while (index < value.length) {
+					if (value[index] === character) {
+						if (value[index + 1] === character) {
+							index += 2;
+							continue;
+						}
+						closed = true;
+						index += 1;
+						break;
+					}
+					index += 1;
+				}
+				if (!closed) {
+					result.push({ start: quoteStart, end: value.length, message: 'Unclosed quoted value' });
+				}
+				continue;
+			}
+
+			if (character === '(') {
+				parentheses.push(index);
+			} else if (character === ')') {
+				if (parentheses.length === 0) {
+					result.push({ start: index, end: index + 1, message: 'Unexpected closing parenthesis' });
+				} else {
+					parentheses.pop();
+				}
+			}
+			index += 1;
+		}
+
+		for (const start of parentheses) {
+			result.push({ start, end: start + 1, message: 'Unclosed parenthesis' });
+		}
+
+		const firstToken = value.match(/^\s*([A-Za-z_][\w$]*)/);
+		if (firstToken && !knownKeywords.has(firstToken[1].toUpperCase())) {
+			const start = firstToken.index! + firstToken[0].length - firstToken[1].length;
+			const expectedKeyword = firstToken[1].toUpperCase().startsWith('SEL')
+				? 'SELECT'
+				: 'a SQL statement keyword';
+			result.push({
+				start,
+				end: start + firstToken[1].length,
+				message: `Expected ${expectedKeyword}`
+			});
+		}
+
+		const invalidKeywordPatterns = [
+			{ pattern: /\bFRO\b/gi, message: 'Expected FROM' },
+			{ pattern: /\bJOI\b/gi, message: 'Expected JOIN' },
+			{ pattern: /\bWHER\b/gi, message: 'Expected WHERE' },
+			{ pattern: /\bORDER\s+B\b/gi, message: 'Expected ORDER BY' }
+		];
+		for (const { pattern, message } of invalidKeywordPatterns) {
+			for (const match of value.matchAll(pattern)) {
+				const start = match.index ?? 0;
+				result.push({ start, end: start + match[0].length, message });
+			}
+		}
+
+		const tableReferencePattern = /\b(?:FROM|JOIN|UPDATE|INTO)\s+([A-Za-z_][\w$]*)/gi;
+		for (const match of value.matchAll(tableReferencePattern)) {
+			const tableName = match[1];
+			if (!tableName || knownTables.has(tableName.toLowerCase())) continue;
+			const start = (match.index ?? 0) + match[0].length - tableName.length;
+			result.push({
+				start,
+				end: start + tableName.length,
+				message: `Unknown table "${tableName}"`
+			});
+		}
+
+		const aliases = new SvelteSet<string>();
+		const qualifierTables = new SvelteMap<string, TableSchema>();
+		const aliasPattern =
+			/\b(?:FROM|JOIN)\s+("([^"]+)"|([A-Za-z_][\w$]*))\s+(?:AS\s+)?([A-Za-z_][\w$]*)/gi;
+		for (const match of value.matchAll(aliasPattern)) {
+			const tableName = (match[2] ?? match[3])?.toLowerCase();
+			const alias = match[4]?.toLowerCase();
+			const table = tables.find((candidate) => candidate.name.toLowerCase() === tableName);
+			if (alias) aliases.add(alias);
+			if (table && alias) qualifierTables.set(alias, table);
+			if (table) qualifierTables.set(table.name.toLowerCase(), table);
+		}
+
+		const qualifiedReferencePattern = /\b([A-Za-z_][\w$]*)\s*\.\s*([A-Za-z_][\w$]*)/g;
+		for (const match of value.matchAll(qualifiedReferencePattern)) {
+			const qualifier = match[1];
+			const column = match[2];
+			const table = qualifierTables.get(qualifier.toLowerCase());
+			if (table) {
+				if (!table.columns.some((candidate) => candidate.toLowerCase() === column.toLowerCase())) {
+					const columnStart = (match.index ?? 0) + match[0].lastIndexOf(column);
+					result.push({
+						start: columnStart,
+						end: columnStart + column.length,
+						message: `Unknown column "${column}" on "${qualifier}"`
+					});
+				}
+				continue;
+			}
+			if (knownTables.has(qualifier.toLowerCase()) || aliases.has(qualifier.toLowerCase()))
+				continue;
+			const start = match.index ?? 0;
+			result.push({
+				start,
+				end: start + qualifier.length,
+				message: `Unknown table alias "${qualifier}"`
+			});
+		}
+
+		const trailingClausePattern =
+			/\b(?:SELECT|FROM|WHERE|AND|OR|JOIN|ON|AS|ORDER\s+BY|GROUP\s+BY|HAVING|LIMIT|OFFSET|SET|VALUES|INTO)\s*$/i;
+		const trailingClause = value.match(trailingClausePattern);
+		if (trailingClause?.index !== undefined) {
+			result.push({
+				start: trailingClause.index,
+				end: value.length,
+				message: 'This clause needs another value'
+			});
+		}
+
+		const orderDirectionPattern = /\bORDER\s+BY\b[\s\S]*\s([A-Za-z_][\w$]*)\s*;?\s*$/i;
+		const orderDirection = value.match(orderDirectionPattern);
+		if (
+			orderDirection?.index !== undefined &&
+			orderDirection[1] &&
+			!['ASC', 'DESC'].includes(orderDirection[1].toUpperCase())
+		) {
+			const start = orderDirection.index + orderDirection[0].lastIndexOf(orderDirection[1]);
+			const beforeDirection = value.slice(orderDirection.index, start);
+			if (/\S\s+$/.test(beforeDirection)) {
+				result.push({
+					start,
+					end: start + orderDirection[1].length,
+					message: 'Expected ASC or DESC'
+				});
+			}
+		}
+
+		return result;
+	}
+
 	/**
 	 * SQL syntax highlighting, returned in HTML.
 	 */
@@ -205,16 +375,27 @@ ORDER BY s.expires_at ASC;`;
 			'g'
 		);
 		return Array.from(value.matchAll(tokenPattern))
-			.map(([token]) => {
+			.map((match) => {
+				const token = match[0];
+				const tokenStart = match.index ?? 0;
 				const escaped = escapeHtml(token);
-				if (/^--/.test(token)) return `<span class="sql-comment">${escaped}</span>`;
-				if (/^['"`]/.test(token)) return `<span class="sql-string">${escaped}</span>`;
-				if (/^\d/.test(token)) return `<span class="sql-number">${escaped}</span>`;
+				const diagnostic = diagnostics.find(
+					(diagnostic) =>
+						diagnostic.start < tokenStart + token.length && diagnostic.end > tokenStart
+				);
+				const errorClass = diagnostic ? ' sql-error' : '';
+				const errorTitle = diagnostic ? ` title="${escapeHtml(diagnostic.message)}"` : '';
+				if (/^--/.test(token))
+					return `<span class="sql-comment${errorClass}"${errorTitle}>${escaped}</span>`;
+				if (/^['"`]/.test(token))
+					return `<span class="sql-string${errorClass}"${errorTitle}>${escaped}</span>`;
+				if (/^\d/.test(token))
+					return `<span class="sql-number${errorClass}"${errorTitle}>${escaped}</span>`;
 				if (/^[A-Za-z_]/.test(token) && keywords.some((keyword) => keyword === token.toUpperCase()))
-					return `<span class="sql-keyword">${escaped}</span>`;
+					return `<span class="sql-keyword${errorClass}"${errorTitle}>${escaped}</span>`;
 				if (/^[A-Za-z_]/.test(token) && tables.some((table) => table.name === token))
-					return `<span class="sql-table">${escaped}</span>`;
-				return escaped;
+					return `<span class="sql-table${errorClass}"${errorTitle}>${escaped}</span>`;
+				return errorClass ? `<span class="sql-error"${errorTitle}>${escaped}</span>` : escaped;
 			})
 			.join('');
 	}
@@ -224,17 +405,43 @@ ORDER BY s.expires_at ASC;`;
 	 */
 	function updateSuggestions(showAll = false) {
 		const cursor = editor?.selectionStart ?? query.length;
-		const word = query.slice(0, cursor).match(/[A-Za-z_][\w$]*$/)?.[0] ?? '';
-		if (!word && !showAll) {
-			updateSuggestionPosition(cursor);
+		const beforeCursor = query.slice(0, cursor);
+		const qualifiedMatch = beforeCursor.match(
+			/(?:"([^"]+)"|([A-Za-z_][\w$]*))\.\s*([A-Za-z_][\w$]*)?$/
+		);
+		const word = qualifiedMatch?.[3] ?? beforeCursor.match(/[A-Za-z_][\w$]*$/)?.[0] ?? '';
+		if (!word && !qualifiedMatch && !showAll) {
 			suggestions = [];
-			suggestionsOpen = true;
+			closeSuggestions();
+			return;
+		}
+
+		const qualifier = qualifiedMatch?.[1] ?? qualifiedMatch?.[2];
+		let qualifiedTable = qualifier
+			? tables.find((table) => table.name.toLowerCase() === qualifier.toLowerCase())
+			: undefined;
+		if (qualifier && !qualifiedTable) {
+			const aliasPattern =
+				/\b(?:FROM|JOIN)\s+("([^"]+)"|([A-Za-z_][\w$]*))\s+(?:AS\s+)?([A-Za-z_][\w$]*)/gi;
+			for (const match of query.matchAll(aliasPattern)) {
+				const tableName = (match[2] ?? match[3])?.toLowerCase();
+				const alias = match[4]?.toLowerCase();
+				if (alias !== qualifier.toLowerCase()) continue;
+				qualifiedTable = tables.find((table) => table.name.toLowerCase() === tableName);
+				break;
+			}
+		}
+		if (qualifiedMatch && !qualifiedTable && !showAll) {
+			suggestions = [];
+			closeSuggestions();
 			return;
 		}
 
 		updateSuggestionPosition(cursor);
 		const lowerWord = word.toLowerCase();
-		const nextSuggestions = [...new Set(allSuggestions)]
+		const qualifiedColumns = qualifiedTable?.columns ?? [];
+		const candidateSuggestions = qualifiedTable ? qualifiedColumns : allSuggestions;
+		const nextSuggestions = [...new Set(candidateSuggestions)]
 			.filter(
 				(suggestion) =>
 					showAll || (suggestion.toLowerCase().startsWith(lowerWord) && suggestion !== word)
@@ -349,6 +556,95 @@ ORDER BY s.expires_at ASC;`;
 		updateSuggestionPositionFromCaret();
 	}
 
+	function getLineAtPosition(clientY: number) {
+		if (!lineNumbers) return 0;
+		const rect = lineNumbers.getBoundingClientRect();
+		const lineCount = query.split('\n').length;
+		return Math.min(
+			lineCount - 1,
+			Math.max(
+				0,
+				Math.floor(
+					(clientY - rect.top + lineNumbers.scrollTop - suggestionCaretOffset.top) /
+						suggestionCaretOffset.lineHeight
+				)
+			)
+		);
+	}
+
+	function getLineRange(startLine: number, endLine: number) {
+		const lines = query.split('\n');
+		const firstLine = Math.min(startLine, endLine);
+		const lastLine = Math.max(startLine, endLine);
+		const start = lines.slice(0, firstLine).join('\n').length + (firstLine > 0 ? 1 : 0);
+		const end =
+			lines.slice(0, lastLine + 1).join('\n').length + (lastLine < lines.length - 1 ? 1 : 0);
+		return { start, end };
+	}
+
+	function updateLineSelection(line: number) {
+		if (lineSelectionStart === undefined || !editor) return;
+		const range = getLineRange(lineSelectionStart, line);
+		editor.focus();
+		editor.setSelectionRange(range.start, range.end);
+		closeSuggestions();
+	}
+
+	function startLineSelection(event: MouseEvent, line: number) {
+		event.preventDefault();
+		lineSelectionStart = line;
+		updateLineSelection(line);
+	}
+
+	function moveLineSelection(event: MouseEvent) {
+		if (lineSelectionStart === undefined) return;
+		updateLineSelection(getLineAtPosition(event.clientY));
+	}
+
+	function endLineSelection() {
+		lineSelectionStart = undefined;
+	}
+
+	function handleHighlightedQueryClick(event: MouseEvent) {
+		if (!editor) return;
+		const target = event.target as HTMLElement;
+		const diagnosticElement = target.closest<HTMLElement>('[title]');
+		if (diagnosticElement?.title) {
+			const diagnostic = diagnostics.find((item) => item.message === diagnosticElement.title);
+			if (diagnostic) {
+				editor.focus();
+				editor.setSelectionRange(diagnostic.start, diagnostic.start);
+				closeSuggestions();
+				return;
+			}
+		}
+		const editorRect = editor.getBoundingClientRect();
+		const editorContentLeft = 64;
+		const line = Math.max(
+			0,
+			Math.floor(
+				(event.clientY - editorRect.top + editor.scrollTop - 16) / suggestionCaretOffset.lineHeight
+			)
+		);
+		const column = Math.max(
+			0,
+			Math.round(
+				(event.clientX - editorRect.left + editor.scrollLeft - editorContentLeft) /
+					suggestionCaretOffset.characterWidth
+			)
+		);
+		const lines = query.split('\n');
+		const cursor = Math.min(
+			query.length,
+			lines.slice(0, line).join('\n').length +
+				(line > 0 ? 1 : 0) +
+				Math.min(column, lines[line]?.length ?? 0)
+		);
+		editor.focus();
+		editor.setSelectionRange(cursor, cursor);
+		closeSuggestions();
+	}
+
 	/**
 	 * Run when the user selects a suggestion to add to the query.
 	 */
@@ -363,8 +659,8 @@ ORDER BY s.expires_at ASC;`;
 		void tick()
 			.then(() => tick())
 			.then(() => {
-			editor?.focus();
-			editor?.setSelectionRange(start + suggestion.length, start + suggestion.length);
+				editor?.focus();
+				editor?.setSelectionRange(start + suggestion.length, start + suggestion.length);
 			});
 	}
 
@@ -450,8 +746,8 @@ ORDER BY s.expires_at ASC;`;
 		void tick()
 			.then(() => tick())
 			.then(() => {
-			editor?.focus();
-			editor?.setSelectionRange(cursor, cursor);
+				editor?.focus();
+				editor?.setSelectionRange(cursor, cursor);
 			});
 	}
 
@@ -499,15 +795,11 @@ ORDER BY s.expires_at ASC;`;
 	}
 
 	function getDangerousQuery(): 'delete' | 'modify' | false {
-		for (const dkw of deleteKeywords) {
-			if (query.indexOf(dkw) === -1) continue;
-			return 'delete';
-		}
+		const deletePattern = new RegExp(`\\b(?:${deleteKeywords.join('|')})\\b`, 'i');
+		if (deletePattern.test(query)) return 'delete';
 
-		for (const mkw of modifyKeywords) {
-			if (query.indexOf(mkw) === -1) continue;
-			return 'modify';
-		}
+		const modifyPattern = new RegExp(`\\b(?:${modifyKeywords.join('|')})\\b`, 'i');
+		if (modifyPattern.test(query)) return 'modify';
 
 		return false;
 	}
@@ -586,6 +878,8 @@ ORDER BY s.expires_at ASC;`;
 	}
 </script>
 
+<svelte:window onmousemove={moveLineSelection} onmouseup={endLineSelection} />
+
 <svelte:head>
 	<title>Database</title>
 </svelte:head>
@@ -601,10 +895,22 @@ ORDER BY s.expires_at ASC;`;
 						Query
 					</div>
 					<div class="flex items-center gap-2">
-						<Button variant="outline" size="icon-sm" title="Undo" aria-label="Undo" onclick={undoQuery}>
+						<Button
+							variant="outline"
+							size="icon-sm"
+							title="Undo"
+							aria-label="Undo"
+							onclick={undoQuery}
+						>
 							<Undo2 size={14} />
 						</Button>
-						<Button variant="outline" size="icon-sm" title="Redo" aria-label="Redo" onclick={redoQuery}>
+						<Button
+							variant="outline"
+							size="icon-sm"
+							title="Redo"
+							aria-label="Redo"
+							onclick={redoQuery}
+						>
 							<Redo2 size={14} />
 						</Button>
 						<Button variant="outline" size="sm" onclick={copyQuery}>
@@ -631,17 +937,26 @@ ORDER BY s.expires_at ASC;`;
 							<!-- Line Numbers -->
 							<div
 								bind:this={lineNumbers}
-								class="h-full w-12 shrink-0 overflow-hidden border-r border-border bg-muted/50 py-4 text-right text-muted-foreground select-none"
+								class="pointer-events-auto relative z-30 h-full w-12 shrink-0 overflow-hidden border-r border-border bg-muted/50 py-4 text-right text-muted-foreground select-none"
 							>
 								{#each query.split('\n') as line, index (`line-${index}-${line}`)}
-									<div class="pr-3">{index + 1}</div>
+									<div
+										class="cursor-default pr-3"
+										role="button"
+										tabindex="-1"
+										aria-label={`Select line ${index + 1}`}
+										onmousedown={(event) => startLineSelection(event, index)}
+									>
+										{index + 1}
+									</div>
 								{/each}
 							</div>
 							<!-- The Syntax Highlighted SQL -->
 							<pre
 								bind:this={highlightedQuery}
-								class="sql-code-layer m-0 h-full overflow-hidden p-4 whitespace-pre text-foreground"
-								aria-hidden="true">{@html highlightSql(query)}</pre>
+								class="sql-code-layer relative z-20 m-0 h-full cursor-text overflow-hidden p-4 whitespace-pre text-foreground"
+								aria-hidden="true"
+								onclick={handleHighlightedQueryClick}>{@html highlightSql(query)}</pre>
 						</div>
 						<!-- The SQL Textarea -->
 						<textarea
@@ -877,6 +1192,16 @@ ORDER BY s.expires_at ASC;`;
 	}
 	:global(.sql-table) {
 		color: var(--sql-table);
+	}
+	:global(.sql-error) {
+		pointer-events: auto;
+		cursor: text;
+		text-decoration-line: underline;
+		text-decoration-style: wavy;
+		text-decoration-color: var(--destructive);
+		text-decoration-thickness: 1px;
+		text-decoration-skip-ink: none;
+		text-underline-offset: 2px;
 	}
 	.autocomplete-selected {
 		background: rgb(51 65 85);
