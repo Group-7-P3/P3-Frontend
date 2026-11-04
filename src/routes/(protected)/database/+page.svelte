@@ -1,5 +1,6 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-at-html-tags */
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -12,6 +13,10 @@
 	};
 	type QueryRow = Record<string, unknown>;
 
+	/**
+	 * All tables in the database and their attributes.\
+	 * Used for highlighting and intellisense.
+	 */
 	const tables: TableSchema[] = [
 		{ name: 'user', columns: ['id', 'customer_id', 'managed_by', 'created_at', 'updated_at'] },
 		{
@@ -45,6 +50,10 @@
 		{ name: 'subscription_to_product', columns: ['license_key', 'serial_number'] }
 	];
 
+	/**
+	 * All keywords.\
+	 * Used for highlighting and intellisense.
+	 */
 	const keywords = [
 		'SELECT',
 		'FROM',
@@ -62,20 +71,58 @@
 		'AS',
 		'LIMIT',
 		'OFFSET',
-		'INSERT INTO',
+		'INSERT',
 		'VALUES',
 		'UPDATE',
 		'SET',
-		'DELETE FROM',
-		'CREATE TABLE',
+		'INTO',
+		'DELETE',
+		'CREATE',
+		'FROM',
+		'TABLE',
 		'NULL',
 		'TRUE',
 		'FALSE',
 		'ASC',
 		'DESC',
-		'CURRENT_DATE'
+		'CURRENT_DATE',
+		'TRUNCATE',
+		'DROP',
+		'MERGE',
+		'ALTER',
+		'COPY',
+		'RENAME',
+		'COMMENT',
+		'GRANT',
+		'REVOKE'
 	];
 
+	/**
+	 * Delete keywords.\
+	 * Used to decide whether a query is dangerous.
+	 */
+	const deleteKeywords = ['DELETE', 'TRUNCATE', 'DROP'];
+
+	/**
+	 * Modify keywords.\
+	 * Used to decide whether a query is dangerous.
+	 */
+	const modifyKeywords = [
+		'UPDATE',
+		'INSERT',
+		'MERGE',
+		'ALTER',
+		'CREATE',
+		'COPY',
+		'RENAME',
+		'COMMENT',
+		'GRANT',
+		'REVOKE'
+	];
+
+	/**
+	 * The current query, which also holds the default value.
+	 */
 	let query = $state(`SELECT
   u.id,
   u.customer_id,
@@ -85,6 +132,7 @@ FROM "user" AS u
 JOIN subscription AS s ON s.user_id = u.id
 WHERE s.expires_at >= CURRENT_DATE
 ORDER BY s.expires_at ASC;`);
+
 	let editor = $state<HTMLTextAreaElement>();
 	let lineNumbers = $state<HTMLDivElement>();
 	let highlightedQuery = $state<HTMLElement>();
@@ -96,7 +144,12 @@ ORDER BY s.expires_at ASC;`);
 	let queryRows = $state<QueryRow[]>([]);
 	let queryRowCount = $state(0);
 	let suggestionPosition = $state({ top: 16, left: 64 });
+	let dialogOpen = $state(false);
+	let querySeverity: 'delete' | 'modify' | false = $state(false);
 
+	/**
+	 * An array containing all possible suggestions.
+	 */
 	const allSuggestions = [
 		...keywords,
 		...tables.flatMap((table) => [table.name, ...table.columns])
@@ -114,6 +167,9 @@ ORDER BY s.expires_at ASC;`);
 		return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 
+	/**
+	 * SQL syntax highlighting, returned in HTML.
+	 */
 	function highlightSql(value: string) {
 		const multiWordKeywords = keywords
 			.filter((keyword) => keyword.includes(' '))
@@ -139,6 +195,9 @@ ORDER BY s.expires_at ASC;`);
 			.join('');
 	}
 
+	/**
+	 * Updates the suggestions to match what's being written.
+	 */
 	function updateSuggestions() {
 		const cursor = editor?.selectionStart ?? query.length;
 		const word = query.slice(0, cursor).match(/[A-Za-z_][\w$]*$/)?.[0] ?? '';
@@ -157,6 +216,9 @@ ORDER BY s.expires_at ASC;`);
 		selectedSuggestion = selectedValue ? Math.max(0, nextSuggestions.indexOf(selectedValue)) : 0;
 	}
 
+	/**
+	 * Updates the position of the suggestion popover.
+	 */
 	function updateSuggestionPosition(cursor: number) {
 		if (!editor) return;
 
@@ -185,6 +247,9 @@ ORDER BY s.expires_at ASC;`);
 		suggestionPosition = { top, left };
 	}
 
+	/**
+	 * Syncs the scroll between the textarea and the text-element which holds the HTML formatted query.
+	 */
 	function syncEditorScroll(event: Event) {
 		const target = event.currentTarget as HTMLTextAreaElement;
 		if (lineNumbers) {
@@ -197,6 +262,9 @@ ORDER BY s.expires_at ASC;`);
 		}
 	}
 
+	/**
+	 * Run when the user selects a suggestion to add to the query.
+	 */
 	function chooseSuggestion(suggestion: string) {
 		const cursor = editor?.selectionStart ?? query.length;
 		const match = query.slice(0, cursor).match(/[A-Za-z_][\w$]*$/);
@@ -209,6 +277,10 @@ ORDER BY s.expires_at ASC;`);
 		});
 	}
 
+	/**
+	 * Handles the input when the suggestions-popover is open.\
+	 * Arrow-up, arrow-down, tab, enter, and escape.
+	 */
 	function handleKeydown(event: KeyboardEvent) {
 		if (!suggestions.length) return;
 		if (event.key === 'ArrowDown') {
@@ -234,6 +306,9 @@ ORDER BY s.expires_at ASC;`);
 		suggestions = [];
 	}
 
+	/**
+	 * Inserts text at the cursor position in the textarea.
+	 */
 	function insertText(value: string) {
 		const cursor = editor?.selectionStart ?? query.length;
 		query = `${query.slice(0, cursor)}${value}${query.slice(cursor)}`;
@@ -243,13 +318,52 @@ ORDER BY s.expires_at ASC;`);
 		});
 	}
 
+	/**
+	 * Copies the query to the clipboard.
+	 */
 	async function copyQuery() {
 		await navigator.clipboard.writeText(query);
 		copied = true;
 		setTimeout(() => (copied = false), 1600);
 	}
 
+	function getDangerousQuery(): 'delete' | 'modify' | false {
+		for (const dkw of deleteKeywords) {
+			if (query.indexOf(dkw) === -1) continue;
+			return 'delete';
+		}
+
+		for (const mkw of modifyKeywords) {
+			if (query.indexOf(mkw) === -1) continue;
+			return 'modify';
+		}
+
+		return false;
+	}
+
+	/**
+	 * Shows dialog if query is unsafe, and then runs the query if the user confirms.
+	 */
 	async function runQuery() {
+		querySeverity = getDangerousQuery();
+		console.log(querySeverity);
+
+		switch (querySeverity) {
+			case 'modify':
+				dialogOpen = true;
+				return;
+			case 'delete':
+				dialogOpen = true;
+				return;
+		}
+
+		forceRunQuery();
+	}
+
+	/**
+	 * Runs the query without safety.
+	 */
+	async function forceRunQuery() {
 		queryStatus = 'running';
 		queryError = '';
 		queryRows = [];
@@ -274,6 +388,9 @@ ORDER BY s.expires_at ASC;`);
 		}
 	}
 
+	/**
+	 * Format cells based on type.
+	 */
 	function formatCell(value: unknown) {
 		if (value === null || value === undefined) return 'NULL';
 		if (value instanceof Date) return value.toLocaleString();
@@ -281,6 +398,9 @@ ORDER BY s.expires_at ASC;`);
 		return String(value);
 	}
 
+	/**
+	 * The columns in the query table based on the results.
+	 */
 	function resultColumns() {
 		return queryRows.length ? Object.keys(queryRows[0]) : [];
 	}
@@ -293,6 +413,7 @@ ORDER BY s.expires_at ASC;`);
 <div class="flex w-full flex-1 flex-col gap-4">
 	<div class="grid flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
 		<div class="flex max-h-191 flex-col gap-4">
+			<!-- The SQL Editor Card -->
 			<Card.Root class="gap-0 p-0">
 				<Card.Header class="flex flex-wrap items-center justify-between gap-3 border-b p-4!">
 					<div class="flex items-center gap-2 text-sm font-medium">
@@ -316,40 +437,47 @@ ORDER BY s.expires_at ASC;`);
 					</div>
 				</Card.Header>
 
-				<div
-					class="sql-editor relative min-h-0 flex-1 overflow-hidden bg-muted/30 font-mono text-[13px] leading-6"
-				>
-					<div class="pointer-events-none absolute inset-0 flex overflow-hidden">
-						<div
-							bind:this={lineNumbers}
-							class="h-full w-12 shrink-0 overflow-hidden border-r border-border bg-muted/50 py-4 text-right text-muted-foreground select-none"
-						>
-							{#each query.split('\n') as line, index (`line-${index}-${line}`)}
-								<div class="pr-3">{index + 1}</div>
-							{/each}
+				<div class="relative min-h-0 flex-1">
+					<div
+						class="sql-editor relative h-full min-h-0 overflow-hidden bg-muted/30 font-mono text-[13px] leading-6"
+					>
+						<div class="pointer-events-none absolute inset-0 flex overflow-hidden">
+							<!-- Line Numbers -->
+							<div
+								bind:this={lineNumbers}
+								class="h-full w-12 shrink-0 overflow-hidden border-r border-border bg-muted/50 py-4 text-right text-muted-foreground select-none"
+							>
+								{#each query.split('\n') as line, index (`line-${index}-${line}`)}
+									<div class="pr-3">{index + 1}</div>
+								{/each}
+							</div>
+							<!-- The Syntax Highlighted SQL -->
+							<pre
+								bind:this={highlightedQuery}
+								class="sql-code-layer m-0 h-full overflow-hidden p-4 whitespace-pre text-foreground"
+								aria-hidden="true">
+                {@html highlightSql(query)}
+              </pre>
 						</div>
-						<pre
-							bind:this={highlightedQuery}
-							class="sql-code-layer m-0 h-full overflow-hidden p-4 whitespace-pre text-foreground"
-							aria-hidden="true">{@html highlightSql(query)}<span class="inline-block w-px"
-							></span></pre>
+						<!-- The SQL Textarea -->
+						<textarea
+							bind:this={editor}
+							bind:value={query}
+							class="sql-code-layer relative z-10 h-full min-h-64 w-full flex-1 resize-none overflow-auto rounded-none border-none bg-transparent py-4 pr-4 pl-16 whitespace-pre text-transparent caret-foreground outline-none select-text selection:bg-primary/20 focus-visible:ring-2 focus-visible:ring-ring/50"
+							spellcheck="false"
+							data-gramm="false"
+							data-grammarly="false"
+							wrap="off"
+							aria-label="SQL query editor"
+							oninput={updateSuggestions}
+							onkeydown={handleKeydown}
+							onscroll={syncEditorScroll}
+							onblur={() => setTimeout(() => (suggestions = []), 120)}></textarea>
 					</div>
-					<textarea
-						bind:this={editor}
-						bind:value={query}
-						class="sql-code-layer relative z-10 h-full min-h-64 w-full flex-1 resize-none overflow-auto rounded-none border-none bg-transparent py-4 pr-4 pl-16 whitespace-pre text-transparent caret-foreground outline-none select-text selection:bg-primary/20 focus-visible:ring-2 focus-visible:ring-ring/50"
-						spellcheck="false"
-						data-gramm="false"
-						data-grammarly="false"
-						wrap="off"
-						aria-label="SQL query editor"
-						oninput={updateSuggestions}
-						onkeydown={handleKeydown}
-						onscroll={syncEditorScroll}
-						onblur={() => setTimeout(() => (suggestions = []), 120)}></textarea>
+					<!-- Suggestion Popover -->
 					{#if suggestions.length}
 						<div
-							class="absolute z-20 min-w-48 overflow-hidden rounded-md border border-border bg-popover py-1 text-xs text-popover-foreground shadow-md"
+							class="absolute z-20 min-w-48 overflow-hidden rounded-md border border-border bg-popover text-xs text-popover-foreground shadow-md"
 							style={`top: ${suggestionPosition.top}px; left: ${suggestionPosition.left}px`}
 						>
 							{#each suggestions as suggestion, index (`suggestion-${index}-${suggestion}`)}
@@ -376,6 +504,7 @@ ORDER BY s.expires_at ASC;`);
 				</div>
 			</Card.Root>
 
+			<!-- Resulting Query Table/Error Card -->
 			<Card.Root size="sm" class="flex-1 gap-0 pb-0">
 				<Card.Header class="flex items-center justify-between border-b">
 					<div>
@@ -444,6 +573,7 @@ ORDER BY s.expires_at ASC;`);
 			</Card.Root>
 		</div>
 
+		<!-- The Helping Database Schema -->
 		<Card.Root size="sm" class="h-fit">
 			<Card.Header class="border-b">
 				<Card.Title>Database schema</Card.Title>
@@ -479,6 +609,29 @@ ORDER BY s.expires_at ASC;`);
 		</Card.Root>
 	</div>
 </div>
+
+<!-- The Dangerous Query Dialog -->
+<Dialog.Root bind:open={dialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Dangerous Query!</Dialog.Title>
+			<Dialog.Description>
+				This action cannot be undone. This will permanently {querySeverity} the database. Are you sure
+				you want to continue?
+			</Dialog.Description>
+		</Dialog.Header>
+		<Dialog.Footer>
+			<Button
+				variant="destructive"
+				onclick={() => {
+					forceRunQuery();
+					dialogOpen = false;
+				}}>Confirm</Button
+			>
+			<Button onclick={() => (dialogOpen = false)}>Cancel</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
 
 <style>
 	.sql-editor {
