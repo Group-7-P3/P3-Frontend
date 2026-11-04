@@ -21,7 +21,7 @@
 		class?: string;
 		columns: string[];
 		data: TData[];
-		onRowClick?: () => void;
+		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
 	};
 
@@ -164,7 +164,7 @@
 			</Table.Header>
 			<Table.Body>
 				{#each table.getRowModel().rows as row (row.id)}
-					<Table.Row data-state={row.getIsSelected() && 'selected'} onclick={onRowClick}>
+					<Table.Row data-state={row.getIsSelected() && 'selected'} onclick={() => onRowClick?.(row.original as TData)}>
 						{#each row.getVisibleCells() as cell (cell.id)}
 							<Table.Cell class="px-3">
 								<FlexRender {cell} />

@@ -109,7 +109,7 @@
 {/snippet}
 
 <div class="flex w-full gap-6">
-	<!-- -------------------- Email -------------------- -->
+<!-- -------------------- Email -------------------- -->
 	<Card.Root class="basis-5/12 px-6">
 		<form onsubmit={handleEmailSubmit}>
 			<Field.Set>
@@ -167,7 +167,7 @@
 		</form>
 	</Card.Root>
 
-	<!-- -------------------- Password -------------------- -->
+<!-- -------------------- Password -------------------- -->
 	<Card.Root class="basis-7/12 px-6">
 		<form onsubmit={handlePasswordSubmit}>
 			<Field.Set>
