@@ -13,6 +13,10 @@
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
 	import { ChevronDown, Plus } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { page as currentPage } from '$app/state';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
@@ -23,11 +27,52 @@
 		data: TData[];
 		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
+		totalRows?: number;
+		page?: number;
+		pageSize?: number;
+		filter?: string;
+		sort?: string;
+		direction?: 'asc' | 'desc';
+		route?: string;
 	};
+	type PaginatedRoute =
+		| `/(protected)/users?${string}`
+		| `/(protected)/products?${string}`
+		| `/(protected)/subscriptions?${string}`
+		| `/(protected)/staff?${string}`;
 
-	let { data, columns, class: className, onRowClick, onAddClick }: DataTableProps<TData> = $props();
+	let {
+		data,
+		columns,
+		class: className,
+		onRowClick,
+		onAddClick,
+		totalRows,
+		page = 1,
+		pageSize = 12,
+		filter = '',
+		sort = '',
+		direction = 'asc',
+		route = '/(protected)/users'
+	}: DataTableProps<TData> = $props();
 
-	let globalFilter = $state('');
+	let clientGlobalFilter = $state('');
+	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
+
+	function updateQuery(updates: Record<string, string>) {
+		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
+		for (const [key, value] of Object.entries(updates)) {
+			if (value) params.set(key, value);
+			else if (key === 'sort') params.set(key, 'none');
+			else params.delete(key);
+		}
+		const target = `${route}?${params}` as PaginatedRoute;
+		goto(resolve(target));
+	}
+
+	function isServerPagination() {
+		return totalRows !== undefined;
+	}
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
@@ -59,7 +104,7 @@
 			const isTimestamp = /At$|Date$|Time$/i.test(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
-				id: label,
+				id: col,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
 					const onclick = column.getToggleSortingHandler();
@@ -101,17 +146,42 @@
 
 	const table = createTable({
 		features,
+		get manualPagination() {
+			return isServerPagination();
+		},
+		get manualSorting() {
+			return isServerPagination();
+		},
 		get data() {
 			return data;
 		},
 		columns: cols,
 		state: {
 			get globalFilter() {
-				return globalFilter;
+				return isServerPagination() ? filter : clientGlobalFilter;
+			},
+			get sorting() {
+				return sort ? [{ id: sort, desc: direction === 'desc' }] : [];
 			}
 		},
 		onGlobalFilterChange: (updater) => {
-			globalFilter = typeof updater === 'function' ? updater(globalFilter) : updater;
+			const nextFilter =
+				typeof updater === 'function'
+					? updater(isServerPagination() ? filter : clientGlobalFilter)
+					: updater;
+			if (isServerPagination()) updateQuery({ filter: nextFilter, page: '1' });
+			else clientGlobalFilter = nextFilter;
+		},
+		onSortingChange: (updater) => {
+			const currentSorting = sort ? [{ id: sort, desc: direction === 'desc' }] : [];
+			const next = typeof updater === 'function' ? updater(currentSorting) : updater;
+			const nextSort = next[0];
+			if (isServerPagination())
+				updateQuery({
+					sort: nextSort?.id ?? '',
+					direction: nextSort?.desc ? 'desc' : 'asc',
+					page: '1'
+				});
 		}
 	});
 	table.setPageSize(12);
@@ -121,12 +191,11 @@
 	<div class="flex items-center justify-between py-4">
 		<Input
 			placeholder="Filter columns..."
-			value={globalFilter}
+			value={isServerPagination() ? filter : clientGlobalFilter}
 			onchange={(e) => {
-				globalFilter = e.currentTarget.value;
-			}}
-			oninput={(e) => {
-				globalFilter = e.currentTarget.value;
+				const nextFilter = e.currentTarget.value;
+				if (isServerPagination()) updateQuery({ filter: nextFilter, page: '1' });
+				else clientGlobalFilter = nextFilter;
 			}}
 			class="max-w-sm"
 		/>
@@ -205,16 +274,18 @@
 		<Button
 			variant="outline"
 			size="sm"
-			onclick={() => table.previousPage()}
-			disabled={!table.getCanPreviousPage()}
+			onclick={() =>
+				isServerPagination() ? updateQuery({ page: String(page - 1) }) : table.previousPage()}
+			disabled={isServerPagination() ? page <= 1 : !table.getCanPreviousPage()}
 		>
 			Previous
 		</Button>
 		<Button
 			variant="outline"
 			size="sm"
-			onclick={() => table.nextPage()}
-			disabled={!table.getCanNextPage()}
+			onclick={() =>
+				isServerPagination() ? updateQuery({ page: String(page + 1) }) : table.nextPage()}
+			disabled={isServerPagination() ? page >= pageCount : !table.getCanNextPage()}
 		>
 			Next
 		</Button>
