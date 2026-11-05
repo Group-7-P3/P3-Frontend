@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>User #{data.user.id} Subscriptions</title>
+	<title>User ({data.user.id})</title>
 </svelte:head>
 
 <div class="w-full space-y-6 text-left">
