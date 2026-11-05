@@ -68,11 +68,17 @@ export const subscriptionToProduct = pgTable(
 );
 
 export const userRelations = relations(user, ({ many }) => ({
-	subscription: many(subscription)
+	subscription: many(subscription, {
+		relationName: 'userToSubscriptions'
+	})
 }));
 
 export const subscriptionRelations = relations(subscription, ({ many, one }) => ({
-	user: one(user),
+	user: one(user, {
+		fields: [subscription.userId],
+		references: [user.id],
+		relationName: 'userToSubscriptions'
+	}),
 	subscriptionToProduct: many(subscriptionToProduct)
 }));
 

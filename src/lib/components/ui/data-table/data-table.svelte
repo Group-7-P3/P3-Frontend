@@ -28,7 +28,7 @@
 	let { data, columns, class: className, onRowClick, onAddClick }: DataTableProps<TData> = $props();
 
 	let globalFilter = $state('');
-	const columnHelper = createColumnHelper<DataTableFeatures, RowData>();
+	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
 			id: 'select',
@@ -58,7 +58,7 @@
 			const label = camelToTitleCase(col);
 			const isTimestamp = /At$|Date$|Time$/i.test(col);
 
-			return columnHelper.accessor(col, {
+			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: label,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
@@ -76,8 +76,14 @@
 						if (!value) return '';
 
 						// Handles numbers (epochs), ISO strings, or Date objects
+						const dateInput =
+							typeof value === 'number' || typeof value === 'string' || value instanceof Date
+								? value
+								: String(value);
 						const date = new Date(
-							typeof value === 'number' && value.toString().length === 10 ? value * 1000 : value
+							typeof dateInput === 'number' && dateInput.toString().length === 10
+								? dateInput * 1000
+								: dateInput
 						);
 
 						// Format nicely, e.g., "Nov 2, 2026, 11:15 AM"
@@ -164,9 +170,23 @@
 			</Table.Header>
 			<Table.Body>
 				{#each table.getRowModel().rows as row (row.id)}
-					<Table.Row data-state={row.getIsSelected() && 'selected'} onclick={() => onRowClick?.(row.original as TData)}>
+					<Table.Row
+						data-state={row.getIsSelected() && 'selected'}
+						class={cn(onRowClick && 'cursor-pointer transition-colors hover:bg-muted/50')}
+						onclick={() => {
+							if (!onRowClick) return;
+							onRowClick(row.original);
+						}}
+					>
 						{#each row.getVisibleCells() as cell (cell.id)}
-							<Table.Cell class="px-3">
+							<Table.Cell
+								class="px-3"
+								onclick={(e: MouseEvent) => {
+									if (cell.column.id === 'select') {
+										e.stopPropagation();
+									}
+								}}
+							>
 								<FlexRender {cell} />
 							</Table.Cell>
 						{/each}
