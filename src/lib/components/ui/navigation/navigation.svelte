@@ -2,7 +2,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import NavigationProfile from './navigation-profile.svelte';
-	import { House, Users, Package, ShieldUser, CreditCard } from '@lucide/svelte';
+	import { House, Users, Package, ShieldUser, CreditCard, Database } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import ThemeSwitcher from '../theme-switcher.svelte';
@@ -109,8 +109,8 @@
 					</Tooltip.Root>
 				</Sidebar.MenuItem>
 
-				<!-- Staff Page Link -->
 				{#if $session.data?.user?.role === 'owner'}
+					<!-- Staff Page Link -->
 					<Sidebar.MenuItem>
 						<Tooltip.Root>
 							<Tooltip.Trigger>
@@ -129,6 +129,29 @@
 							</Tooltip.Trigger>
 							<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
 								<p>Staff</p>
+							</Tooltip.Content>
+						</Tooltip.Root>
+					</Sidebar.MenuItem>
+
+					<!-- SQL Page Link -->
+					<Sidebar.MenuItem>
+						<Tooltip.Root>
+							<Tooltip.Trigger>
+								{#snippet child({ props: tooltipProps })}
+									<div {...tooltipProps}>
+										<Sidebar.MenuButton isActive={page.url.pathname === '/database'}>
+											{#snippet child({ props })}
+												<a href={resolve('/(protected)/database')} {...props}>
+													<Database />
+													<span>Database</span>
+												</a>
+											{/snippet}
+										</Sidebar.MenuButton>
+									</div>
+								{/snippet}
+							</Tooltip.Trigger>
+							<Tooltip.Content side="right" hidden={sidebar.state !== 'collapsed'}>
+								<p>Database</p>
 							</Tooltip.Content>
 						</Tooltip.Root>
 					</Sidebar.MenuItem>
