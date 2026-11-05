@@ -15,8 +15,9 @@
 	import { ChevronDown, Plus } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { page as currentPage } from '$app/state';
+	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { tick } from 'svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
@@ -57,11 +58,24 @@
 	}: DataTableProps<TData> = $props();
 
 	let filterInput = $state<HTMLInputElement | null>(null);
+	let filterTimer: ReturnType<typeof setTimeout> | undefined;
 	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
+	let showLoading = $state(false);
 
-	function updateQuery(updates: Record<string, string>) {
+	$effect(() => {
+		if (navigating.to === null) {
+			showLoading = false;
+			return;
+		}
+
+		const timer = setTimeout(() => (showLoading = true), 100);
+		return () => clearTimeout(timer);
+	});
+
+	async function updateQuery(updates: Record<string, string>) {
 		const refocusFilter = 'filter' in updates;
 		const selectionStart = filterInput?.selectionStart;
+		const selectionEnd = filterInput?.selectionEnd;
 		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
 		for (const [key, value] of Object.entries(updates)) {
 			if (value) params.set(key, value);
@@ -69,12 +83,13 @@
 			else params.delete(key);
 		}
 		const target = `${route}?${params}` as PaginatedRoute;
-		void goto(resolve(target)).then(() => {
-			if (!refocusFilter || !filterInput) return;
-			filterInput.focus();
-			const cursor = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
-			filterInput.setSelectionRange(cursor, cursor);
-		});
+		await goto(resolve(target));
+		if (!refocusFilter || !filterInput) return;
+		await tick();
+		filterInput.focus();
+		const start = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
+		const end = Math.min(selectionEnd ?? start, filterInput.value.length);
+		filterInput.setSelectionRange(start, end);
 	}
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
@@ -171,6 +186,13 @@
 			});
 		}
 	});
+
+	function updateFilter(value: string) {
+		if (filterTimer) clearTimeout(filterTimer);
+		filterTimer = setTimeout(() => {
+			updateQuery({ filter: value, page: '1' });
+		}, 250);
+	}
 </script>
 
 <div class={cn('w-fit max-w-full', className)}>
@@ -180,8 +202,7 @@
 			placeholder="Filter columns..."
 			value={filter}
 			oninput={(e) => {
-				const nextFilter = e.currentTarget.value;
-				updateQuery({ filter: nextFilter, page: '1' });
+				updateFilter(e.currentTarget.value);
 			}}
 			class="max-w-sm"
 		/>
@@ -208,7 +229,16 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<div class="rounded-md border">
+	<div class="relative rounded-md border" aria-busy={showLoading}>
+		{#if showLoading}
+			<div
+				class="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-sm text-muted-foreground backdrop-blur-[1px]"
+				role="status"
+				aria-live="polite"
+			>
+				Loading...
+			</div>
+		{/if}
 		<Table.Root>
 			<Table.Header>
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}

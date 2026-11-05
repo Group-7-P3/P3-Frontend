@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const filter = url.searchParams.get('filter')?.trim() ?? '';
+	const filter = url.searchParams.get('filter') ?? '';
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
@@ -23,8 +23,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (staffUser.group !== 'INNOVAID') {
 		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'moderator'));
 	}
-	if (filter) {
-		const pattern = `%${filter}%`;
+	const searchFilter = filter.trim();
+	if (searchFilter) {
+		const pattern = `%${searchFilter}%`;
 		conditions.push(
 			or(
 				ilike(schema.staff.id, pattern),

@@ -11,15 +11,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!staff) throw error(401, 'You must be signed in to view users');
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const filter = url.searchParams.get('filter')?.trim() ?? '';
+	const filter = url.searchParams.get('filter') ?? '';
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
 	const conditions = [];
 
 	if (staff.group !== 'INNOVAID') conditions.push(eq(schema.user.managedBy, staff.group));
-	if (filter) {
-		const pattern = `%${filter}%`;
+	const searchFilter = filter.trim();
+	if (searchFilter) {
+		const pattern = `%${searchFilter}%`;
 		conditions.push(
 			or(
 				ilike(sql`${schema.user.id}::text`, pattern),
