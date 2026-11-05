@@ -20,11 +20,11 @@
 
 	type UserRecord = (typeof data.users)[number];
 
+	/**
+	 * This very small function is just a link when clicking a row in the user table.
+	 */
 	async function handleRowClick(user: UserRecord) {
 		await goto(resolve('/(protected)/users/[id]', { id: String(user.id) }));
-		/**
-		 * This very small function is just a link when clicking a row in the user table.
-		 */
 	}
 </script>
 
