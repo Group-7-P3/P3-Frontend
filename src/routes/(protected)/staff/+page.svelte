@@ -78,7 +78,7 @@
 <Dialog bind:open>
 	<!--<DialogTrigger></DialogTrigger>
 	-->
-	<DialogContent class="gap-2">
+	<DialogContent class="gap-4">
 		<DialogHeader>
 			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
@@ -86,7 +86,7 @@
 			<form onsubmit={handleStaffCreation}>
 				<Field.Set>
 					<Field.Legend></Field.Legend>
-					<Field.Group class="gap-4">
+					<Field.Group class="gap-6">
 						<Field.Field class="gap-1">
 							<Field.Label for="newStaffEmail">New email</Field.Label>
 							<Input
