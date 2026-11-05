@@ -32,4 +32,4 @@
 	<title>Subscriptions</title>
 </svelte:head>
 
-<DataTable data={formattedSubs} {columns} class="max-w-6xl" />
+<DataTable data={formattedSubs} {columns} />

@@ -117,7 +117,7 @@
 	table.setPageSize(12);
 </script>
 
-<div class={cn('w-full', className)}>
+<div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
 			placeholder="Filter columns..."

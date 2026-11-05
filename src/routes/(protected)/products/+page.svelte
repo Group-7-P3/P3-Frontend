@@ -29,4 +29,4 @@
 	<title>Products</title>
 </svelte:head>
 
-<DataTable data={formattedProducts} {columns} class="max-w-6xl" onRowClick={handleRowClick} />
+<DataTable data={formattedProducts} {columns} onRowClick={handleRowClick} />

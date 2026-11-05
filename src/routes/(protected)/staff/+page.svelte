@@ -25,7 +25,6 @@
 <DataTable
 	data={formattedStaff}
 	{columns}
-	class="max-w-6xl"
 	onRowClick={(staff) => {
 		console.log(staff.id);
 	}}
