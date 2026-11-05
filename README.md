@@ -37,7 +37,7 @@ npx tsx scripts/create-user.ts "{email}" "{username}" "{role}" "{group}" "{passw
 Example:
 
 ```sh
-npx tsx scripts/create-user.ts "example@mail.dk" "John Doe" "owner" "global" "123456"
+npx tsx scripts/create-user.ts "example@mail.dk" "John Doe" "owner" "INNOVAID" "123456"
 ```
 
 ## Libraries

@@ -3,7 +3,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const columns = ['id', 'customerId', 'managedBy', 'createdAt', 'updatedAt'];
+	const columns = ['id', 'customerId', 'createdAt', 'updatedAt', 'managedBy'];
 	$effect(() => console.log(columns));
 </script>
 
