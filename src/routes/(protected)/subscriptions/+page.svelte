@@ -11,7 +11,8 @@
 		'createdAt',
 		'updatedAt',
 		'expiresAt',
-		'autoRenew'
+		'autoRenew',
+		'managedBy'
 	];
 </script>
 
