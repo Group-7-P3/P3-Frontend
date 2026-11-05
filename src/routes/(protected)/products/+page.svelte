@@ -10,4 +10,4 @@
 	<title>Products</title>
 </svelte:head>
 
-<DataTable data={data.products} {columns} class="max-w-6xl" />
+<DataTable data={data.products} {columns} />

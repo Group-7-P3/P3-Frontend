@@ -109,7 +109,7 @@
 					</Tooltip.Root>
 				</Sidebar.MenuItem>
 
-				{#if $session.data?.user?.role === 'owner'}
+				{#if $session.data?.user.role !== 'moderator'}
 					<!-- Staff Page Link -->
 					<Sidebar.MenuItem>
 						<Tooltip.Root>
@@ -132,7 +132,9 @@
 							</Tooltip.Content>
 						</Tooltip.Root>
 					</Sidebar.MenuItem>
+				{/if}
 
+				{#if $session.data?.user?.role === 'owner'}
 					<!-- SQL Page Link -->
 					<Sidebar.MenuItem>
 						<Tooltip.Root>

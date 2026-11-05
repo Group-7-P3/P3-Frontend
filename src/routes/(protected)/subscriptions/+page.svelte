@@ -20,4 +20,4 @@
 	<title>Subscriptions</title>
 </svelte:head>
 
-<DataTable data={data.subscriptions} {columns} class="max-w-6xl" />
+<DataTable data={data.subscriptions} {columns} />

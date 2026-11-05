@@ -11,4 +11,4 @@
 	<title>Users</title>
 </svelte:head>
 
-<DataTable data={data.users} {columns} class="max-w-6xl" />
+<DataTable data={data.users} {columns} />
