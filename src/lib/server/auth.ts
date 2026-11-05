@@ -15,12 +15,16 @@ export const auth = betterAuth({
 	],
 	user: {
 		modelName: 'staff',
+		changeEmail: {
+			enabled: true,
+			updateEmailWithoutVerification: false,
+		},
 		additionalFields: {
 			role: {
 				type: ['owner', 'admin', 'moderator'],
 				required: false,
 				defaultValue: 'moderator',
-				input: true,
+				input: false,
 				returned: true
 			},
 			group: {
@@ -28,6 +32,12 @@ export const auth = betterAuth({
 				input: true,
 				returned: true
 			}
+		}
+	},
+	emailVerification: {
+		expiresIn: 60 * 15,
+		sendVerificationEmail: async ({user, url}) => {
+			console.log(`Verify ${user.email}: ${url}`);
 		}
 	}
 });

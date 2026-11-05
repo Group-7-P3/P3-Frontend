@@ -12,7 +12,8 @@
 		'createdAt',
 		'updatedAt',
 		'expiresAt',
-		'autoRenew'
+		'autoRenew',
+		'managedBy'
 	];
 
 	/*
