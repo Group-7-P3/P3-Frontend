@@ -27,13 +27,13 @@
 		data: TData[];
 		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
-		totalRows?: number;
-		page?: number;
-		pageSize?: number;
-		filter?: string;
-		sort?: string;
-		direction?: 'asc' | 'desc';
-		route?: string;
+		totalRows: number;
+		page: number;
+		pageSize: number;
+		filter: string;
+		sort: string;
+		direction: 'asc' | 'desc';
+		route: string;
 	};
 	type PaginatedRoute =
 		| `/(protected)/users?${string}`
@@ -48,15 +48,14 @@
 		onRowClick,
 		onAddClick,
 		totalRows,
-		page = 1,
-		pageSize = 12,
-		filter = '',
-		sort = '',
-		direction = 'asc',
-		route = '/(protected)/users'
+		page,
+		pageSize,
+		filter,
+		sort,
+		direction,
+		route
 	}: DataTableProps<TData> = $props();
 
-	let clientGlobalFilter = $state('');
 	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
 
 	function updateQuery(updates: Record<string, string>) {
@@ -70,9 +69,6 @@
 		goto(resolve(target));
 	}
 
-	function isServerPagination() {
-		return totalRows !== undefined;
-	}
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
@@ -146,56 +142,37 @@
 
 	const table = createTable({
 		features,
-		get manualPagination() {
-			return isServerPagination();
-		},
-		get manualSorting() {
-			return isServerPagination();
-		},
+		manualSorting: true,
 		get data() {
 			return data;
 		},
 		columns: cols,
 		state: {
-			get globalFilter() {
-				return isServerPagination() ? filter : clientGlobalFilter;
-			},
 			get sorting() {
 				return sort ? [{ id: sort, desc: direction === 'desc' }] : [];
 			}
-		},
-		onGlobalFilterChange: (updater) => {
-			const nextFilter =
-				typeof updater === 'function'
-					? updater(isServerPagination() ? filter : clientGlobalFilter)
-					: updater;
-			if (isServerPagination()) updateQuery({ filter: nextFilter, page: '1' });
-			else clientGlobalFilter = nextFilter;
 		},
 		onSortingChange: (updater) => {
 			const currentSorting = sort ? [{ id: sort, desc: direction === 'desc' }] : [];
 			const next = typeof updater === 'function' ? updater(currentSorting) : updater;
 			const nextSort = next[0];
-			if (isServerPagination())
-				updateQuery({
-					sort: nextSort?.id ?? '',
-					direction: nextSort?.desc ? 'desc' : 'asc',
-					page: '1'
-				});
+			updateQuery({
+				sort: nextSort?.id ?? '',
+				direction: nextSort?.desc ? 'desc' : 'asc',
+				page: '1'
+			});
 		}
 	});
-	table.setPageSize(12);
 </script>
 
 <div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
 			placeholder="Filter columns..."
-			value={isServerPagination() ? filter : clientGlobalFilter}
+			value={filter}
 			onchange={(e) => {
 				const nextFilter = e.currentTarget.value;
-				if (isServerPagination()) updateQuery({ filter: nextFilter, page: '1' });
-				else clientGlobalFilter = nextFilter;
+				updateQuery({ filter: nextFilter, page: '1' });
 			}}
 			class="max-w-sm"
 		/>
@@ -274,18 +251,16 @@
 		<Button
 			variant="outline"
 			size="sm"
-			onclick={() =>
-				isServerPagination() ? updateQuery({ page: String(page - 1) }) : table.previousPage()}
-			disabled={isServerPagination() ? page <= 1 : !table.getCanPreviousPage()}
+			onclick={() => updateQuery({ page: String(page - 1) })}
+			disabled={page <= 1}
 		>
 			Previous
 		</Button>
 		<Button
 			variant="outline"
 			size="sm"
-			onclick={() =>
-				isServerPagination() ? updateQuery({ page: String(page + 1) }) : table.nextPage()}
-			disabled={isServerPagination() ? page >= pageCount : !table.getCanNextPage()}
+			onclick={() => updateQuery({ page: String(page + 1) })}
+			disabled={page >= pageCount}
 		>
 			Next
 		</Button>
