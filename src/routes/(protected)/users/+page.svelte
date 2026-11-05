@@ -41,5 +41,6 @@
 	filter={data.filter}
 	sort={data.sort}
 	direction={data.direction}
+	route="/(protected)/users"
 	onRowClick={handleRowClick}
 />

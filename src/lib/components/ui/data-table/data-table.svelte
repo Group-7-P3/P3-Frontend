@@ -56,9 +56,12 @@
 		route
 	}: DataTableProps<TData> = $props();
 
+	let filterInput = $state<HTMLInputElement | null>(null);
 	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
 
 	function updateQuery(updates: Record<string, string>) {
+		const refocusFilter = 'filter' in updates;
+		const selectionStart = filterInput?.selectionStart;
 		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
 		for (const [key, value] of Object.entries(updates)) {
 			if (value) params.set(key, value);
@@ -66,7 +69,12 @@
 			else params.delete(key);
 		}
 		const target = `${route}?${params}` as PaginatedRoute;
-		goto(resolve(target));
+		void goto(resolve(target)).then(() => {
+			if (!refocusFilter || !filterInput) return;
+			filterInput.focus();
+			const cursor = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
+			filterInput.setSelectionRange(cursor, cursor);
+		});
 	}
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
@@ -168,9 +176,10 @@
 <div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
+			bind:ref={filterInput}
 			placeholder="Filter columns..."
 			value={filter}
-			onchange={(e) => {
+			oninput={(e) => {
 				const nextFilter = e.currentTarget.value;
 				updateQuery({ filter: nextFilter, page: '1' });
 			}}
