@@ -15,13 +15,12 @@
 	import { ChevronDown, Plus } from '@lucide/svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
-	import { camelToTitleCase } from '#lib/utils.js';
+	import { camelToTitleCase } from '$lib/utils.js';
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
 		columns: string[];
 		data: TData[];
-		onRowClick?: (row: TData) => void;
 		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
 	};
@@ -29,7 +28,6 @@
 	let { data, columns, class: className, onRowClick, onAddClick }: DataTableProps<TData> = $props();
 
 	let globalFilter = $state('');
-	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
@@ -61,7 +59,6 @@
 			const isTimestamp = /At$|Date$|Time$/i.test(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
-			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: label,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
@@ -83,14 +80,7 @@
 							typeof value === 'number' || typeof value === 'string' || value instanceof Date
 								? value
 								: String(value);
-						const dateInput =
-							typeof value === 'number' || typeof value === 'string' || value instanceof Date
-								? value
-								: String(value);
 						const date = new Date(
-							typeof dateInput === 'number' && dateInput.toString().length === 10
-								? dateInput * 1000
-								: dateInput
 							typeof dateInput === 'number' && dateInput.toString().length === 10
 								? dateInput * 1000
 								: dateInput
