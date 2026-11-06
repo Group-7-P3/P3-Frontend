@@ -4,8 +4,6 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
 import { db } from '#lib/server/db/index.ts';
-import { ac, moderator, admin, owner } from '../../routes/(auth)/permissions';
-import { admin as adminPlugin } from 'better-auth/plugins';
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
@@ -13,19 +11,18 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: 'pg' }),
 	emailAndPassword: { enabled: true },
 	plugins: [
-		adminPlugin({ ac, roles: { moderator, admin, owner } }),
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
 	],
 	user: {
 		modelName: 'staff',
 		changeEmail: {
 			enabled: true,
-			updateEmailWithoutVerification: false,
+			updateEmailWithoutVerification: false
 		},
 		additionalFields: {
 			role: {
 				type: ['owner', 'admin', 'moderator'],
-				required: false,
+				required: true,
 				defaultValue: 'moderator',
 				input: false,
 				returned: true
@@ -39,7 +36,7 @@ export const auth = betterAuth({
 	},
 	emailVerification: {
 		expiresIn: 60 * 15,
-		sendVerificationEmail: async ({user, url}) => {
+		sendVerificationEmail: async ({ user, url }) => {
 			console.log(`Verify ${user.email}: ${url}`);
 		}
 	}
