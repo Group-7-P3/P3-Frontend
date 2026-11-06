@@ -21,6 +21,24 @@ export function stringToHex(str: string): string {
 	return '#' + rgb.map((val) => Math.round(val).toString(16).padStart(2, '0')).join('');
 }
 
+export function wordsToTitleCase<T extends string | string[] | null>(input: T): T {
+	if (input == null) {
+		return (Array.isArray(input) ? [] : '') as T;
+	}
+	const transform = (str: string) =>
+		str
+			.replace(/([a-z])([A-Z])/g, '$1 $2')
+			.replace(/[-_]+/g, '')
+			.replace(/\b\w/g, (c) => c.toUpperCase());
+
+	/*
+	 * Export function that uses a generic T as string and string[] inputs
+	 * It takes all strings and splits words apart and makes them uppercase
+	 * It also takes words like customerid and makes them 'Customer Id'
+	 */
+	return (Array.isArray(input) ? input.map(transform) : transform(input)) as T;
+}
+
 export function camelToTitleCase(str: string) {
 	const result = str.replace(/([A-Z])/g, ' $1').replace(/^./, (match) => match.toUpperCase());
 

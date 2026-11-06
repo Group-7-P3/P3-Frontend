@@ -22,12 +22,14 @@
 		columns: string[];
 		data: TData[];
 		onRowClick?: (row: TData) => void;
+		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
 	};
 
 	let { data, columns, class: className, onRowClick, onAddClick }: DataTableProps<TData> = $props();
 
 	let globalFilter = $state('');
+	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
@@ -59,6 +61,7 @@
 			const isTimestamp = /At$|Date$|Time$/i.test(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
+			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: label,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
@@ -80,7 +83,14 @@
 							typeof value === 'number' || typeof value === 'string' || value instanceof Date
 								? value
 								: String(value);
+						const dateInput =
+							typeof value === 'number' || typeof value === 'string' || value instanceof Date
+								? value
+								: String(value);
 						const date = new Date(
+							typeof dateInput === 'number' && dateInput.toString().length === 10
+								? dateInput * 1000
+								: dateInput
 							typeof dateInput === 'number' && dateInput.toString().length === 10
 								? dateInput * 1000
 								: dateInput
@@ -117,7 +127,7 @@
 	table.setPageSize(12);
 </script>
 
-<div class={cn('w-full', className)}>
+<div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
 			placeholder="Filter columns..."
@@ -178,7 +188,14 @@
 						}}
 					>
 						{#each row.getVisibleCells() as cell (cell.id)}
-							<Table.Cell class="px-3">
+							<Table.Cell
+								class="px-3"
+								onclick={(e: MouseEvent) => {
+									if (cell.column.id === 'select') {
+										e.stopPropagation();
+									}
+								}}
+							>
 								<FlexRender {cell} />
 							</Table.Cell>
 						{/each}

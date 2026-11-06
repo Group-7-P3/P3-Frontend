@@ -1,12 +1,13 @@
 <script lang="ts">
 	import DataTable from '$lib/components/ui/data-table/data-table.svelte';
+	import { wordsToTitleCase } from '$lib/utils.ts';
 	import type { PageData } from './$types';
 	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import Button from '#lib/components/ui/button/button.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
-	import { authClient } from '#lib/client.ts';
+	import { authClient } from '$lib/client.ts';
 	//import { authClient } from '$lib/auth-client';
 
 	// Staff Table, i think

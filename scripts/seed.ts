@@ -17,6 +17,7 @@ async function main() {
 
 	// 1. Clear existing data if needed (in reverse order of foreign keys)
 	console.log('🧹 Cleaning existing data...');
+	await db.delete(schema.subscriptionToProduct);
 	await db.delete(schema.subscription);
 	await db.delete(schema.product);
 	await db.delete(schema.user);
@@ -37,7 +38,7 @@ async function main() {
 	console.log('👤 Inserting dummy users...');
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
-		managedBy: faker.company.name(),
+		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const),
 		createdAt: faker.date.past(),
 		updatedAt: faker.date.past()
 	}));
@@ -67,6 +68,19 @@ async function main() {
 		.values(dummySubscriptions)
 		.returning();
 	console.log(`✅ Successfully seeded ${insertedSubscriptions.length} subscriptions.`);
+
+	// 5. Seed Subscription-Product assignments
+	console.log('🔗 Linking products to subscriptions...');
+	const subscriptionProductLinks = insertedProducts.map((product) => ({
+		serialNumber: product.serialNumber,
+		licenseKey: faker.helpers.arrayElement(insertedSubscriptions).licenseKey
+	}));
+
+	const insertedLinks = await db
+		.insert(schema.subscriptionToProduct)
+		.values(subscriptionProductLinks)
+		.returning();
+	console.log(`✅ Successfully seeded ${insertedLinks.length} subscription-product assignments.`);
 
 	console.log('🎉 Seeding completed!');
 	await client.end();
