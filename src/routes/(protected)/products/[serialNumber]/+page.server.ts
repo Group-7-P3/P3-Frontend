@@ -1,7 +1,7 @@
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 
 const mockProducts = [
-    { serialNumber: '72273', status: 'Active', type: 'Pad Pro', userId: 'DK-1080' },
+    { serialNumber: '10170', status: 'Active', type: 'Pad Pro+', userId: 'DK-1080' },
     { serialNumber: '38491', status: 'Inactive', type: 'Pad Home', userId: 'DE-0789' }
 ]
 
@@ -16,6 +16,15 @@ export const load: PageServerLoad = async ({ params }) => {
     }
 
     return {
-        product 
+        product
     }
 }
+/*
+export const actions: Actions = {
+    default: async ({ request, params }) => {
+        await request.formData()
+
+
+    }
+};
+*/
