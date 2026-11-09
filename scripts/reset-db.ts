@@ -12,17 +12,11 @@ if (!connectionString) {
 }
 
 const sql = postgres(connectionString);
-const preserveStaff = process.argv.includes('--preserve-staff');
 
 async function reset() {
-	if (!preserveStaff) {
-		console.log('🗑️ Dropping public schema, including staff...');
-		await sql`DROP SCHEMA public CASCADE;`;
-		await sql`CREATE SCHEMA public;`;
-	} else {
-		console.log('🗑️ Resetting app data while preserving staff...');
-		await sql`TRUNCATE TABLE "subscription_to_product", "subscription", "user", "product" RESTART IDENTITY CASCADE;`;
-	}
+	console.log('🗑️ Dropping public schema...');
+	await sql`DROP SCHEMA public CASCADE;`;
+	await sql`CREATE SCHEMA public;`;
 	console.log('✅ Database reset successfully!');
 	await sql.end();
 }

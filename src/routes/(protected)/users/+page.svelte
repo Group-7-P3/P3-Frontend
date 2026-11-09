@@ -32,15 +32,4 @@
 	<title>Users</title>
 </svelte:head>
 
-<DataTable
-	data={formattedUser}
-	{columns}
-	totalRows={data.total}
-	page={data.page}
-	pageSize={data.pageSize}
-	filter={data.filter}
-	sort={data.sort}
-	direction={data.direction}
-	route="/(protected)/users"
-	onRowClick={handleRowClick}
-/>
+<DataTable data={formattedUser} {columns} onRowClick={handleRowClick} />
