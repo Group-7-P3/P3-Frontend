@@ -233,7 +233,7 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<div class="relative rounded-md border" aria-busy={showLoading}>
+	<div class="relative overflow-hidden rounded-md border" aria-busy={showLoading}>
 		{#if showLoading}
 			<div
 				class="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-sm text-muted-foreground backdrop-blur-[1px]"
