@@ -47,3 +47,23 @@ export function camelToTitleCase(str: string) {
 		.replace(/\bApi\b/g, 'API')
 		.replace(/\bUrl\b/g, 'URL');
 }
+
+export function isString(value: unknown): value is string {
+	return typeof value === 'string';
+}
+
+export function trim(value: string) {
+	return value.trim();
+}
+
+export function isNotEmptyStr(value: string) {
+	return value !== '';
+}
+
+export function stringCheck(value: unknown) {
+	if (isString(value)) {
+		const check = trim(value);
+		if (isNotEmptyStr(check)) return check;
+	}
+	return null;
+}

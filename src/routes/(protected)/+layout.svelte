@@ -6,7 +6,7 @@
 	import Footer from '#lib/components/ui/footer.svelte';
 	import { ModeWatcher } from 'mode-watcher';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import Navigation from '#lib/components/ui/navigation/navigation.svelte';
+	import Navigation from '$lib/components/ui/navigation/navigation.svelte';
 
 	let { children }: LayoutProps = $props();
 </script>

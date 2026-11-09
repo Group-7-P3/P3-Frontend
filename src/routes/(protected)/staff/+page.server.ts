@@ -3,19 +3,17 @@ import * as schema from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from '../users/$types';
 import { and, eq } from 'drizzle-orm';
+import { invalidate } from '$app/navigation';
+import { isString, stringCheck } from '#lib/utils.ts';
+import { fail } from '@sveltejs/kit';
 
-// Temporary
-
+import 'dotenv';
+import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
-import { dataCoords } from 'layerchart';
-
-const client = postgres(connectionString);
-
-const dbd = drizzle(client);
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const staffUser = locals.user;
@@ -39,22 +37,60 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+	console.error('❌ DATABASE_URL is not set in your .env file');
+	process.exit(1);
+}
+
+const client = postgres(connectionString);
+const dbd = drizzle(client);
+
+type Role = 'moderator' | 'admin';
+
 export const actions = {
-	createStaff: async ({ request }) => {
+	createStaff: async ({ locals, request }) => {
 		const data = await request.formData();
 
-		const name = getString(data, 'name');
-		const newEmail = data.get('newStaffEmail');
-		const newName = data.get('newStaffName');
-		const role = data.get('makeAdmin');
-		const group = 'Innovaid';
+		const email = stringCheck(data.get('newStaffEmail'));
+		const name = stringCheck(data.get('newStaffName'));
+		const makeAdmin = data.get('makeAdmin');
+		let group = 'empty';
 		const password = data.get('newStaffPassword');
+		const repeatPassword = data.get('repeatPassword');
+		let role: Role = 'moderator';
 
-		createUser(newEmail, newName, role, group, password);
+		if (name === null || email === null || makeAdmin === null || group === null) {
+			return fail(400, {
+				message: 'Please fill in all the fields',
+				name,
+				email
+			});
+		}
+
+		if (isString(password) === false || isString(repeatPassword) === false) {
+			return fail(400, {
+				message: 'Please fill in all the fields'
+			});
+		}
+
+		if (locals.user?.role === 'owner' && makeAdmin === 'on') {
+			role = 'admin';
+		}
+
+		if (locals.user?.role === 'owner') {
+			group = 'INNOVAID';
+		} else {
+			group = 'Norway';
+		}
+
+		if (password != repeatPassword) {
+			throw new Error(`Passwords don't match`);
+		}
+		createUser(email, name, role, group, password);
 	}
 } satisfies Actions;
 
-type Role = 'admin' | 'moderator';
 async function createUser(
 	email: string,
 	name: string,
@@ -62,32 +98,20 @@ async function createUser(
 	group: string,
 	password: string
 ) {
-	if (!connectionString) {
-		throw new Error('DATABASE_URL is not set in your .env file');
-	}
-
-	if (!['admin', 'moderator'].includes(role)) {
-		throw new Error(`Invalid role "${role}". Must be one of: admin, moderator.`);
-	}
-
-	console.log(`Creating staff account for ${email} (${role})...`);
-
 	try {
 		// 1. Check if user already exists and clean up if they do
 		const existingUser = await dbd.select().from(staff).where(eq(staff.email, email));
 		if (existingUser.length > 0) {
 			throw new Error(`User with email ${email} already exists.`);
-			/*
-      const existingId = existingUser[0].id;
+
+			const existingId = existingUser[0].id;
 			console.log(`User with email ${email} already exists. Cleaning up old record...`);
 			await db.delete(account).where(eq(account.userId, existingId));
 			await db.delete(staff).where(eq(staff.id, existingId));
-      */
 		}
 
 		const hashedPassword = await hashPassword(password);
 		const userId = randomUUID();
-
 		// 2. Insert into your custom 'staff' table
 		await dbd.insert(staff).values({
 			id: userId,
@@ -108,18 +132,8 @@ async function createUser(
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
-
-		console.log('✅ Successfully created user!');
-		console.log('-----------------------------------');
-		console.log(`Email:    ${email}`);
-		console.log(`Password: ${password}`);
-		console.log(`Role:     ${role}`);
-		console.log(`Group:    ${group}`);
-		console.log('-----------------------------------');
+		invalidate('/staff');
 	} catch (error) {
 		console.error('❌ Failed to create user:', error);
-	} finally {
-		await client.end();
-		process.exit(0);
 	}
 }

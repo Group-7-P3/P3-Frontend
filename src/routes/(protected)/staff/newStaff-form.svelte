@@ -117,7 +117,7 @@
 	/*
 	async function handle(e: SubmitEvent) {
 		e.preventDefault();
-
+/*
 		type Role = 'moderator' | 'admin';
 		let assignedRole: Role = 'moderator';
 
@@ -125,24 +125,12 @@
 			assignedRole = 'admin';
 		}
 
-		const { data: newUser, error } = await authClient.admin.createUser({
-			email: newStaffEmail, // required, The email of the user.
-			password: newStaffPassword, // required, The password of the user.
-			name: newStaffName, // required, The name of the user.
-			role: assignedRole, // A string or array of strings representing the roles to apply to the new user.
-			data: { customField: 'customValue' } // Extra fields for the user. Including custom additional fields.
-		});
+			newStaffEmail // required, The email of the user.
+			newStaffPassword // required, The password of the user.
+			newStaffName // required, The name of the user.
+			assignedRole // A string or array of strings representing the roles to apply to the new user.
 
-		if (newUser != null) {
-			console.log('User created!');
-		}
-
-		if (error) {
-			passwordFormError = error.message ?? '';
-			return;
-		}
-	}
-    */
+	}*/
 </script>
 
 <!-- Snippet for the checkmark/x bullets on the requirement list -->
@@ -172,6 +160,7 @@
 											<Field.Label for="newStaffName">Name</Field.Label>
 											<Input
 												id="newStaffName"
+												name="newStaffName"
 												bind:value={newStaffName}
 												type="text"
 												autocomplete="off"
@@ -182,6 +171,7 @@
 											<Field.Label for="newStaffEmail">Email</Field.Label>
 											<Input
 												id="newStaffEmail"
+												name="newStaffEmail"
 												bind:value={newStaffEmail}
 												type="email"
 												autocomplete="off"
@@ -192,6 +182,7 @@
 											<Field.Label for="newStaffPassword">Password</Field.Label>
 											<Input
 												id="newStaffPassword"
+												name="newStaffPassword"
 												bind:value={newStaffPassword}
 												type="password"
 												autocomplete="off"
@@ -208,6 +199,7 @@
 											<Field.Label for="newRepeatStaffPassword">Repeat password</Field.Label>
 											<Input
 												id="newRepeatStaffPassword"
+												name="repeatPassword"
 												bind:value={newRepeatStaffPassword}
 												type="password"
 												autocomplete="off"
@@ -228,7 +220,7 @@
 												<Field.Label for="makeAdmin" class="w-auto flex-none"
 													>Make admin?</Field.Label
 												>
-												<Checkbox id="makeAdmin" bind:checked={makeAdmin} />
+												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
 											</Field.Field>
 										{/if}
 										<Button type="submit" class="w-full">Create staff account</Button>
