@@ -987,9 +987,7 @@ ORDER BY s.expires_at ASC;`;
 	<title>Database</title>
 </svelte:head>
 
-<div
-	class="flex h-[calc(100dvh-153px)] max-h-[calc(100dvh-153px)] min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden"
->
+<div class="flex min-h-0 w-full flex-1 flex-col gap-4">
 	<div class="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
 		<div class="flex min-h-0 flex-1 flex-col gap-4">
 			<!-- The SQL Editor Card -->
@@ -1116,7 +1114,7 @@ ORDER BY s.expires_at ASC;`;
 			</Card.Root>
 
 			<!-- Resulting Query Table/Error Card -->
-			<Card.Root size="sm" class="max-h-[calc(100dvh-18rem)] min-h-0 gap-0 pb-0">
+			<Card.Root size="sm" class="max-h-[calc(100dvh-420.25px)] min-h-0 gap-0 pb-0">
 				<Card.Header class="flex items-center justify-between border-b">
 					<div>
 						<Card.Title>Query results</Card.Title>

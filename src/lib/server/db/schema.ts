@@ -51,6 +51,16 @@ export const product = pgTable('product', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
+export const activity = pgTable(
+	'activity',
+	{
+		activity: text('activity').notNull(),
+		time: timestamp('time').defaultNow(),
+		seconds: integer('seconds').notNull().default(0)
+	},
+	(table) => [primaryKey({ columns: [table.activity, table.time] })]
+);
+
 export const subscriptionToProduct = pgTable(
 	'subscription_to_product',
 	{
