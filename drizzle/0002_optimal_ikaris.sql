@@ -1,0 +1,1 @@
+ALTER TABLE "activity" ALTER COLUMN "time" SET NOT NULL;
