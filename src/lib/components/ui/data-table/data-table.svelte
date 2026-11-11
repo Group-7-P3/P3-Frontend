@@ -158,8 +158,7 @@
 						return isNaN(date.getTime())
 							? String(value)
 							: new Intl.DateTimeFormat('en-US', {
-									dateStyle: 'medium',
-									timeStyle: 'short'
+									dateStyle: 'medium'
 								}).format(date);
 					}
 				})

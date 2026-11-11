@@ -10,7 +10,7 @@
 	import PopoverRangeCalendar from '#lib/components/ui/popover-range-calendar.svelte';
 	import { Button } from '#lib/components/ui/button/index.ts';
 	import type { DateRange } from 'bits-ui';
-	import { today, getLocalTimeZone } from '@internationalized/date';
+	import { today, getLocalTimeZone, CalendarDate } from '@internationalized/date';
 	import type { PageData } from './$types';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 
@@ -241,6 +241,17 @@
 			}}
 		>
 			YTD
+		</ToggleGroup.Item>
+		<ToggleGroup.Item
+			value="all-time"
+			onclick={() => {
+				dateRange = {
+					start: new CalendarDate(2026, 9, 2),
+					end: today(getLocalTimeZone())
+				};
+			}}
+		>
+			All Time
 		</ToggleGroup.Item>
 	</ToggleGroup.Root>
 
