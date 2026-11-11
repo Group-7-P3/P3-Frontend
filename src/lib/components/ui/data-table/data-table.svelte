@@ -15,7 +15,7 @@
 	import { ChevronDown, Plus } from '@lucide/svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
-	import { camelToTitleCase } from '#lib/utils.js';
+	import { camelToTitleCase } from '$lib/utils.js';
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
@@ -117,7 +117,7 @@
 	table.setPageSize(12);
 </script>
 
-<div class={cn('w-full', className)}>
+<div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
 			placeholder="Filter columns..."
@@ -178,7 +178,14 @@
 						}}
 					>
 						{#each row.getVisibleCells() as cell (cell.id)}
-							<Table.Cell class="px-3">
+							<Table.Cell
+								class="px-3"
+								onclick={(e: MouseEvent) => {
+									if (cell.column.id === 'select') {
+										e.stopPropagation();
+									}
+								}}
+							>
 								<FlexRender {cell} />
 							</Table.Cell>
 						{/each}

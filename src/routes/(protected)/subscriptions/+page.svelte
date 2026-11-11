@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DataTable from '#lib/components/ui/data-table/data-table.svelte';
 	import type { PageData } from './$types';
+	import { wordsToTitleCase } from '#lib/utils.ts';
 
 	let { data }: { data: PageData } = $props();
 	const columns = [
@@ -11,12 +12,24 @@
 		'createdAt',
 		'updatedAt',
 		'expiresAt',
-		'autoRenew'
+		'autoRenew',
+		'managedBy'
 	];
+
+	/*
+	 * formattedSubs changes data.subs to uppercase
+	 */
+	const formattedSubs = $derived(
+		data.subscriptions.map((sub) => ({
+			...sub,
+			type: wordsToTitleCase(sub.type),
+			autoRenew: sub.autoRenew ? 'True' : 'False'
+		}))
+	);
 </script>
 
 <svelte:head>
 	<title>Subscriptions</title>
 </svelte:head>
 
-<DataTable data={data.subscriptions} {columns} class="max-w-6xl" />
+<DataTable data={formattedSubs} {columns} />
