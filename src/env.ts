@@ -8,5 +8,8 @@ export const variables = defineEnvVars({
 	BETTER_AUTH_SECRET: {
 		description:
 			'Secret used to sign tokens. For production use 32 characters generated with high entropy. See [Better Auth installation](https://www.better-auth.com/docs/installation).'
+	},
+	RESEND_API_KEY: {
+    description: 'API key used to send email through Resend.'
 	}
 });

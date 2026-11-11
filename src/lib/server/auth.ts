@@ -42,7 +42,13 @@ export const auth = betterAuth({
 	emailVerification: {
 		expiresIn: 60 * 15, // 15 minutes
 		sendVerificationEmail: async ({user, url}) => {
-			sendMail({ to: user.email, subject: "Verify email", text: "Click this link to verify your email change: " + url + "\nThe link is active for 15 minutes"});
+			sendMail({
+				to: user.email,
+				subject: "Verify email",
+				text: `<p>Click below to verify your email change:</p>
+        				<p><a href="${url}">Verify email change</a></p>
+        				<p>The link is active for 15 minutes.</p>`
+			});
 		}
 	},
 	// hooks happen before/after an event happens, in this case betterAuth events.
@@ -93,7 +99,11 @@ export const auth = betterAuth({
 			sendMail({
 				to: currentEmail,
 				subject: ("Notice of " + whatChanged + " change"),
-				text: "Hello,\nA request to change the " + whatChanged + " on your staff account has been made. " + (whatChanged === "email" ? "\nNew email: " + newEmail : "") + "\nIf you did not make this " + whatChanged + " change, contact your manager immediately."});
+				text: `<p>Hello,</p>
+					<p>A request to change the ${whatChanged} on your staff account has been made.
+					${whatChanged === 'email' ? `<br>New email: ${newEmail}` : ''}</p>
+					<p>If you did not make this ${whatChanged} change, contact your manager immediately.</p>`
+			});
 
 			let bossEmail;
 			// If the staff is a moderator, find the admin of the same group
@@ -116,7 +126,14 @@ export const auth = betterAuth({
 			sendMail({
 				to: bossEmail.email,
 				subject: ("Notice of " + whatChanged + " change - " + currentEmail),
-				text: "Hello,\nA staff member has requested to change their " + whatChanged + (whatChanged === "email" ? ":\nOld email: " + currentEmail + "\nNew email: " + newEmail : ".\nEmail: " + currentEmail) + "\nNo action is needed unless the change is unexpected"});
+				text: `<p>Hello,</p>
+    				<p>A staff member has requested to change their ${whatChanged}${
+        			whatChanged === 'email'
+            		? `:<br><strong>Old email:</strong> ${currentEmail}<br><strong>New email:</strong> ${newEmail}`
+            		: `.<br><strong>Email:</strong> ${currentEmail}`
+    				}</p>
+    				<p>No action is needed unless the change is unexpected.</p>`
+			});
 		})
 	}
 });
