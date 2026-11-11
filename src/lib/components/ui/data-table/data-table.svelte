@@ -300,7 +300,7 @@
 			}}
 		>
 			<Select.Trigger size="sm">
-				<Select.Value />
+				Results: <Select.Value />
 			</Select.Trigger>
 			<Select.Content align="start">
 				<Select.Item value="12">12</Select.Item>
