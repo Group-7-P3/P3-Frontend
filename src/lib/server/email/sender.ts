@@ -15,10 +15,12 @@ export function sendMail(mail: Mail) {
     console.log("To: " + mail.to + "\nSubject: " + mail.subject + "\nText: " + mail.text);
     console.log("------------------------------------------------------------------------------------");
 
+    /*
     resend.emails.send({
         from: 'onboarding@resend.dev',
         to: mail.to,
         subject: mail.subject,
         html: mail.text
     });
+    */
 }
