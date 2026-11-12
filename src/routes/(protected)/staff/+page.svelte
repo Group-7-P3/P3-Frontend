@@ -25,7 +25,13 @@
 <DataTable
 	data={formattedStaff}
 	{columns}
-	class="max-w-6xl"
+	totalRows={data.total}
+	page={data.page}
+	pageSize={data.pageSize}
+	filter={data.filter}
+	sort={data.sort}
+	direction={data.direction}
+	route="/(protected)/staff"
 	onRowClick={(staff) => {
 		console.log(staff.id);
 	}}
