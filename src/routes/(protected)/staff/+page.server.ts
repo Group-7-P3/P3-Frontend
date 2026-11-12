@@ -13,6 +13,7 @@ import postgres from 'postgres';
 import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
+import { groupRules } from '#lib/utils.ts';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const staffUser = locals.user;
@@ -36,6 +37,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
+// Custom error code for user creation
+type userCreationErrorCode = 'mail' | 'drizzle' | 'auth';
+
+class userCreationError extends Error {
+	code: userCreationErrorCode;
+
+	constructor(code: userCreationErrorCode, message: string, cause?: unknown) {
+		super(message, { cause });
+		this.name = 'userCreationErrorCode';
+		this.code = code;
+	}
+}
+
+// Sets up and ensures db connection
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
 	throw new Error('DATABASE_URL is not set. Check your .env file.');
@@ -44,7 +59,6 @@ const client = postgres(connectionString);
 const dbd = drizzle(client);
 
 type Role = 'moderator' | 'admin';
-const errors: Record<string, string> = {};
 
 export const actions = {
 	createStaff: async ({ locals, request }) => {
@@ -60,13 +74,14 @@ export const actions = {
 			});
 		}
 		const data = await request.formData();
+		const errors: Record<string, string> = {};
 
 		// Extract and validate form data
 		const name = stringCheckTrim(data.get('newStaffName'));
 		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
 		const email = emailRaw?.toLowerCase() ?? null;
 		const makeAdmin = data.get('makeAdmin');
-		const group = 'INNOVAID';
+		let group = stringCheckTrim(data.get('newStaffGroup'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));
 		let role: Role = 'moderator';
@@ -91,15 +106,14 @@ export const actions = {
 			errors.email = 'Please enter a valid email address.';
 		}
 
-		/*
 		// Group check
-		if (group === 'INNOVAID' && locals.user.group !== 'INNOVAID') {
-			errors.group = 'You do not have permission to assign this group.';
-		} else if (group === '') {
-			errors.group = 'Group is required.';
-		} else if (group !== locals.user.group && locals.user.group !== 'INNOVAID') {
-			errors.group = 'You do not have permission to assign a group.';
-		}*/
+		if (locals.user.group !== 'INNOVAID') {
+			group = locals.user.group;
+		} else if (group === null) {
+			errors.group = 'Group is required';
+		} else if (group.length > 60) {
+			errors.group = 'Group can at most be 60 characters';
+		}
 
 		// Password checks, contains same rules as the password rules in the settings page
 		if (password === null || repeatPassword === null) {
@@ -110,15 +124,8 @@ export const actions = {
 			errors.password = 'Password must be at least 8 characters long.';
 		} else if (password.length > 100) {
 			errors.password = 'Password can be at most 100 characters long.';
-		} else if (!/[A-Z]/.test(password)) {
-			errors.password = 'Password must contain at least one uppercase letter.';
-		} else if (!/[a-z]/.test(password)) {
-			/*errors.password = 'Password must contain at least one lowercase letter.';
-		} */
-		} else if (!/[0-9]/.test(password)) {
-			errors.password = 'Password must contain at least one number.';
-		} else if (!/[^A-Za-z0-9]/.test(password)) {
-			errors.password = 'Password must contain at least one special character.';
+		} else if (groupRules.filter((r) => r.test(password)).length < 3) {
+			errors.password = 'Password needs to fulfill 3 of the 4 rules';
 		}
 
 		if (locals.user.role === 'owner' && makeAdmin === 'on') {
@@ -137,17 +144,24 @@ export const actions = {
 
 		try {
 			await createUser(email, name, role, group, password);
-		} catch (err) {
-			console.error('Error creating user:', err);
+		} catch (error) {
+			if (error instanceof userCreationError) {
+				if (error.code === 'mail') {
+					errors.email = `User with ${email} already exists`;
+					return fail(400, { errors });
+				}
+			}
+			errors.general = 'Could not create user';
 			return fail(500, { errors });
 		}
+
 		return {
 			success: true,
 			message: `User ${name} created successfully.`
 		};
 	}
 } satisfies Actions;
-//qwe
+
 async function createUser(
 	email: string,
 	name: string,
@@ -155,38 +169,52 @@ async function createUser(
 	group: string,
 	password: string
 ) {
+	// Checks if the email already has a user
+	let existingUser;
 	try {
-		// 1. Check if user already exists and clean up if they do
-		const existingUser = await dbd.select().from(staff).where(eq(staff.email, email));
-		if (existingUser.length > 0) {
-			errors.email = 'An user with this email already exists.';
-			throw new Error(`User with email ${email} already exists.`);
-		}
+		existingUser = await dbd.select().from(staff).where(eq(staff.email, email));
+	} catch (error) {
+		throw new userCreationError('drizzle', `Could not check if user exists.`, error);
+	}
 
-		const hashedPassword = await hashPassword(password);
-		const userId = randomUUID();
-		// 2. Insert into your custom 'staff' table
-		await dbd.insert(staff).values({
-			id: userId,
-			name,
-			email,
-			emailVerified: true,
-			role,
-			group
-		});
+	if (existingUser.length > 0) {
+		throw new userCreationError('mail', `User with email ${email} already exists.`);
+	}
 
-		// 3. Insert into the Better Auth 'account' table
-		await dbd.insert(account).values({
-			id: randomUUID(),
-			userId,
-			accountId: userId, // Must match userId for Better Auth credential login
-			providerId: 'credential',
-			password: hashedPassword,
-			createdAt: new Date(),
-			updatedAt: new Date()
+	let hashedPassword;
+	try {
+		hashedPassword = await hashPassword(password);
+	} catch (error) {
+		throw new userCreationError('auth', 'Could not hash password.', error);
+	}
+
+	const userId = randomUUID();
+
+	// Writes to the db, wrapped to ensure both actions succeed or fail together
+	// Runs transaction through tx package, if either fails, dbd.transaction fails
+	// and doesn't commit anything to the db
+	try {
+		await dbd.transaction(async (tx) => {
+			await tx.insert(staff).values({
+				id: userId,
+				name,
+				email,
+				emailVerified: true,
+				role,
+				group
+			});
+
+			await tx.insert(account).values({
+				id: randomUUID(),
+				userId,
+				accountId: userId, // Must match userId for Better Auth credential login
+				providerId: 'credential',
+				password: hashedPassword,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			});
 		});
-	} catch (err) {
-		console.error('Error in createUser function:', err);
-		throw err; // Re-throw the error to be caught in the calling function
+	} catch (error) {
+		throw new userCreationError('drizzle', `Could not save the new user.`, error);
 	}
 }

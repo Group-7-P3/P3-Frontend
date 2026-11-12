@@ -7,12 +7,14 @@
 	import { authClient } from '$lib/client.ts';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import XIcon from '@lucide/svelte/icons/x';
-	import { deserialize, applyAction } from '$app/forms';
+	import { deserialize } from '$app/forms';
 	import { refreshAll } from '$app/navigation';
+	import { groupRules } from '#lib/utils.ts';
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
 	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'moderator' | undefined);
+	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
 
 	// Make open bindable
 	let { open = $bindable(false) }: { open: boolean } = $props();
@@ -24,9 +26,6 @@
 	// Keeps track of whether the form has been submitted and if the password has changed.
 	let formSubmitted = $state(false);
 
-	// Holds the thrown error, if any, after submitting the form.
-	let passwordFormError = $state('');
-
 	// Keeps track of when form inputs have been touched.
 	let newStaffPasswordTouched = $state(false);
 	let newRepeatStaffPasswordTouched = $state(false);
@@ -36,30 +35,7 @@
 	let newStaffEmail = $state('');
 	let newStaffPassword = $state('');
 	let newRepeatStaffPassword = $state('');
-
-	// Rules for new passwords, uses regex to determine if strings include for example a number.
-	const groupRules = [
-		{
-			id: 'uppercase',
-			label: 'An uppercase letter',
-			test: (pw: string) => /[A-Z]/.test(pw)
-		},
-		{
-			id: 'lowercase',
-			label: 'A lowercase letter',
-			test: (pw: string) => /[a-z]/.test(pw)
-		},
-		{
-			id: 'number',
-			label: 'A number',
-			test: (pw: string) => /[0-9]/.test(pw)
-		},
-		{
-			id: 'symbol',
-			label: 'A symbol',
-			test: (pw: string) => /[^A-Za-z0-9]/.test(pw)
-		}
-	];
+	let newStaffGroup = $state('');
 
 	// Keeps track of whether the two main requirements have been met ('8 characters' and 'at least 3 of the following:').
 	const lengthOk = $derived(newStaffPassword.length >= 8);
@@ -110,6 +86,7 @@
 		newStaffPassword = '';
 		newRepeatStaffPassword = '';
 		makeAdmin = false;
+		newStaffGroup = '';
 		errors = {};
 		successMessage = '';
 		//group = '';
@@ -180,10 +157,12 @@
 				<Field.Legend></Field.Legend>
 				<Field.Group class="gap-4">
 					<Field.Field>
+						<!-- Form begins here-->
 						<form method="POST" action="?/createStaff" onsubmit={handle}>
 							<Field.Set>
 								<div class="flex gap-6">
 									<Field.Group class="basis-2/3">
+										<!-- Name field -->
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffName">Name</Field.Label>
 											<Input
@@ -194,10 +173,12 @@
 												autocomplete="off"
 												placeholder="e.g. John Smith"
 											/>
+											<!-- Error line below, fills in with error object from server, if any errors are present-->
 											{#if errors.name}
 												<Field.Error>{errors.name}</Field.Error>
 											{/if}
 										</Field.Field>
+										<!--Repeat of previous structure-->
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffEmail">Email</Field.Label>
 											<Input
@@ -212,6 +193,7 @@
 												<Field.Error>{errors.email}</Field.Error>
 											{/if}
 										</Field.Field>
+										<!-- Password structure, rewritten from settings-->
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffPassword">Password</Field.Label>
 											<Input
@@ -225,13 +207,15 @@
 												aria-invalid={newStaffPasswordError}
 												placeholder="New password"
 											/>
+											<!-- Shows password errors, if any local show those, else show send from server -->
 											{#if newStaffPasswordError}
 												<Field.Error>The password must fulfill all requirements</Field.Error>
 											{:else if errors.password}
 												<Field.Error>{errors.password}</Field.Error>
 											{/if}
 										</Field.Field>
-										<Field.Field class="gap-1">
+										<!-- Repeat of previous structure-->
+										<Field.Field>
 											<Field.Label for="newRepeatStaffPassword">Repeat password</Field.Label>
 											<Input
 												id="newRepeatStaffPassword"
@@ -246,11 +230,29 @@
 											/>
 											{#if repeatStaffPasswordError}
 												<Field.Error>Passwords must match</Field.Error>
+											{:else if errors.password}
+												<Field.Error>{errors.password}</Field.Error>
 											{/if}
 										</Field.Field>
-										{#if passwordFormError}
-											<Field.Error>{passwordFormError}</Field.Error>
+										<!-- INNOVAID only, input group for new staff -->
+										{#if group === 'INNOVAID'}
+											<Field.Field>
+												<Field.Label for="newStaffGroup">Group for the new staff</Field.Label>
+												<Input
+													id="newStaffGroup"
+													name="newStaffGroup"
+													bind:value={newStaffGroup}
+													type="text"
+													autocomplete="off"
+													placeholder="Denmark"
+												/>
+											</Field.Field>
+											<!-- Reports any errors back to the user -->
+											{#if errors.group}
+												<Field.Error>{errors.group}</Field.Error>
+											{/if}
 										{/if}
+										<!-- Owner only field, gives admin role to staff -->
 										{#if role === 'owner'}
 											<Field.Field orientation="horizontal" class="justify-start gap-1">
 												<Field.Label for="makeAdmin" class="w-auto flex-none"
@@ -258,21 +260,18 @@
 												>
 												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
 											</Field.Field>
-											<Field.Field orientation="horizontal" class="justify-start gap-1">
-												<Field.Label for="makeAdmin" class="w-auto flex-none"
-													>Make admin?</Field.Label
-												>
-												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
-											</Field.Field>
 										{/if}
+										<!-- Reports general errors at bottom, i.e. if something goes wrong in actually creating the user -->
 										{#if errors.general}
 											<Field.Error class="text-center">{errors.general}</Field.Error>
 										{/if}
+										<!-- Reports a successfull creation back to the user -->
 										{#if successMessage}
 											<p class="text-center text-green-500">{successMessage}</p>
 										{/if}
 										<Button type="submit" class="w-full">Create staff account</Button>
 									</Field.Group>
+									<!-- Password rules -->
 									<Field.Group class="basis-1/3">
 										<div>
 											<h3 class="mb-2 font-semibold">Password requirements</h3>

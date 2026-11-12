@@ -10,6 +10,9 @@
 
 	import { authClient } from '$lib/client.ts';
 
+	// Rules for new passwords, uses regex to determine if strings include for example a number.
+	import { groupRules } from '#lib/utils.ts';
+
 	// Keeps track of whether the form has been submitted and if the password has changed.
 	let passwordSubmitted = $state(false);
 	let passwordChanged = $state(false);
@@ -29,30 +32,6 @@
 
 	// Keeps track of whether the current password has been rejected.
 	let passwordRejected = $state(false);
-
-	// Rules for new passwords, uses regex to determine if strings include for example a number.
-	const groupRules = [
-		{
-			id: 'uppercase',
-			label: 'An uppercase letter',
-			test: (pw: string) => /[A-Z]/.test(pw)
-		},
-		{
-			id: 'lowercase',
-			label: 'A lowercase letter',
-			test: (pw: string) => /[a-z]/.test(pw)
-		},
-		{
-			id: 'number',
-			label: 'A number',
-			test: (pw: string) => /[0-9]/.test(pw)
-		},
-		{
-			id: 'symbol',
-			label: 'A symbol',
-			test: (pw: string) => /[^A-Za-z0-9]/.test(pw)
-		}
-	];
 
 	// Keeps track of whether the two main requirements have been met ('8 characters' and 'at least 3 of the following:').
 	const lengthOk = $derived(newPassword.length >= 8);
