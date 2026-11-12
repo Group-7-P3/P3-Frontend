@@ -1,7 +1,9 @@
 <script lang="ts">
 	import DataTable from '#lib/components/ui/data-table/data-table.svelte';
-	import type { PageData } from './$types';
 	import { wordsToTitleCase } from '#lib/utils.ts';
+	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let { data }: { data: PageData } = $props();
 	const columns = [
@@ -20,12 +22,18 @@
 	 * formattedSubs changes data.subs to uppercase
 	 */
 	const formattedSubs = $derived(
-		data.subscriptions.map((sub) => ({
+    	data.subscriptions.map((sub) => ({
 			...sub,
-			type: wordsToTitleCase(sub.type),
-			autoRenew: sub.autoRenew ? 'True' : 'False'
-		}))
+			typeDisplay: wordsToTitleCase(sub.type),
+			autoRenewDisplay: sub.autoRenew ? 'True' : 'False'
+    	}))
 	);
+
+	function handleRowClick(row: (typeof data.subscriptions)[number]) {
+		goto(
+			resolve('/(protected)/subscriptions/[licenseKey]', { licenseKey: String(row.licenseKey) })
+		);
+	}
 </script>
 
 <svelte:head>
@@ -42,4 +50,5 @@
 	sort={data.sort}
 	direction={data.direction}
 	route="/(protected)/subscriptions"
+	onRowClick={handleRowClick}
 />
