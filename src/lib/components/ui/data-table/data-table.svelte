@@ -22,6 +22,7 @@
 	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
+	import DataTableDate from './data-table-date.svelte';
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
@@ -133,28 +134,10 @@
 					});
 				},
 				...(isTimestamp && {
-					cell: ({ getValue }) => {
-						const value = getValue();
-						if (!value) return '';
-
-						// Handles numbers (epochs), ISO strings, or Date objects
-						const dateInput =
-							typeof value === 'number' || typeof value === 'string' || value instanceof Date
-								? value
-								: String(value);
-						const date = new Date(
-							typeof dateInput === 'number' && dateInput.toString().length === 10
-								? dateInput * 1000
-								: dateInput
-						);
-
-						// Format nicely, e.g., "Nov 2, 2026, 11:15 AM"
-						return isNaN(date.getTime())
-							? String(value)
-							: new Intl.DateTimeFormat('en-US', {
-									dateStyle: 'medium'
-								}).format(date);
-					}
+					cell: ({ getValue }) =>
+						renderComponent(DataTableDate, {
+							value: getValue()
+						})
 				})
 			});
 		})
