@@ -14,8 +14,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
+
 	const conditions = [];
 	if (staff.group !== 'INNOVAID') conditions.push(eq(schema.user.managedBy, staff.group));
+
 	const searchFilter = filter.trim();
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
@@ -33,7 +35,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			)
 		);
 	}
+
 	const where = conditions.length ? and(...conditions) : undefined;
+
 	const sortColumn =
 		(
 			{
@@ -59,10 +63,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				| 'autoRenew'
 				| 'managedBy'
 		] ?? schema.subscription.licenseKey;
+
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
+
 	const subscriptions = await db
 		.select({
 			...getTableColumns(schema.subscription),
+			devices: sql<number>`(
+        SELECT count(*)::int 
+        FROM ${schema.subscriptionToProduct} 
+        WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
+      )`,
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)
@@ -71,6 +82,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.orderBy(orderBy)
 		.limit(pageSize)
 		.offset((page - 1) * pageSize);
+
 	const [{ total }] = await db
 		.select({ total: count() })
 		.from(schema.subscription)
