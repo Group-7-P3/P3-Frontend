@@ -4,13 +4,12 @@ import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-const pageSize = 12;
-
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staff = locals.user;
 	if (!staff) throw error(401, 'You must be signed in to view users');
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 12);
 	const filter = url.searchParams.get('filter') ?? '';
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';

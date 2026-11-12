@@ -15,8 +15,9 @@ const db = drizzle(client, { schema });
 async function main() {
 	console.log('🌱 Starting database seeding...');
 
-	// 1. Clear existing data if needed (in reverse order of foreign keys)
+	// 1. Clear existing data (in reverse order of dependencies)
 	console.log('🧹 Cleaning existing data...');
+	await db.delete(schema.activity);
 	await db.delete(schema.subscriptionToProduct);
 	await db.delete(schema.subscription);
 	await db.delete(schema.product);
@@ -55,7 +56,7 @@ async function main() {
 			userId: user.id,
 			type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
 			expiresAt: faker.helpers.arrayElement([faker.date.past(), faker.date.future()]).toISOString(),
-			licenseKey: faker.number.int({ min: 100000, max: 999999 }), // Numeric license key matching schema
+			licenseKey: faker.number.int({ min: 100000, max: 999999 }),
 			maxDevices: faker.number.int({ min: 1, max: 5 }),
 			createdAt: faker.date.past(),
 			updatedAt: faker.date.past(),
@@ -67,6 +68,7 @@ async function main() {
 		.insert(schema.subscription)
 		.values(dummySubscriptions)
 		.returning();
+
 	console.log(`✅ Successfully seeded ${insertedSubscriptions.length} subscriptions.`);
 
 	// 5. Seed Subscription-Product assignments
@@ -80,14 +82,40 @@ async function main() {
 		.insert(schema.subscriptionToProduct)
 		.values(subscriptionProductLinks)
 		.returning();
+
 	console.log(`✅ Successfully seeded ${insertedLinks.length} subscription-product assignments.`);
+
+	// 6. Seed Activities
+	console.log('📊 Inserting dummy activities...');
+
+	const activityNames = [
+		'simon_says',
+		'neglect_color',
+		'sequence',
+		'whack_a_mole',
+		'reaction',
+		'reflex',
+		'balance',
+		'force'
+	];
+
+	const dummyActivities = Array.from({ length: 500 }).map(() => ({
+		activity: faker.helpers.arrayElement(activityNames),
+		time: faker.date.recent({ days: 30 }),
+		seconds: faker.number.int({ min: 1, max: 3600 })
+	}));
+
+	const insertedActivities = await db.insert(schema.activity).values(dummyActivities).returning();
+
+	console.log(`✅ Successfully seeded ${insertedActivities.length} activities.`);
 
 	console.log('🎉 Seeding completed!');
 	await client.end();
 	process.exit(0);
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
 	console.error('❌ Error seeding database:', err);
+	await client.end();
 	process.exit(1);
 });

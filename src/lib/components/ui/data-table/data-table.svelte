@@ -8,6 +8,7 @@
 	} from '@tanstack/svelte-table';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { features, type DataTableFeatures } from './data-table-features.js';
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
@@ -57,7 +58,10 @@
 		route
 	}: DataTableProps<TData> = $props();
 
+	let isMounted = $derived(true);
 	let filterInput = $state<HTMLInputElement | null>(null);
+	// svelte-ignore state_referenced_locally
+	let selectedPageSize = $state(String(pageSize));
 	let filterTimer: ReturnType<typeof setTimeout> | undefined;
 	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
 	let showLoading = $state(false);
@@ -229,7 +233,7 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<div class="relative rounded-md border" aria-busy={showLoading}>
+	<div class="relative overflow-hidden rounded-md border" aria-busy={showLoading}>
 		{#if showLoading}
 			<div
 				class="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-sm text-muted-foreground backdrop-blur-[1px]"
@@ -286,22 +290,42 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex items-center justify-end space-x-2 py-4">
-		<Button
-			variant="outline"
-			size="sm"
-			onclick={() => updateQuery({ page: String(page - 1) })}
-			disabled={page <= 1}
+	<div class="flex items-center justify-between space-x-2 py-4">
+		<Select.Root
+			type="single"
+			bind:value={selectedPageSize}
+			onValueChange={() => {
+				if (!isMounted) return;
+				updateQuery({ size: selectedPageSize });
+			}}
 		>
-			Previous
-		</Button>
-		<Button
-			variant="outline"
-			size="sm"
-			onclick={() => updateQuery({ page: String(page + 1) })}
-			disabled={page >= pageCount}
-		>
-			Next
-		</Button>
+			<Select.Trigger size="sm">
+				<Select.Value />
+			</Select.Trigger>
+			<Select.Content align="start">
+				<Select.Item value="12">12</Select.Item>
+				<Select.Item value="24">24</Select.Item>
+				<Select.Item value="48">48</Select.Item>
+				<Select.Item value="96">96</Select.Item>
+			</Select.Content>
+		</Select.Root>
+		<div>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => updateQuery({ page: String(page - 1) })}
+				disabled={page <= 1}
+			>
+				Previous
+			</Button>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => updateQuery({ page: String(page + 1) })}
+				disabled={page >= pageCount}
+			>
+				Next
+			</Button>
+		</div>
 	</div>
 </div>

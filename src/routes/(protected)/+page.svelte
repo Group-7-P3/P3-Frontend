@@ -11,6 +11,10 @@
 	import { Button } from '#lib/components/ui/button/index.ts';
 	import type { DateRange } from 'bits-ui';
 	import { today, getLocalTimeZone } from '@internationalized/date';
+	import type { PageData } from './$types';
+	import Separator from '#lib/components/ui/separator/separator.svelte';
+
+	let { data }: { data: PageData } = $props();
 
 	const start = today(getLocalTimeZone()).subtract({ months: 1, days: -1 });
 	const end = today(getLocalTimeZone());
@@ -55,6 +59,124 @@
 <svelte:head>
 	<title>Dashboard</title>
 </svelte:head>
+
+<!-- Statistic cards -->
+<div class="flex w-full gap-6">
+	<!-- Users card -->
+	<a href={resolve('/(protected)/users')} class="flex-1">
+		<Card.Root class="w-full gap-5">
+			<Card.Header>
+				<Card.Title>Users</Card.Title>
+			</Card.Header>
+			<Separator />
+
+			<Card.Content>
+				<div class="flex justify-between">
+					<span>Day</span>
+					<span>12</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Week</span>
+					<span>123</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Month</span>
+					<span>1234</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Year</span>
+					<span>12345</span>
+				</div>
+			</Card.Content>
+			<Separator />
+			<Card.Footer>
+				<div class="flex w-full justify-between font-semibold">
+					<span>Total</span>
+					<span>12345678</span>
+				</div>
+			</Card.Footer>
+		</Card.Root>
+	</a>
+
+	<!-- Subscriptions card -->
+	<a href={resolve('/(protected)/subscriptions')} class="flex-1">
+		<Card.Root class="w-full gap-5">
+			<Card.Header>
+				<Card.Title>Subscriptions</Card.Title>
+			</Card.Header>
+			<Separator />
+			<Card.Content>
+				<div class="flex justify-between">
+					<span>Day</span>
+					<span>12</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Week</span>
+					<span>123</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Month</span>
+					<span>1234</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Year</span>
+					<span>12345</span>
+				</div>
+			</Card.Content>
+			<Separator />
+			<Card.Footer>
+				<div class="flex w-full justify-between font-semibold">
+					<span>Total</span>
+					<span>12345678</span>
+				</div>
+			</Card.Footer>
+		</Card.Root>
+	</a>
+
+	<!-- Products card -->
+	<a href={resolve('/(protected)/products')} class="flex-1">
+		<Card.Root class="w-full gap-5">
+			<Card.Header>
+				<Card.Title>Products</Card.Title>
+			</Card.Header>
+			<Separator />
+			<Card.Content>
+				<div class="flex justify-between">
+					<span>Day</span>
+					<span>12</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Week</span>
+					<span>123</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Month</span>
+					<span>1234</span>
+				</div>
+
+				<div class="flex justify-between">
+					<span>Year</span>
+					<span>12345</span>
+				</div>
+			</Card.Content>
+			<Separator />
+			<Card.Footer>
+				<div class="flex w-full justify-between font-semibold">
+					<span>Total</span>
+					<span>12345678</span>
+				</div>
+			</Card.Footer>
+		</Card.Root>
+	</a>
+</div>
 
 <div class="flex w-full justify-between">
 	<div class="flex gap-6">
@@ -181,111 +303,6 @@
 			<ArrowRight />
 		</Button>
 	</ButtonGroup.Root>
-</div>
-
-<!-- Statistic cards -->
-<div class="flex w-full gap-6">
-	<!-- Users card -->
-	<a href={resolve('/(protected)/users')} class="flex-1">
-		<Card.Root class="w-full gap-5">
-			<Card.Header>
-				<Card.Title>
-					<h3>Users</h3>
-				</Card.Title>
-			</Card.Header>
-			<Card.Content>
-				<div class="space-y-4">
-					<div class="flex justify-between">
-						<span>Today</span>
-						<span>12</span>
-					</div>
-
-					<div class="flex justify-between">
-						<span>This week</span>
-						<span>123</span>
-					</div>
-
-					<div class="flex justify-between">
-						<span>This month</span>
-						<span>1234</span>
-					</div>
-
-					<div class="flex justify-between font-semibold">
-						<span>Total</span>
-						<span>12345678</span>
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	</a>
-
-	<!-- Subscriptions card -->
-	<a href={resolve('/(protected)/subscriptions')} class="flex-1">
-		<Card.Root class="w-full gap-5">
-			<Card.Header>
-				<Card.Title>
-					<h3>Subscriptions</h3>
-				</Card.Title>
-			</Card.Header>
-			<Card.Content>
-				<div class="space-y-4">
-					<div class="flex justify-between">
-						<span>Today</span>
-						<span>12</span>
-					</div>
-
-					<div class="flex justify-between">
-						<span>This week</span>
-						<span>123</span>
-					</div>
-
-					<div class="flex justify-between">
-						<span>This month</span>
-						<span>1234</span>
-					</div>
-
-					<div class="flex justify-between font-semibold">
-						<span>Total</span>
-						<span>12345678</span>
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	</a>
-
-	<!-- Products card -->
-	<a href={resolve('/(protected)/products')} class="flex-1">
-		<Card.Root class="w-full gap-5">
-			<Card.Header>
-				<Card.Title>
-					<h3>Products</h3>
-				</Card.Title>
-			</Card.Header>
-			<Card.Content>
-				<div class="space-y-4">
-					<div class="flex justify-between">
-						<span>Today</span>
-						<span>12</span>
-					</div>
-
-					<div class="flex justify-between">
-						<span>This week</span>
-						<span>123</span>
-					</div>
-
-					<div class="flex justify-between">
-						<span>This month</span>
-						<span>1234</span>
-					</div>
-
-					<div class="flex justify-between font-semibold">
-						<span>Total</span>
-						<span>12345678</span>
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	</a>
 </div>
 
 <!-- Bar chart -->
