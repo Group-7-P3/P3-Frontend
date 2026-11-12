@@ -19,7 +19,7 @@
 	const start = today(getLocalTimeZone()).subtract({ months: 1, days: -1 });
 	const end = today(getLocalTimeZone());
 	let dateRange: DateRange | undefined = $state({ start, end });
-	let rangeType: 'week' | 'month' | 'year' | 'ytd' = $state('month');
+	let rangeType: 'week' | 'month' | 'year' | 'ytd' | 'all-time' = $state('month');
 
 	const years = $derived.by(() => {
 		const currentYear = new Date().getFullYear();
@@ -261,6 +261,7 @@
 		<Button
 			variant="outline"
 			size="icon"
+			disabled={rangeType === 'ytd' || rangeType === 'all-time'}
 			onclick={() => {
 				if (!dateRange?.start || !dateRange?.end) return;
 				switch (rangeType) {
@@ -277,7 +278,6 @@
 						};
 						break;
 					case 'year':
-					case 'ytd':
 						dateRange = {
 							start: dateRange.start.subtract({ years: 1 }),
 							end: dateRange.end.subtract({ years: 1 })
@@ -291,6 +291,7 @@
 		<Button
 			variant="outline"
 			size="icon"
+			disabled={rangeType === 'ytd' || rangeType === 'all-time'}
 			onclick={() => {
 				if (!dateRange?.start || !dateRange?.end) return;
 				switch (rangeType) {
@@ -307,7 +308,6 @@
 						};
 						break;
 					case 'year':
-					case 'ytd':
 						dateRange = {
 							start: dateRange.start.add({ years: 1 }),
 							end: dateRange.end.add({ years: 1 })

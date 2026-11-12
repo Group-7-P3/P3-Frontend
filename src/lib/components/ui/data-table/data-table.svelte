@@ -302,10 +302,10 @@
 				Results: <Select.Value />
 			</Select.Trigger>
 			<Select.Content align="start">
-				<Select.Item value="12">12</Select.Item>
-				<Select.Item value="24">24</Select.Item>
-				<Select.Item value="48">48</Select.Item>
-				<Select.Item value="96">96</Select.Item>
+				<Select.Item value="10">10</Select.Item>
+				<Select.Item value="25">25</Select.Item>
+				<Select.Item value="50">50</Select.Item>
+				<Select.Item value="100">100</Select.Item>
 			</Select.Content>
 		</Select.Root>
 		<div>
