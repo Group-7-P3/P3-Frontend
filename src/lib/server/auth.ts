@@ -45,9 +45,9 @@ export const auth = betterAuth({
 			sendMail({
 				to: user.email,
 				subject: "Verify email",
-				text: `<p>Click below to verify your email change:</p>
-        				<p><a href="${url}">Verify email change</a></p>
-        				<p>The link is active for 15 minutes.</p>`
+				text: '<p>Click below to verify your email change:</p>' +
+				`<p><a href="${url}">Verify email change</a></p>` +
+				'<p>The link is active for 15 minutes.</p>'
 			});
 		}
 	},
@@ -99,10 +99,10 @@ export const auth = betterAuth({
 			sendMail({
 				to: currentEmail,
 				subject: ("Notice of " + whatChanged + " change"),
-				text: `<p>Hello,</p>
-					<p>A request to change the ${whatChanged} on your staff account has been made.
-					${whatChanged === 'email' ? `<br>New email: ${newEmail}` : ''}</p>
-					<p>If you did not make this ${whatChanged} change, contact your manager immediately.</p>`
+				text: '<p>Hello,</p>' +
+					`<p>A request to change the ${whatChanged} on your staff account has been made.` +
+					`${whatChanged === 'email' ? `<br>New email: ${newEmail}` : ''}</p>` +
+					`<p>If you did not make this ${whatChanged} change, contact your manager immediately.</p>`
 			});
 
 			let bossEmail;
@@ -122,17 +122,17 @@ export const auth = betterAuth({
 
 			if (!bossEmail) return;
 
+			const ternary = (whatChanged === 'email'
+				? `:<br><strong>Old email:</strong> ${currentEmail}<br><strong>New email:</strong> ${newEmail}`
+				: `.<br><strong>Email:</strong> ${currentEmail}`);	
+
 			// Send email to boss
 			sendMail({
 				to: bossEmail.email,
 				subject: ("Notice of " + whatChanged + " change - " + currentEmail),
-				text: `<p>Hello,</p>
-    				<p>A staff member has requested to change their ${whatChanged}${
-        			whatChanged === 'email'
-            		? `:<br><strong>Old email:</strong> ${currentEmail}<br><strong>New email:</strong> ${newEmail}`
-            		: `.<br><strong>Email:</strong> ${currentEmail}`
-    				}</p>
-    				<p>No action is needed unless the change is unexpected.</p>`
+				text: '<p>Hello,</p>'+
+    				`<p>A staff member has requested to change their ${whatChanged}${ternary}</p>` +
+    				`<p>No action is needed unless the change is unexpected.</p>`
 			});
 		})
 	}
