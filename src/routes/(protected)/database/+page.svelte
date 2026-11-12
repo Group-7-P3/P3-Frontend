@@ -287,14 +287,21 @@ ORDER BY s.expires_at ASC;`;
 		for (const match of value.matchAll(missingKeywordPattern)) {
 			const missingKeyword = match[1];
 			const followingIdentifier = match[2];
-			if (keywordCandidates.some((keyword) => keyword.toLowerCase() === missingKeyword.toLowerCase()))
+			if (
+				keywordCandidates.some((keyword) => keyword.toLowerCase() === missingKeyword.toLowerCase())
+			)
 				continue;
-			if (keywordCandidates.some((keyword) => keyword.toLowerCase() === followingIdentifier.toLowerCase()))
+			if (
+				keywordCandidates.some(
+					(keyword) => keyword.toLowerCase() === followingIdentifier.toLowerCase()
+				)
+			)
 				continue;
 			const candidate = keywordCandidates
 				.map((keyword) => ({ keyword, distance: editDistance(missingKeyword, keyword) }))
 				.sort((left, right) => left.distance - right.distance)[0];
-			if (!candidate || candidate.distance > Math.max(1, Math.floor(missingKeyword.length / 4))) continue;
+			if (!candidate || candidate.distance > Math.max(1, Math.floor(missingKeyword.length / 4)))
+				continue;
 			const start = (match.index ?? 0) + match[0].lastIndexOf(missingKeyword);
 			result.push({
 				start,
@@ -342,11 +349,13 @@ ORDER BY s.expires_at ASC;`;
 			});
 		}
 
-		const knownIdentifiers = new Set([
-			...knownKeywords,
-			...tables.flatMap((table) => [table.name, ...table.columns]),
-			...aliases
-		].map((identifier) => identifier.toLowerCase()));
+		const knownIdentifiers = new Set(
+			[
+				...knownKeywords,
+				...tables.flatMap((table) => [table.name, ...table.columns]),
+				...aliases
+			].map((identifier) => identifier.toLowerCase())
+		);
 		const typoCandidates = [
 			...keywords.filter((keyword) => !keyword.includes(' ')),
 			...tables.flatMap((table) => [table.name, ...table.columns])
@@ -370,7 +379,11 @@ ORDER BY s.expires_at ASC;`;
 			)
 				continue;
 			const start = match.index ?? 0;
-			if (result.some((diagnostic) => diagnostic.start <= start && diagnostic.end >= start + token.length))
+			if (
+				result.some(
+					(diagnostic) => diagnostic.start <= start && diagnostic.end >= start + token.length
+				)
+			)
 				continue;
 			result.push({
 				start,
@@ -390,7 +403,11 @@ ORDER BY s.expires_at ASC;`;
 				)
 					continue;
 				const start = (match.index ?? 0) + match[0].lastIndexOf(actualWord);
-				if (result.some((diagnostic) => diagnostic.start <= start && diagnostic.end >= start + actualWord.length))
+				if (
+					result.some(
+						(diagnostic) => diagnostic.start <= start && diagnostic.end >= start + actualWord.length
+					)
+				)
 					continue;
 				result.push({
 					start,
@@ -970,11 +987,11 @@ ORDER BY s.expires_at ASC;`;
 	<title>Database</title>
 </svelte:head>
 
-<div class="flex w-full flex-1 flex-col gap-4">
-	<div class="grid flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-		<div class="flex max-h-191 flex-col gap-4">
+<div class="flex min-h-0 w-full flex-1 flex-col gap-4">
+	<div class="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+		<div class="flex min-h-0 flex-1 flex-col gap-4">
 			<!-- The SQL Editor Card -->
-			<Card.Root class="gap-0 p-0">
+			<Card.Root class="shrink-0 gap-0 p-0">
 				<Card.Header class="flex flex-wrap items-center justify-between gap-3 border-b p-4!">
 					<div class="flex items-center gap-2 text-sm font-medium">
 						<Code size={17} class="text-primary" />
@@ -1015,7 +1032,7 @@ ORDER BY s.expires_at ASC;`;
 					</div>
 				</Card.Header>
 
-				<div class="relative min-h-0 flex-1">
+				<div class="relative min-h-0">
 					<div
 						class="sql-editor relative h-full min-h-0 overflow-hidden bg-muted/30 font-mono text-[13px] leading-6"
 					>
@@ -1097,7 +1114,7 @@ ORDER BY s.expires_at ASC;`;
 			</Card.Root>
 
 			<!-- Resulting Query Table/Error Card -->
-			<Card.Root size="sm" class="flex-1 gap-0 pb-0">
+			<Card.Root size="sm" class="max-h-[calc(100dvh-420.25px)] min-h-0 gap-0 pb-0">
 				<Card.Header class="flex items-center justify-between border-b">
 					<div>
 						<Card.Title>Query results</Card.Title>
@@ -1139,7 +1156,7 @@ ORDER BY s.expires_at ASC;`;
 						{queryError}
 					</div>
 				{:else if queryStatus === 'success' && queryRows.length > 0}
-					<div class="overflow-auto">
+					<div class="min-h-0 flex-1 overflow-auto">
 						<Table.Root>
 							<Table.Header class="sticky top-0 bg-muted/95 text-xs text-muted-foreground">
 								<Table.Row>

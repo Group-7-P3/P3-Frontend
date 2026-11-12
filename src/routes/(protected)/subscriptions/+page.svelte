@@ -32,4 +32,14 @@
 	<title>Subscriptions</title>
 </svelte:head>
 
-<DataTable data={formattedSubs} {columns} />
+<DataTable
+	data={formattedSubs}
+	{columns}
+	totalRows={data.total}
+	page={data.page}
+	pageSize={data.pageSize}
+	filter={data.filter}
+	sort={data.sort}
+	direction={data.direction}
+	route="/(protected)/subscriptions"
+/>

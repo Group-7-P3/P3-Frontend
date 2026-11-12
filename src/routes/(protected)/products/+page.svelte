@@ -29,4 +29,15 @@
 	<title>Products</title>
 </svelte:head>
 
-<DataTable data={formattedProducts} {columns} onRowClick={handleRowClick} />
+<DataTable
+	data={formattedProducts}
+	{columns}
+	totalRows={data.total}
+	page={data.page}
+	pageSize={data.pageSize}
+	filter={data.filter}
+	sort={data.sort}
+	direction={data.direction}
+	route="/(protected)/products"
+	onRowClick={handleRowClick}
+/>

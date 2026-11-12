@@ -193,8 +193,8 @@
 				</Field.Field>
 				{#if emailPendingTo !== ''}
 					<div class="rounded-md border border-orange-400 p-2 text-orange-400">
-						To finalize your email change press the link that has been sent to {$session.data?.user
-							.email ?? ''}
+						To finalize your email change press the link that has been sent to {emailPendingTo ??
+							''}
 					</div>
 				{/if}
 				<Button type="submit" class="w-full">Apply new email</Button>

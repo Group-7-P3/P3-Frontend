@@ -8,11 +8,17 @@
 	} from '@tanstack/svelte-table';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { features, type DataTableFeatures } from './data-table-features.js';
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
 	import { ChevronDown, Plus } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { navigating, page as currentPage } from '$app/state';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { tick } from 'svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '$lib/utils.js';
@@ -23,11 +29,73 @@
 		data: TData[];
 		onRowClick?: (row: TData) => void;
 		onAddClick?: () => void;
+		totalRows: number;
+		page: number;
+		pageSize: number;
+		filter: string;
+		sort: string;
+		direction: 'asc' | 'desc';
+		route: string;
 	};
+	type PaginatedRoute =
+		| `/(protected)/users?${string}`
+		| `/(protected)/products?${string}`
+		| `/(protected)/subscriptions?${string}`
+		| `/(protected)/staff?${string}`;
 
-	let { data, columns, class: className, onRowClick, onAddClick }: DataTableProps<TData> = $props();
+	let {
+		data,
+		columns,
+		class: className,
+		onRowClick,
+		onAddClick,
+		totalRows,
+		page,
+		pageSize,
+		filter,
+		sort,
+		direction,
+		route
+	}: DataTableProps<TData> = $props();
 
-	let globalFilter = $state('');
+	let isMounted = $derived(true);
+	let filterInput = $state<HTMLInputElement | null>(null);
+	// svelte-ignore state_referenced_locally
+	let selectedPageSize = $state(String(pageSize));
+	let filterTimer: ReturnType<typeof setTimeout> | undefined;
+	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
+	let showLoading = $state(false);
+
+	$effect(() => {
+		if (navigating.to === null) {
+			showLoading = false;
+			return;
+		}
+
+		const timer = setTimeout(() => (showLoading = true), 100);
+		return () => clearTimeout(timer);
+	});
+
+	async function updateQuery(updates: Record<string, string>) {
+		const refocusFilter = 'filter' in updates;
+		const selectionStart = filterInput?.selectionStart;
+		const selectionEnd = filterInput?.selectionEnd;
+		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
+		for (const [key, value] of Object.entries(updates)) {
+			if (value) params.set(key, value);
+			else if (key === 'sort') params.set(key, 'none');
+			else params.delete(key);
+		}
+		const target = `${route}?${params}` as PaginatedRoute;
+		await goto(resolve(target));
+		if (!refocusFilter || !filterInput) return;
+		await tick();
+		filterInput.focus();
+		const start = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
+		const end = Math.min(selectionEnd ?? start, filterInput.value.length);
+		filterInput.setSelectionRange(start, end);
+	}
+
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
@@ -59,7 +127,7 @@
 			const isTimestamp = /At$|Date$|Time$/i.test(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
-				id: label,
+				id: col,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
 					const onclick = column.getToggleSortingHandler();
@@ -101,32 +169,44 @@
 
 	const table = createTable({
 		features,
+		manualSorting: true,
 		get data() {
 			return data;
 		},
 		columns: cols,
 		state: {
-			get globalFilter() {
-				return globalFilter;
+			get sorting() {
+				return sort ? [{ id: sort, desc: direction === 'desc' }] : [];
 			}
 		},
-		onGlobalFilterChange: (updater) => {
-			globalFilter = typeof updater === 'function' ? updater(globalFilter) : updater;
+		onSortingChange: (updater) => {
+			const currentSorting = sort ? [{ id: sort, desc: direction === 'desc' }] : [];
+			const next = typeof updater === 'function' ? updater(currentSorting) : updater;
+			const nextSort = next[0];
+			updateQuery({
+				sort: nextSort?.id ?? '',
+				direction: nextSort?.desc ? 'desc' : 'asc',
+				page: '1'
+			});
 		}
 	});
-	table.setPageSize(12);
+
+	function updateFilter(value: string) {
+		if (filterTimer) clearTimeout(filterTimer);
+		filterTimer = setTimeout(() => {
+			updateQuery({ filter: value, page: '1' });
+		}, 250);
+	}
 </script>
 
 <div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
+			bind:ref={filterInput}
 			placeholder="Filter columns..."
-			value={globalFilter}
-			onchange={(e) => {
-				globalFilter = e.currentTarget.value;
-			}}
+			value={filter}
 			oninput={(e) => {
-				globalFilter = e.currentTarget.value;
+				updateFilter(e.currentTarget.value);
 			}}
 			class="max-w-sm"
 		/>
@@ -153,7 +233,16 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<div class="rounded-md border">
+	<div class="relative overflow-hidden rounded-md border" aria-busy={showLoading}>
+		{#if showLoading}
+			<div
+				class="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-sm text-muted-foreground backdrop-blur-[1px]"
+				role="status"
+				aria-live="polite"
+			>
+				Loading...
+			</div>
+		{/if}
 		<Table.Root>
 			<Table.Header>
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
@@ -200,22 +289,42 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex items-center justify-end space-x-2 py-4">
-		<Button
-			variant="outline"
-			size="sm"
-			onclick={() => table.previousPage()}
-			disabled={!table.getCanPreviousPage()}
+	<div class="flex items-center justify-between space-x-2 py-4">
+		<Select.Root
+			type="single"
+			bind:value={selectedPageSize}
+			onValueChange={() => {
+				if (!isMounted) return;
+				updateQuery({ size: selectedPageSize });
+			}}
 		>
-			Previous
-		</Button>
-		<Button
-			variant="outline"
-			size="sm"
-			onclick={() => table.nextPage()}
-			disabled={!table.getCanNextPage()}
-		>
-			Next
-		</Button>
+			<Select.Trigger size="sm">
+				<Select.Value />
+			</Select.Trigger>
+			<Select.Content align="start">
+				<Select.Item value="12">12</Select.Item>
+				<Select.Item value="24">24</Select.Item>
+				<Select.Item value="48">48</Select.Item>
+				<Select.Item value="96">96</Select.Item>
+			</Select.Content>
+		</Select.Root>
+		<div>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => updateQuery({ page: String(page - 1) })}
+				disabled={page <= 1}
+			>
+				Previous
+			</Button>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => updateQuery({ page: String(page + 1) })}
+				disabled={page >= pageCount}
+			>
+				Next
+			</Button>
+		</div>
 	</div>
 </div>

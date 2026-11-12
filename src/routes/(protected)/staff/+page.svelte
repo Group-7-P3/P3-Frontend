@@ -1,6 +1,5 @@
 <script lang="ts">
 	import DataTable from '$lib/components/ui/data-table/data-table.svelte';
-	import { wordsToTitleCase } from '$lib/utils.ts';
 	import type { PageData } from './$types';
 	import NewStaffFormDialog from './newStaff-form.svelte';
 
@@ -19,7 +18,13 @@
 <DataTable
 	data={data.staff}
 	{columns}
-	class="max-w-6xl"
+	totalRows={data.total}
+	page={data.page}
+	pageSize={data.pageSize}
+	filter={data.filter}
+	sort={data.sort}
+	direction={data.direction}
+	route="/(protected)/staff"
 	onRowClick={(staff) => {
 		console.log(staff.id);
 	}}
