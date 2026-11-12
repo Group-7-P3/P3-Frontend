@@ -3,8 +3,7 @@ import * as schema from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from '../users/$types';
 import { and, eq } from 'drizzle-orm';
-import { invalidate } from '$app/navigation';
-import { isString, stringCheck } from '#lib/utils.ts';
+import { stringCheck, stringCheckTrim } from '#lib/utils.ts';
 import { fail } from '@sveltejs/kit';
 
 import 'dotenv';
@@ -39,55 +38,113 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
-	console.error('❌ DATABASE_URL is not set in your .env file');
-	process.exit(1);
+	throw new Error('DATABASE_URL is not set. Check your .env file.');
 }
-
 const client = postgres(connectionString);
 const dbd = drizzle(client);
 
 type Role = 'moderator' | 'admin';
+const errors: Record<string, string> = {};
 
 export const actions = {
 	createStaff: async ({ locals, request }) => {
+		if (!locals.user) {
+			return fail(401, {
+				errors: { general: 'You must be signed in to create a new staff member.' }
+			});
+		}
+
+		if (locals.user.role !== 'owner' && locals.user.role !== 'admin') {
+			return fail(403, {
+				errors: { general: 'You do not have permission to create a new staff member.' }
+			});
+		}
 		const data = await request.formData();
 
-		const email = stringCheck(data.get('newStaffEmail'));
-		const name = stringCheck(data.get('newStaffName'));
+		// Extract and validate form data
+		const name = stringCheckTrim(data.get('newStaffName'));
+		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
+		const email = emailRaw?.toLowerCase() ?? null;
 		const makeAdmin = data.get('makeAdmin');
-		let group = 'empty';
-		const password = data.get('newStaffPassword');
-		const repeatPassword = data.get('repeatPassword');
+		const group = 'INNOVAID';
+		const password = stringCheck(data.get('newStaffPassword'));
+		const repeatPassword = stringCheck(data.get('repeatPassword'));
 		let role: Role = 'moderator';
 
-		if (name === null || email === null || makeAdmin === null || group === null) {
-			return fail(400, {
-				message: 'Please fill in all the fields',
-				name,
-				email
-			});
+		// Name checks
+		if (name === null) {
+			errors.name = 'Name is required.';
+		} else if (name.length < 2) {
+			errors.name = 'Name must be at least 2 characters.';
+		} else if (name.length > 100) {
+			errors.name = 'Name can be at most 100 characters.';
+		} else if (!/^[\p{L}\s'.-]+$/u.test(name)) {
+			errors.name = 'Name can only contain letters, spaces, apostrophes, dots and dashes.';
 		}
 
-		if (isString(password) === false || isString(repeatPassword) === false) {
-			return fail(400, {
-				message: 'Please fill in all the fields'
-			});
+		// Email checks
+		if (email === null) {
+			errors.email = 'Email is required.';
+		} else if (email.length > 254) {
+			errors.email = 'Email is too long.';
+		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+			errors.email = 'Please enter a valid email address.';
 		}
 
-		if (locals.user?.role === 'owner' && makeAdmin === 'on') {
+		/*
+		// Group check
+		if (group === 'INNOVAID' && locals.user.group !== 'INNOVAID') {
+			errors.group = 'You do not have permission to assign this group.';
+		} else if (group === '') {
+			errors.group = 'Group is required.';
+		} else if (group !== locals.user.group && locals.user.group !== 'INNOVAID') {
+			errors.group = 'You do not have permission to assign a group.';
+		}*/
+
+		// Password checks, contains same rules as the password rules in the settings page
+		if (password === null || repeatPassword === null) {
+			errors.password = 'Password and repeat password are required.';
+		} else if (password !== repeatPassword) {
+			errors.password = 'Passwords do not match.';
+		} else if (password.length < 8) {
+			errors.password = 'Password must be at least 8 characters long.';
+		} else if (password.length > 100) {
+			errors.password = 'Password can be at most 100 characters long.';
+		} else if (!/[A-Z]/.test(password)) {
+			errors.password = 'Password must contain at least one uppercase letter.';
+		} else if (!/[a-z]/.test(password)) {
+			/*errors.password = 'Password must contain at least one lowercase letter.';
+		} */
+		} else if (!/[0-9]/.test(password)) {
+			errors.password = 'Password must contain at least one number.';
+		} else if (!/[^A-Za-z0-9]/.test(password)) {
+			errors.password = 'Password must contain at least one special character.';
+		}
+
+		if (locals.user.role === 'owner' && makeAdmin === 'on') {
 			role = 'admin';
 		}
 
-		if (locals.user?.role === 'owner') {
-			group = 'INNOVAID';
-		} else {
-			group = 'Norway';
+		if (
+			Object.keys(errors).length > 0 ||
+			name === null ||
+			email === null ||
+			group === null ||
+			password === null
+		) {
+			return fail(400, { errors });
 		}
 
-		if (password != repeatPassword) {
-			throw new Error(`Passwords don't match`);
+		try {
+			await createUser(email, name, role, group, password);
+		} catch (err) {
+			console.error('Error creating user:', err);
+			return fail(500, { errors });
 		}
-		createUser(email, name, role, group, password);
+		return {
+			success: true,
+			message: `User ${name} created successfully.`
+		};
 	}
 } satisfies Actions;
 
@@ -102,12 +159,8 @@ async function createUser(
 		// 1. Check if user already exists and clean up if they do
 		const existingUser = await dbd.select().from(staff).where(eq(staff.email, email));
 		if (existingUser.length > 0) {
+			errors.email = 'An user with this email already exists.';
 			throw new Error(`User with email ${email} already exists.`);
-
-			const existingId = existingUser[0].id;
-			console.log(`User with email ${email} already exists. Cleaning up old record...`);
-			await db.delete(account).where(eq(account.userId, existingId));
-			await db.delete(staff).where(eq(staff.id, existingId));
 		}
 
 		const hashedPassword = await hashPassword(password);
@@ -132,8 +185,8 @@ async function createUser(
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
-		invalidate('/staff');
-	} catch (error) {
-		console.error('❌ Failed to create user:', error);
+	} catch (err) {
+		console.error('Error in createUser function:', err);
+		throw err; // Re-throw the error to be caught in the calling function
 	}
 }

@@ -5,10 +5,10 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { authClient } from '$lib/client.ts';
-	//import { authClient } from '$lib/auth-client';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import XIcon from '@lucide/svelte/icons/x';
-	//import { moderator } from '../../(auth)/permissions';
+	import { deserialize, applyAction } from '$app/forms';
+	import { refreshAll } from '$app/navigation';
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
@@ -16,12 +16,13 @@
 
 	// Make open bindable
 	let { open = $bindable(false) }: { open: boolean } = $props();
+	let wasOpen = false;
 
 	// Store if staff should be admin, default is moderator
 	let makeAdmin = $state(false);
 
 	// Keeps track of whether the form has been submitted and if the password has changed.
-	let passwordSubmitted = $state(false);
+	let formSubmitted = $state(false);
 
 	// Holds the thrown error, if any, after submitting the form.
 	let passwordFormError = $state('');
@@ -72,15 +73,15 @@
 
 	// Keeps track of the error status on each input field. Like whether the new password meets the requirements or whether the current password is correct.
 	const newStaffPasswordError = $derived(
-		(newStaffPasswordTouched || passwordSubmitted) && !newStaffPasswordOk
+		(newStaffPasswordTouched || formSubmitted) && !newStaffPasswordOk
 	);
 
 	const repeatStaffPasswordError = $derived(
-		(newRepeatStaffPasswordTouched || passwordSubmitted) && !passwordRepeatOk
+		(newRepeatStaffPasswordTouched || formSubmitted) && !passwordRepeatOk
 	);
 
 	// Keeps track of whether password rules status should be shown (colors, red/green)
-	const showPasswordRulesStatus = $derived(newStaffPassword !== '' || passwordSubmitted);
+	const showPasswordRulesStatus = $derived(newStaffPassword !== '' || formSubmitted);
 
 	/**
 	 * Colors a requirement green when it passes and red when it doesn't.
@@ -96,41 +97,67 @@
 		return 'text-red-600';
 	}
 
-	/**
-	 * Resets the staff creation form.
-	 * Empties the input fields and marks them 'not touched'.
-	 */
-	/*
-		function resetStaffForm() {
+	const staffPasswordFormOk = $derived(newStaffPasswordOk && passwordRepeatOk);
+
+	let errors = $state<Record<string, string>>({});
+	let successMessage = $state('');
+
+	//Resets the staff creation form.
+	//Empties the input fields, clears errors and success messages and marks the password fields as untouched.
+	function resetStaffForm() {
+		newStaffName = '';
+		newStaffEmail = '';
 		newStaffPassword = '';
 		newRepeatStaffPassword = '';
-		password = '';
-		passwordSubmitted = false;
+		makeAdmin = false;
+		errors = {};
+		successMessage = '';
+		//group = '';
 
 		newStaffPasswordTouched = false;
 		newRepeatStaffPasswordTouched = false;
-		passwordTouched = false;
-	}	
-*/
+	}
 
 	// Form submission handler for creating a new staff member
-	/*
 	async function handle(e: SubmitEvent) {
 		e.preventDefault();
-/*
-		type Role = 'moderator' | 'admin';
-		let assignedRole: Role = 'moderator';
+		// Stops the form from submitting if the password requirements are not met.
+		if (!staffPasswordFormOk) return;
+		errors = {};
+		successMessage = '';
+		// Sends the form data to the server and handles the response.
+		const form = e.currentTarget as HTMLFormElement;
+		const formData = new FormData(e.target as HTMLFormElement);
+		const response = await fetch(form.action, {
+			method: 'POST',
+			body: formData,
+			headers: { 'x-sveltekit-action': 'true' }
+		});
 
-		if (makeAdmin == true) {
-			assignedRole = 'admin';
+		// Decodes the response from the server
+		const result = deserialize(await response.text());
+
+		// Stores the errors so they can be displayed in the form.
+		if (result.type === 'failure') {
+			errors = (result.data?.errors as Record<string, string>) ?? {};
 		}
 
-			newStaffEmail // required, The email of the user.
-			newStaffPassword // required, The password of the user.
-			newStaffName // required, The name of the user.
-			assignedRole // A string or array of strings representing the roles to apply to the new user.
+		// If the form submission was successful, resets the form, displays a success message and refreshes the staff list.
+		if (result.type === 'success') {
+			resetStaffForm();
+			successMessage = (result.data?.message as string) ?? 'User created successfully.';
+			errors = {};
+			await refreshAll();
+		}
+	}
 
-	}*/
+	// Resets the form when the dialog is closed.
+	$effect(() => {
+		if (!open && wasOpen) {
+			resetStaffForm();
+		}
+		wasOpen = open;
+	});
 </script>
 
 <!-- Snippet for the checkmark/x bullets on the requirement list -->
@@ -142,6 +169,7 @@
 		<XIcon class="size-4" />
 	{/if}
 {/snippet}
+
 <Dialog bind:open>
 	<DialogContent class="gap-2 sm:max-w-xl">
 		<DialogHeader>
@@ -152,7 +180,7 @@
 				<Field.Legend></Field.Legend>
 				<Field.Group class="gap-4">
 					<Field.Field>
-						<form method="POST" action="?/createStaff">
+						<form method="POST" action="?/createStaff" onsubmit={handle}>
 							<Field.Set>
 								<div class="flex gap-6">
 									<Field.Group class="basis-2/3">
@@ -166,6 +194,9 @@
 												autocomplete="off"
 												placeholder="e.g. John Smith"
 											/>
+											{#if errors.name}
+												<Field.Error>{errors.name}</Field.Error>
+											{/if}
 										</Field.Field>
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffEmail">Email</Field.Label>
@@ -177,6 +208,9 @@
 												autocomplete="off"
 												placeholder="example@mail.xyz"
 											/>
+											{#if errors.email}
+												<Field.Error>{errors.email}</Field.Error>
+											{/if}
 										</Field.Field>
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffPassword">Password</Field.Label>
@@ -193,6 +227,8 @@
 											/>
 											{#if newStaffPasswordError}
 												<Field.Error>The password must fulfill all requirements</Field.Error>
+											{:else if errors.password}
+												<Field.Error>{errors.password}</Field.Error>
 											{/if}
 										</Field.Field>
 										<Field.Field class="gap-1">
@@ -222,6 +258,18 @@
 												>
 												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
 											</Field.Field>
+											<Field.Field orientation="horizontal" class="justify-start gap-1">
+												<Field.Label for="makeAdmin" class="w-auto flex-none"
+													>Make admin?</Field.Label
+												>
+												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
+											</Field.Field>
+										{/if}
+										{#if errors.general}
+											<Field.Error class="text-center">{errors.general}</Field.Error>
+										{/if}
+										{#if successMessage}
+											<p class="text-center text-green-500">{successMessage}</p>
 										{/if}
 										<Button type="submit" class="w-full">Create staff account</Button>
 									</Field.Group>

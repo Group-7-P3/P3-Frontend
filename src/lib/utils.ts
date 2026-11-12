@@ -60,10 +60,18 @@ export function isNotEmptyStr(value: string) {
 	return value !== '';
 }
 
-export function stringCheck(value: unknown) {
+export function stringCheckTrim(value: unknown) {
 	if (isString(value)) {
 		const check = trim(value);
 		if (isNotEmptyStr(check)) return check;
+	}
+	return null;
+}
+
+export function stringCheck(value: unknown) {
+	if (isString(value)) {
+		const check = trim(value);
+		if (isNotEmptyStr(check)) return value;
 	}
 	return null;
 }
