@@ -1,13 +1,7 @@
-import {
-	columnVisibilityFeature,
-	rowSelectionFeature,
-	rowSortingFeature,
-	tableFeatures
-} from '@tanstack/svelte-table';
+import { columnVisibilityFeature, rowSortingFeature, tableFeatures } from '@tanstack/svelte-table';
 
 export const features = tableFeatures({
 	columnVisibilityFeature,
-	rowSelectionFeature,
 	rowSortingFeature
 });
 

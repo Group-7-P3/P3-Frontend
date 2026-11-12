@@ -13,13 +13,13 @@
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
-	import { ChevronDown, Plus } from '@lucide/svelte';
+	import { ChevronDown, Copy, Plus } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { tick } from 'svelte';
-	import DataTableCheckbox from './data-table-checkbox.svelte';
+	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
 
@@ -104,17 +104,11 @@
 				class: 'mr-4 pr-4',
 				className: 'mr-4 pr-4'
 			},
-			header: ({ table }) =>
-				renderComponent(DataTableCheckbox, {
-					checked: table.getIsAllPageRowsSelected(),
-					indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
-					onCheckedChange: (value: boolean) => table.toggleAllPageRowsSelected(!!value),
-					'aria-label': 'Select all'
-				}),
 			cell: ({ row }) =>
-				renderComponent(DataTableCheckbox, {
-					checked: row.getIsSelected(),
-					onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
+				renderComponent(DataTableOpenButton, {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					row: row as any,
+					onClick: onRowClick as (row: RowData) => void,
 					'aria-label': 'Select row'
 				}),
 			enableSorting: false,
@@ -225,7 +219,7 @@
 							class="capitalize"
 							bind:checked={() => column.getIsVisible(), (v) => column.toggleVisibility(!!v)}
 						>
-							{column.id}
+							{camelToTitleCase(column.id)}
 						</DropdownMenu.CheckboxItem>
 					{/each}
 				</DropdownMenu.Content>
@@ -258,24 +252,33 @@
 			</Table.Header>
 			<Table.Body>
 				{#each table.getRowModel().rows as row (row.id)}
-					<Table.Row
-						data-state={row.getIsSelected() && 'selected'}
-						class={cn(onRowClick && 'cursor-pointer transition-colors hover:bg-muted/50')}
-						onclick={() => {
-							if (!onRowClick) return;
-							onRowClick(row.original);
-						}}
-					>
+					<Table.Row>
 						{#each row.getVisibleCells() as cell (cell.id)}
 							<Table.Cell
-								class="px-3"
+								class="group relative px-3 py-2"
 								onclick={(e: MouseEvent) => {
-									if (cell.column.id === 'select') {
-										e.stopPropagation();
-									}
+									if (cell.column.id === 'select') e.stopPropagation();
 								}}
 							>
-								<FlexRender {cell} />
+								<div class="flex min-h-8 items-center justify-between gap-2">
+									<span class="truncate">
+										<FlexRender {cell} />
+									</span>
+
+									{#if cell.column.id !== 'select'}
+										<Button
+											variant="ghost"
+											size="icon-xs"
+											class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+											onclick={(e) => {
+												e.stopPropagation();
+												navigator.clipboard.writeText(String(cell.getValue()));
+											}}
+										>
+											<Copy class="h-3 w-3" />
+										</Button>
+									{/if}
+								</div>
 							</Table.Cell>
 						{/each}
 					</Table.Row>

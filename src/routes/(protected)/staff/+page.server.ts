@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 12);
+	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 10);
 	const filter = url.searchParams.get('filter') ?? '';
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
