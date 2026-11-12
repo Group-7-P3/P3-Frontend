@@ -13,6 +13,7 @@
 	import { today, getLocalTimeZone, CalendarDate } from '@internationalized/date';
 	import type { PageData } from './$types';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
+	import { snakeToTitleCase } from '#lib/utils.ts';
 
 	let { data }: { data: PageData } = $props();
 
@@ -27,6 +28,17 @@
 		const endYear = currentYear;
 		return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 	});
+
+	const activityChartData = $derived(
+		data.activities.map((activity) => {
+			return {
+				activity: snakeToTitleCase(activity.activity),
+				seconds: Number(activity.totalSeconds),
+				uses: Number(activity.totalUses)
+			};
+		})
+	);
+	const activitySeries = [{ key: 'seconds', label: 'Seconds' }];
 
 	const chartData = [
 		{ month: new Date('2026-01-01'), home: 50, 'home+': 20, pro: 130, 'pro+': 60 },
@@ -331,30 +343,10 @@
 		<Card.Content>
 			<BarChart
 				class="h-100 px-5"
-				config={chartConfig}
-				data={chartData}
-				series={[
-					{
-						key: 'home',
-						label: 'Home',
-						color: chartConfig.home.color
-					},
-					{
-						key: 'home+',
-						label: 'Home+',
-						color: chartConfig['home+'].color
-					},
-					{
-						key: 'pro',
-						label: 'Pro',
-						color: chartConfig.pro.color
-					},
-					{
-						key: 'pro+',
-						label: 'Pro+',
-						color: chartConfig['pro+'].color
-					}
-				]}
+				data={activityChartData}
+				series={activitySeries}
+				x="activity"
+				y="seconds"
 			/>
 		</Card.Content>
 	</Card.Root>

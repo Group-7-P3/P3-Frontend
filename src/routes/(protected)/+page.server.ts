@@ -1,11 +1,20 @@
 import { db } from '#lib/server/db/index.ts';
 import * as schema from '$lib/server/db/schema';
-import { count } from 'drizzle-orm';
+import { count, sum } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const activities = await db.select().from(schema.activity);
-	const [{ total }] = await db.select({ total: count() }).from(schema.activity);
+	const activities = await db
+		.select({
+			activity: schema.activity.activity,
+			totalUses: count(),
+			totalSeconds: sum(schema.activity.seconds)
+		})
+		.from(schema.activity)
+		.groupBy(schema.activity.activity);
+	console.log(activities);
 
-	return { activities, total };
+	const [{ totalActivities }] = await db.select({ totalActivities: count() }).from(schema.activity);
+
+	return { activities, totalActivities };
 };

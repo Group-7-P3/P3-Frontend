@@ -47,3 +47,7 @@ export function camelToTitleCase(str: string) {
 		.replace(/\bApi\b/g, 'API')
 		.replace(/\bUrl\b/g, 'URL');
 }
+
+export function snakeToTitleCase(str: string) {
+	return str.replace(/^_*(.)|_+(.)/g, (_, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
+}
