@@ -158,8 +158,7 @@
 						return isNaN(date.getTime())
 							? String(value)
 							: new Intl.DateTimeFormat('en-US', {
-									dateStyle: 'medium',
-									timeStyle: 'short'
+									dateStyle: 'medium'
 								}).format(date);
 					}
 				})
@@ -300,7 +299,7 @@
 			}}
 		>
 			<Select.Trigger size="sm">
-				<Select.Value />
+				Results: <Select.Value />
 			</Select.Trigger>
 			<Select.Content align="start">
 				<Select.Item value="12">12</Select.Item>

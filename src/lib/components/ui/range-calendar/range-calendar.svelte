@@ -1,54 +1,83 @@
 <script lang="ts">
-	import { isEqualMonth, type DateValue } from "@internationalized/date";
-	import { RangeCalendar as RangeCalendarPrimitive } from "bits-ui";
-	import type { ButtonVariant } from "#lib/components/ui/button/index.js";
-	import { cn, type WithoutChildrenOrChild } from "#lib/utils.js";
-	import RangeCalendarCaption from "./range-calendar-caption.svelte";
-	import RangeCalendarCell from "./range-calendar-cell.svelte";
-	import RangeCalendarDay from "./range-calendar-day.svelte";
-	import RangeCalendarGridBody from "./range-calendar-grid-body.svelte";
-	import RangeCalendarGridHead from "./range-calendar-grid-head.svelte";
-	import RangeCalendarGridRow from "./range-calendar-grid-row.svelte";
-	import RangeCalendarGrid from "./range-calendar-grid.svelte";
-	import RangeCalendarHeadCell from "./range-calendar-head-cell.svelte";
-	import RangeCalendarHeader from "./range-calendar-header.svelte";
-	import RangeCalendarMonth from "./range-calendar-month.svelte";
-	import RangeCalendarMonths from "./range-calendar-months.svelte";
-	import RangeCalendarNav from "./range-calendar-nav.svelte";
-	import RangeCalendarNextButton from "./range-calendar-next-button.svelte";
-	import RangeCalendarPrevButton from "./range-calendar-prev-button.svelte";
-	import type { Snippet } from "svelte";
+	import { isEqualMonth, type DateValue } from '@internationalized/date';
+	import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
+	import type { ButtonVariant } from '#lib/components/ui/button/index.js';
+	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
+	import RangeCalendarCaption from './range-calendar-caption.svelte';
+	import RangeCalendarCell from './range-calendar-cell.svelte';
+	import RangeCalendarDay from './range-calendar-day.svelte';
+	import RangeCalendarGridBody from './range-calendar-grid-body.svelte';
+	import RangeCalendarGridHead from './range-calendar-grid-head.svelte';
+	import RangeCalendarGridRow from './range-calendar-grid-row.svelte';
+	import RangeCalendarGrid from './range-calendar-grid.svelte';
+	import RangeCalendarHeadCell from './range-calendar-head-cell.svelte';
+	import RangeCalendarHeader from './range-calendar-header.svelte';
+	import RangeCalendarMonth from './range-calendar-month.svelte';
+	import RangeCalendarMonths from './range-calendar-months.svelte';
+	import RangeCalendarNav from './range-calendar-nav.svelte';
+	import RangeCalendarNextButton from './range-calendar-next-button.svelte';
+	import RangeCalendarPrevButton from './range-calendar-prev-button.svelte';
+	import type { Snippet } from 'svelte';
 
 	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		placeholder = $bindable(),
-		weekdayFormat = "short",
+		weekdayFormat = 'short',
 		class: className,
-		buttonVariant = "ghost",
-		captionLayout = "label",
-		locale = "en-US",
+		buttonVariant = 'ghost',
+		captionLayout = 'label',
+		locale = 'en-US',
 		months: monthsProp,
-		years,
+		years: yearsProp,
 		monthFormat: monthFormatProp,
-		yearFormat = "numeric",
+		yearFormat = 'numeric',
 		day,
 		disableDaysOutsideMonth = false,
 		...restProps
 	}: WithoutChildrenOrChild<RangeCalendarPrimitive.RootProps> & {
 		buttonVariant?: ButtonVariant;
-		captionLayout?: "dropdown" | "dropdown-months" | "dropdown-years" | "label";
-		months?: RangeCalendarPrimitive.MonthSelectProps["months"];
-		years?: RangeCalendarPrimitive.YearSelectProps["years"];
-		monthFormat?: RangeCalendarPrimitive.MonthSelectProps["monthFormat"];
-		yearFormat?: RangeCalendarPrimitive.YearSelectProps["yearFormat"];
+		captionLayout?: 'dropdown' | 'dropdown-months' | 'dropdown-years' | 'label';
+		months?: RangeCalendarPrimitive.MonthSelectProps['months'];
+		years?: RangeCalendarPrimitive.YearSelectProps['years'];
+		monthFormat?: RangeCalendarPrimitive.MonthSelectProps['monthFormat'];
+		yearFormat?: RangeCalendarPrimitive.YearSelectProps['yearFormat'];
 		day?: Snippet<[{ day: DateValue; outsideMonth: boolean }]>;
 	} = $props();
 
 	const monthFormat = $derived.by(() => {
 		if (monthFormatProp) return monthFormatProp;
-		if (captionLayout.startsWith("dropdown")) return "short";
-		return "long";
+		if (captionLayout.startsWith('dropdown')) return 'short';
+		return 'long';
+	});
+
+	const resolvedMonths = $derived.by(() => {
+		const rawMonths = monthsProp ?? Array.from({ length: 12 }, (_, i) => i + 1);
+		return rawMonths.map((monthValue) => {
+			const sampleDate = new Date(2000, monthValue - 1, 15);
+			const label = sampleDate.toLocaleString(locale, {
+				month: typeof monthFormat === 'string' ? monthFormat : 'short'
+			});
+			return { value: monthValue, label };
+		});
+	});
+
+	// Process and format the active years configuration collection
+	const resolvedYears = $derived.by(() => {
+		if (yearsProp) {
+			return yearsProp.map((yearValue) => ({
+				value: yearValue,
+				label: yearValue.toString()
+			}));
+		}
+		// Robust dynamic baseline window surrounding the current view context
+		const currentYear = placeholder?.year ?? new Date().getFullYear();
+		const startYear = currentYear - 50;
+		const endYear = currentYear + 50;
+		return Array.from({ length: endYear - startYear + 1 }, (_, i) => {
+			const yearValue = startYear + i;
+			return { value: yearValue, label: yearValue.toString() };
+		});
 	});
 </script>
 
@@ -59,7 +88,7 @@
 	{weekdayFormat}
 	{disableDaysOutsideMonth}
 	class={cn(
-		"p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(8)] group/calendar bg-background p-3 [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+		'group/calendar bg-background p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(8)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
 		className
 	)}
 	{locale}
@@ -78,9 +107,9 @@
 					<RangeCalendarHeader>
 						<RangeCalendarCaption
 							{captionLayout}
-							months={monthsProp}
+							months={resolvedMonths}
 							{monthFormat}
-							{years}
+							years={resolvedYears}
 							{yearFormat}
 							month={month.value}
 							bind:placeholder
@@ -107,7 +136,7 @@
 											{#if day}
 												{@render day({
 													day: date,
-													outsideMonth: !isEqualMonth(date, month.value),
+													outsideMonth: !isEqualMonth(date, month.value)
 												})}
 											{:else}
 												<RangeCalendarDay />

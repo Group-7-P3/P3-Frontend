@@ -10,7 +10,7 @@
 	import PopoverRangeCalendar from '#lib/components/ui/popover-range-calendar.svelte';
 	import { Button } from '#lib/components/ui/button/index.ts';
 	import type { DateRange } from 'bits-ui';
-	import { today, getLocalTimeZone } from '@internationalized/date';
+	import { today, getLocalTimeZone, CalendarDate } from '@internationalized/date';
 	import type { PageData } from './$types';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 
@@ -20,6 +20,13 @@
 	const end = today(getLocalTimeZone());
 	let dateRange: DateRange | undefined = $state({ start, end });
 	let rangeType: 'week' | 'month' | 'year' | 'ytd' = $state('month');
+
+	const years = $derived.by(() => {
+		const currentYear = new Date().getFullYear();
+		const startYear = 2026;
+		const endYear = currentYear;
+		return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+	});
 
 	const chartData = [
 		{ month: new Date('2026-01-01'), home: 50, 'home+': 20, pro: 130, 'pro+': 60 },
@@ -64,7 +71,7 @@
 <div class="flex w-full gap-6">
 	<!-- Users card -->
 	<a href={resolve('/(protected)/users')} class="flex-1">
-		<Card.Root class="w-full gap-5">
+		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
 			<Card.Header>
 				<Card.Title>Users</Card.Title>
 			</Card.Header>
@@ -103,7 +110,7 @@
 
 	<!-- Subscriptions card -->
 	<a href={resolve('/(protected)/subscriptions')} class="flex-1">
-		<Card.Root class="w-full gap-5">
+		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
 			<Card.Header>
 				<Card.Title>Subscriptions</Card.Title>
 			</Card.Header>
@@ -141,7 +148,7 @@
 
 	<!-- Products card -->
 	<a href={resolve('/(protected)/products')} class="flex-1">
-		<Card.Root class="w-full gap-5">
+		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
 			<Card.Header>
 				<Card.Title>Products</Card.Title>
 			</Card.Header>
@@ -178,10 +185,9 @@
 	</a>
 </div>
 
-<div class="flex w-full justify-between">
-	<div class="flex gap-6">
-		<ToggleGroup.Root bind:value={rangeType} type="single" variant="outline">
-			<!-- <ToggleGroup.Item
+<div class="flex w-full gap-4">
+	<ToggleGroup.Root bind:value={rangeType} type="single" variant="outline">
+		<!-- <ToggleGroup.Item
 				value="day"
 				onclick={() => {
 					dateRange = {
@@ -192,54 +198,64 @@
 			>
 				Day
 			</ToggleGroup.Item> -->
-			<ToggleGroup.Item
-				value="week"
-				onclick={() => {
-					dateRange = {
-						start: today(getLocalTimeZone()).subtract({ weeks: 1 }),
-						end: today(getLocalTimeZone())
-					};
-				}}
-			>
-				Week
-			</ToggleGroup.Item>
-			<ToggleGroup.Item
-				value="month"
-				onclick={() => {
-					dateRange = {
-						start: today(getLocalTimeZone()).subtract({ months: 1 }),
-						end: today(getLocalTimeZone())
-					};
-				}}
-			>
-				Month
-			</ToggleGroup.Item>
-			<ToggleGroup.Item
-				value="year"
-				onclick={() => {
-					dateRange = {
-						start: today(getLocalTimeZone()).subtract({ years: 1 }),
-						end: today(getLocalTimeZone())
-					};
-				}}
-			>
-				Year
-			</ToggleGroup.Item>
-			<ToggleGroup.Item
-				value="ytd"
-				onclick={() => {
-					dateRange = {
-						start: today(getLocalTimeZone()).set({ month: 1, day: 1 }),
-						end: today(getLocalTimeZone())
-					};
-				}}
-			>
-				YTD
-			</ToggleGroup.Item>
-		</ToggleGroup.Root>
+		<ToggleGroup.Item
+			value="week"
+			onclick={() => {
+				dateRange = {
+					start: today(getLocalTimeZone()).subtract({ weeks: 1 }),
+					end: today(getLocalTimeZone())
+				};
+			}}
+		>
+			Week
+		</ToggleGroup.Item>
+		<ToggleGroup.Item
+			value="month"
+			onclick={() => {
+				dateRange = {
+					start: today(getLocalTimeZone()).subtract({ months: 1 }),
+					end: today(getLocalTimeZone())
+				};
+			}}
+		>
+			Month
+		</ToggleGroup.Item>
+		<ToggleGroup.Item
+			value="year"
+			onclick={() => {
+				dateRange = {
+					start: today(getLocalTimeZone()).subtract({ years: 1 }),
+					end: today(getLocalTimeZone())
+				};
+			}}
+		>
+			Year
+		</ToggleGroup.Item>
+		<ToggleGroup.Item
+			value="ytd"
+			onclick={() => {
+				dateRange = {
+					start: today(getLocalTimeZone()).set({ month: 1, day: 1 }),
+					end: today(getLocalTimeZone())
+				};
+			}}
+		>
+			YTD
+		</ToggleGroup.Item>
+		<ToggleGroup.Item
+			value="all-time"
+			onclick={() => {
+				dateRange = {
+					start: new CalendarDate(2026, 9, 2),
+					end: today(getLocalTimeZone())
+				};
+			}}
+		>
+			All Time
+		</ToggleGroup.Item>
+	</ToggleGroup.Root>
 
-		<PopoverRangeCalendar bind:value={dateRange} />
-	</div>
+	<PopoverRangeCalendar bind:value={dateRange} {years} />
 
 	<ButtonGroup.Root>
 		<Button
