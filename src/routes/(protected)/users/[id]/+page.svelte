@@ -1,11 +1,84 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { enhance, type SubmitFunction } from '$app/forms';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Field from '$lib/components/ui/field/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { resolve } from '$app/paths';
 	import { wordsToTitleCase } from '#lib/utils.ts';
-	import * as Card from '$lib/components/ui/card/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
 
 	let { data }: { data: PageData } = $props();
+
+	// Controls whether the edit popup is visible
+	let isEditing = $state(false);
+
+	// Keep track on if the form has been submitted
+	let submitted = $state(false);
+
+	// Keeps track of when form inputs have been touched ;)
+	let customerIdTouched = $state(false);
+	let managedByTouched = $state(false);
+
+	// keeps track of the inputs in the form
+	let customerId = $state('');
+	let managedBy = $state('');
+	// Keeps track of duplicate id error and general errors
+	let customerIdDuplicate = $state(false);
+	let formError = $state('');
+
+	// Validation rules for each field in the form
+	const customerIdOk = $derived(customerId.trim() !== '' && !customerIdDuplicate);
+	const managedByOk = $derived(managedBy.trim() !== '');
+	const formOk = $derived(customerIdOk && managedByOk);
+
+	// shows field errors only after  th input has been touched/submitted
+	const customerIdError = $derived((customerIdTouched || submitted) && !customerIdOk);
+	const managedByError = $derived((managedByTouched || submitted) && !managedByOk);
+
+	/**
+	 * Takes the user's current values and puts it in the form
+	 * Also resets validation states, and opens the edit popup
+	 */
+	function openEdit() {
+		customerId = data.user.customerId != null ? String(data.user.customerId) : '';
+		managedBy = data.user.managedBy ?? '';
+		submitted = false;
+		customerIdTouched = false;
+		managedByTouched = false;
+		customerIdDuplicate = false;
+		formError = '';
+		isEditing = true;
+	}
+
+	/* validates the form before sending to the server
+	 * Also displays duplicate errors if rejected or refreshes page data and closes the popup on success
+	 */
+	const handleUserSubmit: SubmitFunction = ({ cancel }) => {
+		submitted = true;
+		if (!formOk) {
+			cancel();
+			return;
+		}
+
+		formError = '';
+
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				if (result.data?.customerIdDuplicate) {
+					customerIdDuplicate = true;
+				}
+				return;
+			}
+			if (result.type !== 'success') {
+				formError = 'Something went wrong. Please try again';
+				return;
+			}
+
+			await update();
+			isEditing = false;
+		};
+	};
 </script>
 
 <svelte:head>
@@ -48,6 +121,7 @@
 						{data.user.managedBy}
 					</dd>
 				</div>
+				<Button variant="outline" size="sm" onclick={openEdit}>Edit</Button>
 			</Card.Content>
 		</Card.Root>
 
@@ -115,3 +189,75 @@
 		</Card.Root>
 	</div>
 </div>
+
+<!-- Edit Popup -->
+{#if isEditing}
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+		<Card.Root class="w-full max-w-md px-6">
+			<form method="POST" action="?/updateUser" use:enhance={handleUserSubmit}>
+				<Field.Set>
+					<Field.Legend>Edit User #{data.user.id}</Field.Legend>
+					<Field.Group>
+						<Field.Field>
+							<Field.Label for="customerId">Customer ID</Field.Label>
+							<Input
+								id="customerId"
+								name="customerId"
+								type="text"
+								inputmode="numeric"
+								bind:value={customerId}
+								autocomplete="off"
+								onblur={() => (customerIdTouched = true)}
+								oninput={() => {
+									customerIdDuplicate = false;
+									formError = '';
+								}}
+								aria-invalid={customerIdError}
+							/>
+							{#if customerIdError}
+								<Field.Error>
+									{customerIdDuplicate
+										? 'This Customer ID is already in use'
+										: 'Please enter a valid Customer ID'}
+								</Field.Error>
+							{/if}
+						</Field.Field>
+
+						<Field.Field>
+							<Field.Label for="managedBy">Managed By</Field.Label>
+							<Input
+								id="managedBy"
+								name="managedBy"
+								type="text"
+								bind:value={managedBy}
+								autocomplete="off"
+								onblur={() => (managedByTouched = true)}
+								oninput={() => (formError = '')}
+								aria-invalid={managedByError}
+							/>
+							{#if managedByError}
+								<Field.Error>Please enter who manages this user</Field.Error>
+							{/if}
+						</Field.Field>
+
+						{#if formError}
+							<Field.Error>{formError}</Field.Error>
+						{/if}
+
+						<div class="flex gap-2">
+							<Button
+								type="button"
+								variant="outline"
+								class="w-1/2"
+								onclick={() => (isEditing = false)}
+							>
+								Cancel
+							</Button>
+							<Button type="submit" class="w-1/2">Save changes</Button>
+						</div>
+					</Field.Group>
+				</Field.Set>
+			</form>
+		</Card.Root>
+	</div>
+{/if}
