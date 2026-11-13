@@ -18,21 +18,25 @@ function getCopenhagenDate(date: Date = new Date()): Date {
 	return new Date(copenhagenString);
 }
 
-function randomCopenhagenPast(): Date {
-	return getCopenhagenDate(faker.date.past());
-}
+// Generate a random date strictly between 1 year ago and now (Copenhagen timezone)
+function randomCopenhagenPastYear(): Date {
+	const now = new Date();
+	const oneYearAgo = new Date();
+	oneYearAgo.setFullYear(now.getFullYear() - 1);
 
-function randomCopenhagenRecent(days = 30): Date {
-	return getCopenhagenDate(faker.date.recent({ days }));
-}
-
-function randomCopenhagenFutureOrPast(): Date {
-	const rawDate = faker.helpers.arrayElement([faker.date.past(), faker.date.future()]);
+	const rawDate = faker.date.between({ from: oneYearAgo, to: now });
 	return getCopenhagenDate(rawDate);
 }
 
+// For subscription expiration dates, if you want them within the past year or up to today (no future)
+function randomCopenhagenValidExpiration(): Date {
+	return randomCopenhagenPastYear();
+}
+
 async function main() {
-	console.log('🌱 Starting database seeding (Copenhagen timezone)...');
+	console.log(
+		'🌱 Starting database seeding (Copenhagen timezone, strictly past year up to today)...'
+	);
 
 	// 1. Clear existing data (in reverse order of dependencies)
 	console.log('🧹 Cleaning existing data...');
@@ -47,8 +51,8 @@ async function main() {
 	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
 		status: faker.helpers.arrayElement(['inactive', 'active', 'deactivated'] as const),
-		createdAt: randomCopenhagenPast(),
-		updatedAt: randomCopenhagenPast()
+		createdAt: randomCopenhagenPastYear(),
+		updatedAt: randomCopenhagenPastYear()
 	}));
 
 	const insertedProducts = await db.insert(schema.product).values(dummyProducts).returning();
@@ -59,8 +63,8 @@ async function main() {
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
 		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const),
-		createdAt: randomCopenhagenPast(),
-		updatedAt: randomCopenhagenPast()
+		createdAt: randomCopenhagenPastYear(),
+		updatedAt: randomCopenhagenPastYear()
 	}));
 
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
@@ -74,11 +78,11 @@ async function main() {
 		return Array.from({ length: subCount }).map(() => ({
 			userId: user.id,
 			type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
-			expiresAt: randomCopenhagenFutureOrPast().toISOString(),
+			expiresAt: randomCopenhagenValidExpiration().toISOString(),
 			licenseKey: faker.number.int({ min: 100000, max: 999999 }),
 			maxDevices: faker.number.int({ min: 1, max: 5 }),
-			createdAt: randomCopenhagenPast(),
-			updatedAt: randomCopenhagenPast(),
+			createdAt: randomCopenhagenPastYear(),
+			updatedAt: randomCopenhagenPastYear(),
 			autoRenew: faker.datatype.boolean()
 		}));
 	});
@@ -120,7 +124,7 @@ async function main() {
 
 	const dummyActivities = Array.from({ length: 500 }).map(() => ({
 		activity: faker.helpers.arrayElement(activityNames),
-		time: randomCopenhagenRecent(30),
+		time: randomCopenhagenPastYear(),
 		seconds: faker.number.int({ min: 1, max: 60 })
 	}));
 

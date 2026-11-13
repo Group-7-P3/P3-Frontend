@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import * as Card from '$lib/components/ui/card';
-	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import { resolve } from '$app/paths';
 	import AreaChart from '#lib/components/ui/chart/area-chart.svelte';
@@ -14,12 +14,13 @@
 	import type { PageData } from './$types';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import { snakeToTitleCase } from '#lib/utils.ts';
+	import { updateQueryParams } from '#lib/utils/url.ts';
 
 	let { data }: { data: PageData } = $props();
 
-	const start = today(getLocalTimeZone()).subtract({ months: 1, days: -1 });
-	const end = today(getLocalTimeZone());
-	let dateRange: DateRange | undefined = $state({ start, end });
+	let start = $state(today(getLocalTimeZone()).subtract({ months: 1, days: -1 }));
+	let end = $state(today(getLocalTimeZone()));
+	let dateRange: DateRange | undefined = $derived({ start, end });
 	let rangeType: 'week' | 'month' | 'year' | 'ytd' | 'all-time' = $state('month');
 
 	const years = $derived.by(() => {
@@ -29,16 +30,43 @@
 		return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 	});
 
-	const activityChartData = $derived(
-		data.activities.map((activity) => {
+	let activityChartType: 'seconds' | 'uses' = $state('seconds');
+	const activityChartData = $derived.by(() => {
+		// Map existing activities from the server response for quick lookup
+		const activityMap = new Map(
+			data.activities.map((a) => [
+				a.activity.toLowerCase(),
+				{ seconds: Number(a.totalSeconds), uses: Number(a.totalUses) }
+			])
+		);
+
+		// Iterate through the static config keys to guarantee a fixed order and full set of bars
+		return Object.keys(activityChartConfig).map((key) => {
+			const title = snakeToTitleCase(key);
+			const existing = activityMap.get(key) || { seconds: 0, uses: 0 };
 			return {
-				activity: snakeToTitleCase(activity.activity),
-				seconds: Number(activity.totalSeconds),
-				uses: Number(activity.totalUses)
+				activity: title,
+				seconds: existing.seconds,
+				uses: existing.uses
 			};
-		})
+		});
+	});
+	const activityChartConfig = {
+		simon_says: { label: 'Simon Says', color: '#ffb000' },
+		neglect_color: { label: 'Neglect Color', color: '#fe6100' },
+		sequence: { label: 'Sequence', color: '#dc267f' },
+		whack_a_mole: { label: 'Whack A Mole', color: '#785ef0' },
+		reaction: { label: 'Reaction', color: '#648fff' },
+		reflex: { label: 'Reflex', color: '#4b0082' },
+		balance: { label: 'Balance', color: '#0099ff' },
+		force: { label: 'Force', color: '#00cc99' }
+	};
+
+	const activitySeries = $derived(
+		activityChartType === 'seconds'
+			? [{ key: 'seconds', label: 'Seconds' }]
+			: [{ key: 'uses', label: 'Uses' }]
 	);
-	const activitySeries = [{ key: 'seconds', label: 'Seconds' }];
 
 	const chartData = [
 		{ month: new Date('2026-01-01'), home: 50, 'home+': 20, pro: 130, 'pro+': 60 },
@@ -73,6 +101,27 @@
 			color: '#785ef0'
 		}
 	};
+
+	async function setDate(startDate?: CalendarDate, endDate?: CalendarDate) {
+		if (startDate) start = startDate;
+		if (endDate) end = endDate;
+
+		handleDateChange(start, end);
+	}
+
+	async function handleDateChange(newStart: CalendarDate, newEnd: CalendarDate) {
+		start = newStart;
+		end = newEnd;
+
+		await updateQueryParams({
+			currentUrl: new URL(page.url.toString()),
+			updates: {
+				start: newStart.toString(),
+				end: newEnd.toString()
+			},
+			route: page.url.pathname
+		});
+	}
 </script>
 
 <svelte:head>
@@ -198,74 +247,53 @@
 </div>
 
 <div class="flex w-full gap-4">
-	<ToggleGroup.Root bind:value={rangeType} type="single" variant="outline">
-		<!-- <ToggleGroup.Item
-				value="day"
-				onclick={() => {
-					dateRange = {
-						start: today(getLocalTimeZone()).set({ month: 1, day: 1 }),
-						end: today(getLocalTimeZone())
-					};
-				}}
-			>
-				Day
-			</ToggleGroup.Item> -->
-		<ToggleGroup.Item
-			value="week"
+	<ButtonGroup.Root>
+		<Button
+			variant={rangeType === 'week' ? 'default' : 'outline'}
 			onclick={() => {
-				dateRange = {
-					start: today(getLocalTimeZone()).subtract({ weeks: 1 }),
-					end: today(getLocalTimeZone())
-				};
+				rangeType = 'week';
+				setDate(today(getLocalTimeZone()).subtract({ weeks: 1 }), today(getLocalTimeZone()));
 			}}
 		>
 			Week
-		</ToggleGroup.Item>
-		<ToggleGroup.Item
-			value="month"
+		</Button>
+		<Button
+			variant={rangeType === 'month' ? 'default' : 'outline'}
 			onclick={() => {
-				dateRange = {
-					start: today(getLocalTimeZone()).subtract({ months: 1 }),
-					end: today(getLocalTimeZone())
-				};
+				rangeType = 'month';
+				setDate(today(getLocalTimeZone()).subtract({ months: 1 }), today(getLocalTimeZone()));
 			}}
 		>
 			Month
-		</ToggleGroup.Item>
-		<ToggleGroup.Item
-			value="year"
+		</Button>
+		<Button
+			variant={rangeType === 'year' ? 'default' : 'outline'}
 			onclick={() => {
-				dateRange = {
-					start: today(getLocalTimeZone()).subtract({ years: 1 }),
-					end: today(getLocalTimeZone())
-				};
+				rangeType = 'year';
+				setDate(today(getLocalTimeZone()).subtract({ years: 1 }), today(getLocalTimeZone()));
 			}}
 		>
 			Year
-		</ToggleGroup.Item>
-		<ToggleGroup.Item
-			value="ytd"
+		</Button>
+		<Button
+			variant={rangeType === 'ytd' ? 'default' : 'outline'}
 			onclick={() => {
-				dateRange = {
-					start: today(getLocalTimeZone()).set({ month: 1, day: 1 }),
-					end: today(getLocalTimeZone())
-				};
+				rangeType = 'ytd';
+				setDate(today(getLocalTimeZone()).set({ month: 1, day: 1 }), today(getLocalTimeZone()));
 			}}
 		>
 			YTD
-		</ToggleGroup.Item>
-		<ToggleGroup.Item
-			value="all-time"
+		</Button>
+		<Button
+			variant={rangeType === 'all-time' ? 'default' : 'outline'}
 			onclick={() => {
-				dateRange = {
-					start: new CalendarDate(2026, 9, 2),
-					end: today(getLocalTimeZone())
-				};
+				rangeType = 'all-time';
+				setDate(new CalendarDate(2026, 9, 2), today(getLocalTimeZone()));
 			}}
 		>
 			All Time
-		</ToggleGroup.Item>
-	</ToggleGroup.Root>
+		</Button>
+	</ButtonGroup.Root>
 
 	<PopoverRangeCalendar bind:value={dateRange} {years} />
 
@@ -275,25 +303,16 @@
 			size="icon"
 			disabled={rangeType === 'ytd' || rangeType === 'all-time'}
 			onclick={() => {
-				if (!dateRange?.start || !dateRange?.end) return;
+				if (!start || !end) return;
 				switch (rangeType) {
 					case 'week':
-						dateRange = {
-							start: dateRange.start.subtract({ weeks: 1 }),
-							end: dateRange.end.subtract({ weeks: 1 })
-						};
+						setDate(start.subtract({ weeks: 1 }), end.subtract({ weeks: 1 }));
 						break;
 					case 'month':
-						dateRange = {
-							start: dateRange.start.subtract({ months: 1 }),
-							end: dateRange.end.subtract({ months: 1 })
-						};
+						setDate(start.subtract({ months: 1 }), end.subtract({ months: 1 }));
 						break;
 					case 'year':
-						dateRange = {
-							start: dateRange.start.subtract({ years: 1 }),
-							end: dateRange.end.subtract({ years: 1 })
-						};
+						setDate(start.subtract({ years: 1 }), end.subtract({ years: 1 }));
 						break;
 				}
 			}}
@@ -305,25 +324,16 @@
 			size="icon"
 			disabled={rangeType === 'ytd' || rangeType === 'all-time'}
 			onclick={() => {
-				if (!dateRange?.start || !dateRange?.end) return;
+				if (!start || !end) return;
 				switch (rangeType) {
 					case 'week':
-						dateRange = {
-							start: dateRange.start.add({ weeks: 1 }),
-							end: dateRange.end.add({ weeks: 1 })
-						};
+						setDate(start.add({ weeks: 1 }), end.add({ weeks: 1 }));
 						break;
 					case 'month':
-						dateRange = {
-							start: dateRange.start.add({ months: 1 }),
-							end: dateRange.end.add({ months: 1 })
-						};
+						setDate(start.add({ months: 1 }), end.add({ months: 1 }));
 						break;
 					case 'year':
-						dateRange = {
-							start: dateRange.start.add({ years: 1 }),
-							end: dateRange.end.add({ years: 1 })
-						};
+						setDate(start.add({ years: 1 }), end.add({ years: 1 }));
 						break;
 				}
 			}}
@@ -336,17 +346,34 @@
 <!-- Bar chart -->
 <div class="w-full">
 	<Card.Root>
-		<Card.Header>
+		<Card.Header class="flex items-center justify-between">
 			<Card.Title>Activities</Card.Title>
+			<ButtonGroup.Root>
+				<Button
+					variant={activityChartType === 'seconds' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						activityChartType = 'seconds';
+					}}>Seconds</Button
+				>
+				<Button
+					variant={activityChartType === 'uses' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						activityChartType = 'uses';
+					}}>Uses</Button
+				>
+			</ButtonGroup.Root>
 		</Card.Header>
-
+		<Separator />
 		<Card.Content>
 			<BarChart
 				class="h-100 px-5"
 				data={activityChartData}
+				config={activityChartConfig}
 				series={activitySeries}
 				x="activity"
-				y="seconds"
+				y={activityChartType === 'seconds' ? 'seconds' : 'uses'}
 			/>
 		</Card.Content>
 	</Card.Root>
@@ -358,7 +385,7 @@
 		<Card.Header>
 			<Card.Title>Sales</Card.Title>
 		</Card.Header>
-
+		<Separator />
 		<Card.Content>
 			<LineChart
 				class="h-100 px-5"
@@ -397,7 +424,7 @@
 		<Card.Header>
 			<Card.Title>Revenue</Card.Title>
 		</Card.Header>
-
+		<Separator />
 		<Card.Content>
 			<AreaChart
 				class="h-100 px-5"

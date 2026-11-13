@@ -15,15 +15,15 @@
 		series?: SeriesData<any, Component<BarsProps>>[];
 	}
 
-	const { class: className, data, config = {}, x, y, series }: Props = $props();
+	const { class: className, data = [], config = {}, x, y, series }: Props = $props();
 
-	const chartColors = [
-		'var(--chart-1)',
-		'var(--chart-2)',
-		'var(--chart-3)',
-		'var(--chart-4)',
-		'var(--chart-5)'
-	];
+	// Extract keys for domain and colors for range from the config object
+	const domains = $derived(Object.keys(config));
+	const colors = $derived(
+		Object.values(config)
+			.map((item) => item.color)
+			.filter((color): color is string => typeof color === 'string')
+	);
 </script>
 
 <Chart.Container {config} class={cn('w-full max-w-7xl', className)}>
@@ -32,7 +32,9 @@
 		{y}
 		{data}
 		{series}
-		cRange={chartColors}
+		c={x}
+		cDomain={domains.length > 0 ? domains : undefined}
+		cRange={colors.length > 0 ? colors : undefined}
 		props={{
 			bars: {
 				stroke: 'none',
