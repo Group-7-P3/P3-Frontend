@@ -1,6 +1,6 @@
 import { db } from '#lib/server/db/index.ts';
 import * as schema from '$lib/server/db/schema';
-import { between, count, sum } from 'drizzle-orm';
+import { and, between, count, gte, lte, sum } from 'drizzle-orm';
 import { today, getLocalTimeZone, parseDate } from '@internationalized/date';
 import type { PageServerLoad } from './$types';
 
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		try {
 			startDateObj = parseDate(startParam);
 		} catch {
-			// Fallback to 1 month ago if the query param is invalid
+			// Fallback to 1 month ago if invalid
 		}
 	}
 
@@ -24,12 +24,15 @@ export const load: PageServerLoad = async ({ url }) => {
 		try {
 			endDateObj = parseDate(endParam);
 		} catch {
-			// Fallback to today if the query param is invalid
+			// Fallback to today if invalid
 		}
 	}
 
 	const startDate = startDateObj.toDate(timeZone);
 	const endDate = endDateObj.toDate(timeZone);
+
+	const startDateStr = startDateObj.toString();
+	// const endDateStr = endDateObj.toString();
 
 	const activities = await db
 		.select({
@@ -41,9 +44,23 @@ export const load: PageServerLoad = async ({ url }) => {
 		.where(between(schema.activity.time, startDate, endDate))
 		.groupBy(schema.activity.activity);
 
-	console.log(activities);
-
 	const [{ totalActivities }] = await db.select({ totalActivities: count() }).from(schema.activity);
 
-	return { activities, totalActivities };
+	// Fetch raw subscriptions that overlap with the selected window
+	// (Created on or before the end date, and expires on or after the start date)
+	const subscriptions = await db
+		.select({
+			type: schema.subscription.type,
+			createdAt: schema.subscription.createdAt,
+			expiresAt: schema.subscription.expiresAt
+		})
+		.from(schema.subscription)
+		.where(
+			and(
+				lte(schema.subscription.createdAt, endDate),
+				gte(schema.subscription.expiresAt, startDateStr)
+			)
+		);
+
+	return { activities, totalActivities, subscriptions };
 };

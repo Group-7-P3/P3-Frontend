@@ -3,7 +3,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import { resolve } from '$app/paths';
-	import AreaChart from '#lib/components/ui/chart/area-chart.svelte';
+	// import AreaChart from '#lib/components/ui/chart/area-chart.svelte';
 	import LineChart from '#lib/components/ui/chart/line-chart.svelte';
 	import BarChart from '#lib/components/ui/chart/bar-chart.svelte';
 	import { ArrowLeft, ArrowRight } from '@lucide/svelte';
@@ -30,6 +30,7 @@
 		return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 	});
 
+	//#region Activity Chart
 	let activityChartType: 'seconds' | 'uses' = $state('seconds');
 	const activityChartData = $derived.by(() => {
 		// Map existing activities from the server response for quick lookup
@@ -67,40 +68,62 @@
 			? [{ key: 'seconds', label: 'Seconds' }]
 			: [{ key: 'uses', label: 'Uses' }]
 	);
+	//#endregion
 
-	const chartData = [
-		{ month: new Date('2026-01-01'), home: 50, 'home+': 20, pro: 130, 'pro+': 60 },
-		{ month: new Date('2026-02-01'), home: 70, 'home+': 30, pro: 140, 'pro+': 80 },
-		{ month: new Date('2026-03-01'), home: 90, 'home+': 40, pro: 140, 'pro+': 80 },
-		{ month: new Date('2026-04-01'), home: 130, 'home+': 60, pro: 150, 'pro+': 90 },
-		{ month: new Date('2026-05-01'), home: 170, 'home+': 70, pro: 170, 'pro+': 90 },
-		{ month: new Date('2026-06-01'), home: 190, 'home+': 90, pro: 183, 'pro+': 101 },
-		{ month: new Date('2026-07-01'), home: 220, 'home+': 110, pro: 160, 'pro+': 112 },
-		{ month: new Date('2026-08-01'), home: 240, 'home+': 120, pro: 150, 'pro+': 124 },
-		{ month: new Date('2026-09-01'), home: 250, 'home+': 120, pro: 130, 'pro+': 127 },
-		{ month: new Date('2026-10-01'), home: 270, 'home+': 130, pro: 130, 'pro+': 131 },
-		{ month: new Date('2026-11-01'), home: 290, 'home+': 140, pro: 140, 'pro+': 125 },
-		{ month: new Date('2026-12-01'), home: 300, 'home+': 140, pro: 160, 'pro+': 118 }
-	];
-
-	const chartConfig = {
-		home: {
-			label: 'Home',
-			color: '#ffb000'
-		},
-		'home+': {
-			label: 'Home+',
-			color: '#fe6100'
-		},
-		pro: {
-			label: 'Pro',
-			color: '#dc267f'
-		},
-		'pro+': {
-			label: 'Pro+',
-			color: '#785ef0'
-		}
+	//#region Subscription Chart
+	const subscriptionChartConfig = {
+		home: { label: 'Home', color: '#ffb000' },
+		'home+': { label: 'Home+', color: '#fe6100' },
+		pro: { label: 'Pro', color: '#dc267f' },
+		'pro+': { label: 'Pro+', color: '#785ef0' }
 	};
+
+	const subscriptionChartData = $derived.by(() => {
+		const results: Record<string, unknown>[] = [];
+		let curr = start.toDate(getLocalTimeZone());
+		const finalEnd = end.toDate(getLocalTimeZone());
+
+		// Loop day-by-day through the user-selected date range
+		while (curr <= finalEnd) {
+			const dayStr = curr.toISOString().split('T')[0];
+			const dayDate = new Date(dayStr);
+
+			// Initialize counts for this day
+			const counts: Record<string, number> = {};
+			for (const key of Object.keys(subscriptionChartConfig)) {
+				counts[key] = 0;
+			}
+
+			// Count how many subscriptions of each type were active on this specific day
+			for (const sub of data.subscriptions) {
+				const subCreated = new Date(String(sub.createdAt));
+				const subExpires = new Date(String(sub.expiresAt));
+
+				if (dayDate >= subCreated && dayDate <= subExpires) {
+					if (counts[sub.type] !== undefined) {
+						counts[sub.type]++;
+					}
+				}
+			}
+
+			results.push({
+				month: dayDate,
+				...counts
+			});
+
+			// Advance to the next day
+			curr.setDate(curr.getDate() + 1);
+		}
+
+		return results;
+	});
+
+	const subscriptionSeries = Object.entries(subscriptionChartConfig).map(([key, config]) => ({
+		key,
+		label: config.label,
+		color: config.color
+	}));
+	//#endregion
 
 	const isNextDateInFuture = $derived.by(() => {
 		if (!end) return true;
@@ -400,43 +423,22 @@
 <div class="w-full">
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>Sales</Card.Title>
+			<Card.Title>Subscriptions</Card.Title>
 		</Card.Header>
 		<Separator />
 		<Card.Content>
 			<LineChart
 				class="h-100 px-5"
-				config={chartConfig}
-				data={chartData}
-				series={[
-					{
-						key: 'home',
-						label: 'Home',
-						color: chartConfig.home.color
-					},
-					{
-						key: 'home+',
-						label: 'Home+',
-						color: chartConfig['home+'].color
-					},
-					{
-						key: 'pro',
-						label: 'Pro',
-						color: chartConfig.pro.color
-					},
-					{
-						key: 'pro+',
-						label: 'Pro+',
-						color: chartConfig['pro+'].color
-					}
-				]}
+				config={subscriptionChartConfig}
+				data={subscriptionChartData}
+				series={subscriptionSeries}
 			/>
 		</Card.Content>
 	</Card.Root>
 </div>
 
 <!-- Area chart -->
-<div class="w-full">
+<!-- <div class="w-full">
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Revenue</Card.Title>
@@ -471,4 +473,4 @@
 			/>
 		</Card.Content>
 	</Card.Root>
-</div>
+</div> -->

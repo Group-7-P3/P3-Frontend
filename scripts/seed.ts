@@ -28,11 +28,6 @@ function randomCopenhagenPastYear(): Date {
 	return getCopenhagenDate(rawDate);
 }
 
-// For subscription expiration dates, if you want them within the past year or up to today (no future)
-function randomCopenhagenValidExpiration(): Date {
-	return randomCopenhagenPastYear();
-}
-
 async function main() {
 	console.log(
 		'🌱 Starting database seeding (Copenhagen timezone, strictly past year up to today)...'
@@ -75,16 +70,30 @@ async function main() {
 	const dummySubscriptions = insertedUsers.flatMap((user) => {
 		const subCount = faker.number.int({ min: 1, max: 2 });
 
-		return Array.from({ length: subCount }).map(() => ({
-			userId: user.id,
-			type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
-			expiresAt: randomCopenhagenValidExpiration().toISOString(),
-			licenseKey: faker.number.int({ min: 100000, max: 999999 }),
-			maxDevices: faker.number.int({ min: 1, max: 5 }),
-			createdAt: randomCopenhagenPastYear(),
-			updatedAt: randomCopenhagenPastYear(),
-			autoRenew: faker.datatype.boolean()
-		}));
+		return Array.from({ length: subCount }).map(() => {
+			// 1. Generate a valid creation date within the past year
+			const createdAt = randomCopenhagenPastYear();
+
+			// 2. Add a random duration between 30 days (1 month) and 365 days (1 year)
+			const durationDays = faker.number.int({ min: 30, max: 365 });
+			const expiresAt = new Date(createdAt);
+			expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+			// Ensure expiration doesn't stretch too far into an impossible future relative to today if desired,
+			// or let it naturally span forward. (getCopenhagenDate keeps formatting consistent)
+			const finalExpiresAt = getCopenhagenDate(expiresAt);
+
+			return {
+				userId: user.id,
+				type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
+				expiresAt: finalExpiresAt.toISOString(),
+				licenseKey: faker.number.int({ min: 100000, max: 999999 }),
+				maxDevices: faker.number.int({ min: 1, max: 5 }),
+				createdAt: createdAt,
+				updatedAt: createdAt,
+				autoRenew: faker.datatype.boolean()
+			};
+		});
 	});
 
 	const insertedSubscriptions = await db

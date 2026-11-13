@@ -2,7 +2,7 @@
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import { LineChart, type Accessor, type SeriesData, type SplineProps } from 'layerchart';
-	import { curveNatural } from 'd3-shape';
+	import { curveMonotoneX } from 'd3-shape';
 	import type { Component } from 'svelte';
 	import { cn } from 'cn';
 	import { scaleUtc } from 'd3-scale';
@@ -15,28 +15,25 @@
 		series?: SeriesData<any, Component<SplineProps>>[];
 	}
 
-	const {
+	let {
 		class: className,
-		data = [
-			{ date: new Date('2026-01-01'), amount: 80 },
-			{ date: new Date('2026-01-02'), amount: 200 },
-			{ date: new Date('2026-01-03'), amount: 120 },
-			{ date: new Date('2026-01-04'), amount: 190 },
-			{ date: new Date('2026-01-05'), amount: 130 },
-			{ date: new Date('2026-01-06'), amount: 140 }
-		],
+		data = [{ month: new Date('2026-01-01'), amount: 80 }],
 		config = {
-			amount: { label: 'Amount' }
+			amount: { label: 'Amount', color: 'var(--chart-1)' }
 		},
-		x = Object.keys(data[0])[0],
-		series = [
-			{
-				key: 'amount',
-				label: 'Amount',
-				color: 'var(--chart-1)'
-			}
-		]
+		x = 'month', // Default to 'month' for date-based grouped series
+		series
 	}: Props = $props();
+
+	// Automatically derive series from config if none are explicitly passed
+	const resolvedSeries = $derived(
+		series ||
+			Object.entries(config).map(([key, item]) => ({
+				key,
+				label: item.label,
+				color: item.color || 'var(--chart-1)'
+			}))
+	);
 </script>
 
 <Chart.Container {config} class={cn('w-full max-w-7xl', className)}>
@@ -45,10 +42,10 @@
 		{x}
 		legend
 		xScale={scaleUtc()}
-		{series}
+		series={resolvedSeries}
 		props={{
 			spline: {
-				curve: curveNatural,
+				curve: curveMonotoneX,
 				fillOpacity: 0.4,
 				motion: 'tween'
 			},
