@@ -102,6 +102,23 @@
 		}
 	};
 
+	const isNextDateInFuture = $derived.by(() => {
+		if (!end) return true;
+		const todayDate = today(getLocalTimeZone());
+		switch (rangeType) {
+			case 'week':
+				return end.add({ weeks: 1 }).compare(todayDate) > 0;
+			case 'month':
+				return end.add({ months: 1 }).compare(todayDate) > 0;
+			case 'year':
+				return end.add({ years: 1 }).compare(todayDate) > 0;
+			case 'ytd':
+			case 'all-time':
+			default:
+				return true;
+		}
+	});
+
 	async function setDate(startDate?: CalendarDate, endDate?: CalendarDate) {
 		if (startDate) start = startDate;
 		if (endDate) end = endDate;
@@ -322,7 +339,7 @@
 		<Button
 			variant="outline"
 			size="icon"
-			disabled={rangeType === 'ytd' || rangeType === 'all-time'}
+			disabled={rangeType === 'ytd' || rangeType === 'all-time' || isNextDateInFuture}
 			onclick={() => {
 				if (!start || !end) return;
 				switch (rangeType) {
