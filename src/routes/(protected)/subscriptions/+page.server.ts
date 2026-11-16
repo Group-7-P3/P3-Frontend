@@ -9,13 +9,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!staff) throw error(401, 'You must be signed in to view subscriptions');
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 12);
+	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 10);
 	const filter = url.searchParams.get('filter') ?? '';
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
+
 	const conditions = [];
 	if (staff.group !== 'INNOVAID') conditions.push(eq(schema.user.managedBy, staff.group));
+
 	const searchFilter = filter.trim();
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
@@ -33,7 +35,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			)
 		);
 	}
+
 	const where = conditions.length ? and(...conditions) : undefined;
+
 	const sortColumn =
 		(
 			{
@@ -59,10 +63,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				| 'autoRenew'
 				| 'managedBy'
 		] ?? schema.subscription.licenseKey;
+
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
+
 	const subscriptions = await db
 		.select({
 			...getTableColumns(schema.subscription),
+			devices: sql<number>`(
+        SELECT count(*)::int 
+        FROM ${schema.subscriptionToProduct} 
+        WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
+      )`,
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)
@@ -71,6 +82,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.orderBy(orderBy)
 		.limit(pageSize)
 		.offset((page - 1) * pageSize);
+
 	const [{ total }] = await db
 		.select({ total: count() })
 		.from(schema.subscription)

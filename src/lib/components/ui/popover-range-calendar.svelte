@@ -4,15 +4,16 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { RangeCalendar } from '#lib/components/ui/range-calendar/index.ts';
-	import type { DateRange } from 'bits-ui';
+	import type { DateRange, RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 
 	interface Props {
 		value?: DateRange;
+		years?: RangeCalendarPrimitive.YearSelectProps['years'];
 	}
 
 	const start = today(getLocalTimeZone()).subtract({ months: 1 });
 	const end = today(getLocalTimeZone());
-	let { value = $bindable({ start, end }) }: Props = $props();
+	let { value = $bindable({ start, end }), years }: Props = $props();
 	let rangeOpen = $state(false);
 </script>
 
@@ -32,6 +33,11 @@
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-		<RangeCalendar bind:value captionLayout="dropdown" maxValue={today(getLocalTimeZone())} />
+		<RangeCalendar
+			bind:value
+			captionLayout="dropdown"
+			maxValue={today(getLocalTimeZone())}
+			{years}
+		/>
 	</Popover.Content>
 </Popover.Root>

@@ -47,3 +47,58 @@ export function camelToTitleCase(str: string) {
 		.replace(/\bApi\b/g, 'API')
 		.replace(/\bUrl\b/g, 'URL');
 }
+
+export function isString(value: unknown): value is string {
+	return typeof value === 'string';
+}
+
+export function trim(value: string) {
+	return value.trim();
+}
+
+export function isNotEmptyStr(value: string) {
+	return value !== '';
+}
+
+export function stringCheckTrim(value: unknown) {
+	if (isString(value)) {
+		const check = trim(value);
+		if (isNotEmptyStr(check)) return check;
+	}
+	return null;
+}
+
+export function stringCheck(value: unknown) {
+	if (isString(value)) {
+		const check = trim(value);
+		if (isNotEmptyStr(check)) return value;
+	}
+	return null;
+}
+
+export const groupRules = [
+	{
+		id: 'uppercase',
+		label: 'An uppercase letter',
+		test: (pw: string) => /[A-Z]/.test(pw)
+	},
+	{
+		id: 'lowercase',
+		label: 'A lowercase letter',
+		test: (pw: string) => /[a-z]/.test(pw)
+	},
+	{
+		id: 'number',
+		label: 'A number',
+		test: (pw: string) => /[0-9]/.test(pw)
+	},
+	{
+		id: 'symbol',
+		label: 'A symbol',
+		test: (pw: string) => /[^A-Za-z0-9]/.test(pw)
+	}
+];
+
+export function snakeToTitleCase(str: string) {
+	return str.replace(/^_*(.)|_+(.)/g, (_, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
+}

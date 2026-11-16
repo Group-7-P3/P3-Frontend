@@ -1,10 +1,14 @@
 <script lang="ts">
-	import DataTable from '#lib/components/ui/data-table/data-table.svelte';
-	import { wordsToTitleCase } from '#lib/utils.ts';
+	import DataTable from '$lib/components/ui/data-table/data-table.svelte';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import NewStaffFormDialog from './newStaff-form.svelte';
 
+	// Toggle for Dialog box
+	let open = $state(false);
+
+	// Staff Table, i think
 	let { data }: { data: PageData } = $props();
 	const columns = ['id', 'name', 'email', 'createdAt', 'updatedAt', 'role', 'group'];
 
@@ -29,7 +33,7 @@
 </svelte:head>
 
 <DataTable
-	data={formattedStaff}
+	data={data.staff}
 	{columns}
 	totalRows={data.total}
 	page={data.page}
@@ -38,5 +42,13 @@
 	sort={data.sort}
 	direction={data.direction}
 	route="/(protected)/staff"
-	onRowClick={handleRowClick}
+	onRowClick={(staff) => {
+		console.log(staff.id);
+	}}
+	/* Add new staff member button, conditional to if user has auth to do so, check for auth */
+	onAddClick={() => {
+		open = !open;
+	}}
 />
+
+<NewStaffFormDialog bind:open />
