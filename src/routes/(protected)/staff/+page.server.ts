@@ -13,22 +13,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
 import { groupRules } from '#lib/utils.ts';
-import {
-	and,
-	asc,
-	count,
-	desc,
-	asc,
-	count,
-	desc,
-	eq,
-	ilike,
-	or,
-	sql,
-	ilike,
-	or,
-	sql
-} from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;

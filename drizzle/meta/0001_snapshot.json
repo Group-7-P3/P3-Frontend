@@ -1,6 +1,6 @@
 {
-  "id": "a4640e60-cd6f-4f31-98d9-be1b09f2fee0",
-  "prevId": "060e0f4b-4709-48c6-b324-de7c9f0aa0f7",
+  "id": "2010449f-11e7-4f77-9cb5-1a4bff5f2a7a",
+  "prevId": "938ffea3-64e0-4fae-b2a6-2237be82498b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -18,7 +18,7 @@
           "name": "time",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         },
         "seconds": {
@@ -596,7 +596,7 @@
           "name": "role",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "'moderator'"
         },
         "group": {

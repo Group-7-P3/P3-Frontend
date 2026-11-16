@@ -9,7 +9,6 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
 	import { features, type DataTableFeatures } from './data-table-features.js';
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
@@ -20,9 +19,9 @@
 	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { tick } from 'svelte';
-	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
+	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
 
 	type DataTableProps<TData extends RowData> = {
@@ -59,72 +58,6 @@
 		direction,
 		route
 	}: DataTableProps<TData> = $props();
-		totalRows: number;
-		page: number;
-		pageSize: number;
-		filter: string;
-		sort: string;
-		direction: 'asc' | 'desc';
-		route: string;
-	};
-	type PaginatedRoute =
-		| `/(protected)/users?${string}`
-		| `/(protected)/products?${string}`
-		| `/(protected)/subscriptions?${string}`
-		| `/(protected)/staff?${string}`;
-
-	let {
-		data,
-		columns,
-		class: className,
-		onRowClick,
-		onAddClick,
-		totalRows,
-		page,
-		pageSize,
-		filter,
-		sort,
-		direction,
-		route
-	}: DataTableProps<TData> = $props();
-
-	let isMounted = $derived(true);
-	let filterInput = $state<HTMLInputElement | null>(null);
-	// svelte-ignore state_referenced_locally
-	let selectedPageSize = $state(String(pageSize));
-	let filterTimer: ReturnType<typeof setTimeout> | undefined;
-	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
-	let showLoading = $state(false);
-
-	$effect(() => {
-		if (navigating.to === null) {
-			showLoading = false;
-			return;
-		}
-
-		const timer = setTimeout(() => (showLoading = true), 100);
-		return () => clearTimeout(timer);
-	});
-
-	async function updateQuery(updates: Record<string, string>) {
-		const refocusFilter = 'filter' in updates;
-		const selectionStart = filterInput?.selectionStart;
-		const selectionEnd = filterInput?.selectionEnd;
-		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
-		for (const [key, value] of Object.entries(updates)) {
-			if (value) params.set(key, value);
-			else if (key === 'sort') params.set(key, 'none');
-			else params.delete(key);
-		}
-		const target = `${route}?${params}` as PaginatedRoute;
-		await goto(resolve(target));
-		if (!refocusFilter || !filterInput) return;
-		await tick();
-		filterInput.focus();
-		const start = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
-		const end = Math.min(selectionEnd ?? start, filterInput.value.length);
-		filterInput.setSelectionRange(start, end);
-	}
 
 	let isMounted = $derived(true);
 	let filterInput = $state<HTMLInputElement | null>(null);
@@ -190,7 +123,6 @@
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: col,
-				id: col,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
 					const onclick = column.getToggleSortingHandler();
@@ -214,7 +146,6 @@
 	const table = createTable({
 		features,
 		manualSorting: true,
-		manualSorting: true,
 		get data() {
 			return data;
 		},
@@ -222,19 +153,8 @@
 		state: {
 			get sorting() {
 				return sort ? [{ id: sort, desc: direction === 'desc' }] : [];
-			get sorting() {
-				return sort ? [{ id: sort, desc: direction === 'desc' }] : [];
 			}
 		},
-		onSortingChange: (updater) => {
-			const currentSorting = sort ? [{ id: sort, desc: direction === 'desc' }] : [];
-			const next = typeof updater === 'function' ? updater(currentSorting) : updater;
-			const nextSort = next[0];
-			updateQuery({
-				sort: nextSort?.id ?? '',
-				direction: nextSort?.desc ? 'desc' : 'asc',
-				page: '1'
-			});
 		onSortingChange: (updater) => {
 			const currentSorting = sort ? [{ id: sort, desc: direction === 'desc' }] : [];
 			const next = typeof updater === 'function' ? updater(currentSorting) : updater;
@@ -253,22 +173,13 @@
 			updateQuery({ filter: value, page: '1' });
 		}, 250);
 	}
-
-	function updateFilter(value: string) {
-		if (filterTimer) clearTimeout(filterTimer);
-		filterTimer = setTimeout(() => {
-			updateQuery({ filter: value, page: '1' });
-		}, 250);
-	}
 </script>
 
 <div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
 		<Input
 			bind:ref={filterInput}
-			bind:ref={filterInput}
 			placeholder="Filter columns..."
-			value={filter}
 			value={filter}
 			oninput={(e) => {
 				updateFilter(e.currentTarget.value);
@@ -299,16 +210,6 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<div class="relative overflow-hidden rounded-md border" aria-busy={showLoading}>
-		{#if showLoading}
-			<div
-				class="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-sm text-muted-foreground backdrop-blur-[1px]"
-				role="status"
-				aria-live="polite"
-			>
-				Loading...
-			</div>
-		{/if}
 	<div class="relative overflow-hidden rounded-md border" aria-busy={showLoading}>
 		{#if showLoading}
 			<div

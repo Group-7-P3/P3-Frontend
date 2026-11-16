@@ -12,12 +12,9 @@ export const staff = pgTable("staff", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role", { enum: ["owner", "admin", "moderator"] }).default(
-    "moderator",
-  ),
-  banned: boolean("banned").default(false),
-  banReason: text("ban_reason"),
-  banExpires: timestamp("ban_expires"),
+  role: text("role", { enum: ["owner", "admin", "moderator"] })
+    .default("moderator")
+    .notNull(),
   group: text("group").notNull(),
 });
 
@@ -36,7 +33,6 @@ export const session = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => staff.id, { onDelete: "cascade" }),
-    impersonatedBy: text("impersonated_by"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
