@@ -67,6 +67,10 @@
 			if (result.type === 'failure') {
 				if (result.data?.customerIdDuplicate) {
 					customerIdDuplicate = true;
+				} else {
+					formError = result.data?.customerIdInvalid
+						? 'Please enter a valid integer Customer ID'
+						: 'Something went wrong. Please try again';
 				}
 				return;
 			}
