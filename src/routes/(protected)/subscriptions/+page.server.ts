@@ -38,6 +38,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const where = conditions.length ? and(...conditions) : undefined;
 
+	const devicesExpression = sql<number>`(
+    SELECT count(*)::int 
+    FROM ${schema.subscriptionToProduct} 
+    WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
+  )`;
+
 	const sortColumn =
 		(
 			{
@@ -49,7 +55,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				updatedAt: schema.subscription.updatedAt,
 				expiresAt: schema.subscription.expiresAt,
 				autoRenew: schema.subscription.autoRenew,
-				managedBy: schema.user.managedBy
+				managedBy: schema.user.managedBy,
+				devices: devicesExpression
 			} as const
 		)[
 			sort as
@@ -62,6 +69,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				| 'expiresAt'
 				| 'autoRenew'
 				| 'managedBy'
+				| 'devices'
 		] ?? schema.subscription.licenseKey;
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
@@ -69,11 +77,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const subscriptions = await db
 		.select({
 			...getTableColumns(schema.subscription),
-			devices: sql<number>`(
-        SELECT count(*)::int 
-        FROM ${schema.subscriptionToProduct} 
-        WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
-      )`,
+			devices: devicesExpression,
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)
