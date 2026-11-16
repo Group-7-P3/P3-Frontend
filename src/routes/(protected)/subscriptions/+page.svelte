@@ -13,6 +13,7 @@
 		'updatedAt',
 		'expiresAt',
 		'autoRenew',
+		'devices',
 		'managedBy'
 	];
 
