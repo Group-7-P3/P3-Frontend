@@ -97,7 +97,7 @@
 		</a>
 	</Button>
 
-	<div class="grid grid-cols-5 gap-3">
+	<div class="grid grid-cols-1 gap-3 md:grid-cols-5">
 		<!-- Left Box: Subscription Box-->
 		<Card.Root class="md:col-span-2">
 			<Card.Header>
