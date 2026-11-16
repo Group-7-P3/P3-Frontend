@@ -98,3 +98,7 @@ export const groupRules = [
 		test: (pw: string) => /[^A-Za-z0-9]/.test(pw)
 	}
 ];
+
+export function snakeToTitleCase(str: string) {
+	return str.replace(/^_*(.)|_+(.)/g, (_, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
+}
