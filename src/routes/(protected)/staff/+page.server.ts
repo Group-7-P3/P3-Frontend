@@ -13,7 +13,22 @@ import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
 import { groupRules } from '#lib/utils.ts';
-import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import {
+	and,
+	asc,
+	count,
+	desc,
+	asc,
+	count,
+	desc,
+	eq,
+	ilike,
+	or,
+	sql,
+	ilike,
+	or,
+	sql
+} from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
@@ -24,7 +39,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 12);
+	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 10);
 	const filter = url.searchParams.get('filter') ?? '';
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
