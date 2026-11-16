@@ -1,5 +1,12 @@
 CREATE TYPE "public"."product_status" AS ENUM('inactive', 'active', 'deactivated');--> statement-breakpoint
 CREATE TYPE "public"."subscription_type" AS ENUM('home', 'home+', 'pro', 'pro+');--> statement-breakpoint
+CREATE TABLE "activity" (
+	"activity" text NOT NULL,
+	"time" timestamp DEFAULT now() NOT NULL,
+	"seconds" integer DEFAULT 0 NOT NULL,
+	CONSTRAINT "activity_activity_time_pk" PRIMARY KEY("activity","time")
+);
+--> statement-breakpoint
 CREATE TABLE "product" (
 	"serial_number" serial PRIMARY KEY NOT NULL,
 	"status" "product_status" DEFAULT 'inactive' NOT NULL,
@@ -57,6 +64,7 @@ CREATE TABLE "session" (
 	"ip_address" text,
 	"user_agent" text,
 	"user_id" text NOT NULL,
+	"impersonated_by" text,
 	CONSTRAINT "session_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
@@ -69,6 +77,9 @@ CREATE TABLE "staff" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"role" text DEFAULT 'moderator',
+	"banned" boolean DEFAULT false,
+	"ban_reason" text,
+	"ban_expires" timestamp,
 	"group" text NOT NULL,
 	CONSTRAINT "staff_email_unique" UNIQUE("email")
 );
