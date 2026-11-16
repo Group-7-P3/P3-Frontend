@@ -36,7 +36,12 @@ export const actions: Actions = {
 		const customerId = Number(rawCustomerId);
 		const managedBy = String(data.get('managedBy') ?? '').trim();
 		// make sure that customer id is a non-empty valid number
-		if (!rawCustomerId || isNaN(customerId)) {
+		if (
+			!rawCustomerId ||
+			!Number.isInteger(customerId) ||
+			customerId < -2147483648 ||
+			customerId > 2147483647
+		) {
 			return fail(400, { customerIdInvalid: true });
 		}
 		// Check is another user (ne means not equal) already exists with this customer id
