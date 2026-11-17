@@ -5,6 +5,8 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { ExternalLink } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
 
 	import { enhance } from '$app/forms';
 	import * as Field from '$lib/components/ui/field/index.js';
@@ -72,6 +74,17 @@
 					<dt class="text-sm font-normal text-muted-foreground">User Index</dt>
 					<dd class="text-sm font-medium text-foreground">
 						{subscription.userId}
+							<Button
+								variant="outline"
+								size="icon-xs"
+								onclick={() => {
+									goto(resolve('/(protected)/users/[id]', {
+									id: String(subscription.userId)
+								}));
+								}}
+							>
+							<ExternalLink />
+							</Button>
 					</dd>
 				</div>
 
@@ -177,7 +190,7 @@
 							<dt class="text-sm font-normal text-muted-foreground">Max Devices</dt>
 							<dd class="text-sm font-medium text-foreground">
 								<Field.Field>
-									<Input id="user-Id" type="userID" placeholder="Enter Max Deviced" />
+									<Input id="user-Id" type="userID" placeholder="Enter Max Devices" />
 								</Field.Field>
 							</dd>
 						</div>
@@ -185,21 +198,21 @@
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Created At</dt>
 							<dd class="text-sm font-medium text-foreground">
-								Calender thingy
+								Calender missing for now
 							</dd>
 						</div>
 					<!-- Updated At -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Updated At</dt>
 							<dd class="text-sm font-medium text-foreground">
-								Calender thingy
+								Calender missing for now
 							</dd>
 						</div>
 					<!-- Expires At -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Expires At</dt>
 							<dd class="text-sm font-medium text-foreground">
-								Calender thingy
+								Calender missing for now
 							</dd>
 						</div>
 					<!-- Auto Renew -->
@@ -248,30 +261,37 @@
 		</Card.Root>
 
 		<!-- Products -->
-		<Card.Root class="md:col-span-1">
-			<Card.Header>
-				<Card.Title>Products</Card.Title>
+		<Card.Root class="md:col-span-5">
+			<Card.Header class="flex items-center justify-between">
+				<Card.Title class="text-lg font-extrabold">Products</Card.Title>
 			</Card.Header>
 
-			<Card.Content class="space-y-2">
+			<Card.Content class="grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-3">
 				{#each products as product, i (product.serialNumber)}
-					<div>
+					<div class="border-b">
 						Product {i + 1}
-						<div class="flex items-center justify-between border-b py-2 last:border-0">
+						<div class="flex items-center justify-between py-2">
 							<dt class="text-sm font-normal text-muted-foreground">Serial Number</dt>
 							<dd class="text-sm font-medium text-foreground">
-								<a
-									href={resolve('/(protected)/products/[serialNumber]', {
+								{product.serialNumber}
+								<Button
+									variant="outline"
+									size="icon-xs"
+									onclick={() => {
+										goto(resolve('/(protected)/products/[serialNumber]', {
 										serialNumber: String(product.serialNumber)
-									})}
-									class="text-sm text-muted-foreground hover:underline"
+									}));
+									}}
 								>
-									{product.serialNumber}
-								</a>
+								<ExternalLink />
+								</Button>
 							</dd>
 						</div>
 					</div>
 				{/each}
+				{#if products.length === 0}
+					<dt class="text-sm font-normal text-muted-foreground">This subscription has no products.</dt>
+				{/if}
 			</Card.Content>
 		</Card.Root>
 	</div>
