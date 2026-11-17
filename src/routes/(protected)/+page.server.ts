@@ -28,11 +28,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		}
 	}
 
+	const startDateStr = startDateObj.toString();
 	const startDate = startDateObj.toDate(timeZone);
 	const endDate = endDateObj.toDate(timeZone);
-
-	const startDateStr = startDateObj.toString();
-	// const endDateStr = endDateObj.toString();
 
 	const activities = await db
 		.select({
@@ -46,8 +44,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	const [{ totalActivities }] = await db.select({ totalActivities: count() }).from(schema.activity);
 
-	// Fetch raw subscriptions that overlap with the selected window
-	// (Created on or before the end date, and expires on or after the start date)
+	// Fetch subscriptions that overlap with the selected range window
 	const subscriptions = await db
 		.select({
 			type: schema.subscription.type,

@@ -19,12 +19,12 @@ function getCopenhagenDate(date: Date = new Date()): Date {
 }
 
 // Generate a random date strictly between 1 year ago and now (Copenhagen timezone)
-function randomCopenhagenPastYear(): Date {
+function randomCopenhagenPast(): Date {
 	const now = new Date();
-	const oneYearAgo = new Date();
-	oneYearAgo.setFullYear(now.getFullYear() - 1);
+	const past = new Date();
+	past.setFullYear(now.getFullYear() - 2);
 
-	const rawDate = faker.date.between({ from: oneYearAgo, to: now });
+	const rawDate = faker.date.between({ from: past, to: now });
 	return getCopenhagenDate(rawDate);
 }
 
@@ -46,8 +46,8 @@ async function main() {
 	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
 		status: faker.helpers.arrayElement(['inactive', 'active', 'deactivated'] as const),
-		createdAt: randomCopenhagenPastYear(),
-		updatedAt: randomCopenhagenPastYear()
+		createdAt: randomCopenhagenPast(),
+		updatedAt: randomCopenhagenPast()
 	}));
 
 	const insertedProducts = await db.insert(schema.product).values(dummyProducts).returning();
@@ -58,8 +58,8 @@ async function main() {
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
 		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const),
-		createdAt: randomCopenhagenPastYear(),
-		updatedAt: randomCopenhagenPastYear()
+		createdAt: randomCopenhagenPast(),
+		updatedAt: randomCopenhagenPast()
 	}));
 
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
@@ -68,11 +68,11 @@ async function main() {
 	// 4. Seed Subscriptions
 	console.log('💳 Inserting dummy subscriptions...');
 	const dummySubscriptions = insertedUsers.flatMap((user) => {
-		const subCount = faker.number.int({ min: 1, max: 2 });
+		const subCount = faker.number.int({ min: 1, max: 3 });
 
 		return Array.from({ length: subCount }).map(() => {
 			// 1. Generate a valid creation date within the past year
-			const createdAt = randomCopenhagenPastYear();
+			const createdAt = randomCopenhagenPast();
 
 			// 2. Add a random duration between 30 days (1 month) and 365 days (1 year)
 			const durationDays = faker.number.int({ min: 30, max: 365 });
@@ -133,7 +133,7 @@ async function main() {
 
 	const dummyActivities = Array.from({ length: 500 }).map(() => ({
 		activity: faker.helpers.arrayElement(activityNames),
-		time: randomCopenhagenPastYear(),
+		time: randomCopenhagenPast(),
 		seconds: faker.number.int({ min: 1, max: 60 })
 	}));
 

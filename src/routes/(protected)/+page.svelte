@@ -3,8 +3,8 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import { resolve } from '$app/paths';
-	// import AreaChart from '#lib/components/ui/chart/area-chart.svelte';
 	import LineChart from '#lib/components/ui/chart/line-chart.svelte';
+	import AreaChart from '#lib/components/ui/chart/area-chart.svelte';
 	import BarChart from '#lib/components/ui/chart/bar-chart.svelte';
 	import { ArrowLeft, ArrowRight } from '@lucide/svelte';
 	import PopoverRangeCalendar from '#lib/components/ui/popover-range-calendar.svelte';
@@ -71,6 +71,7 @@
 	//#endregion
 
 	//#region Subscription Chart
+	let subscriptionChartType: 'area' | 'line' = $state('area');
 	const subscriptionChartConfig = {
 		home: { label: 'Home', color: '#ffb000' },
 		'home+': { label: 'Home+', color: '#fe6100' },
@@ -80,15 +81,15 @@
 
 	const subscriptionChartData = $derived.by(() => {
 		const results: Record<string, unknown>[] = [];
-		let curr = start.toDate(getLocalTimeZone());
-		const finalEnd = end.toDate(getLocalTimeZone());
 
-		// Loop day-by-day through the user-selected date range
-		while (curr <= finalEnd) {
-			const dayStr = curr.toISOString().split('T')[0];
-			const dayDate = new Date(dayStr);
+		let curr = start;
+		const finalEnd = end;
 
-			// Initialize counts for this day
+		while (curr.compare(finalEnd) <= 0) {
+			const dayStr = curr.toString(); // "YYYY-MM-DD"
+			const dayDate = new Date(`${dayStr}T00:00:00Z`);
+
+			// Initialize counts for this day with 0
 			const counts: Record<string, number> = {};
 			for (const key of Object.keys(subscriptionChartConfig)) {
 				counts[key] = 0;
@@ -96,10 +97,15 @@
 
 			// Count how many subscriptions of each type were active on this specific day
 			for (const sub of data.subscriptions) {
-				const subCreated = new Date(String(sub.createdAt));
-				const subExpires = new Date(String(sub.expiresAt));
+				// Safely convert createdAt Date/string to a YYYY-MM-DD string
+				const createdAtDate = new Date(sub.createdAt);
+				const subCreatedStr = createdAtDate.toISOString().split('T')[0];
 
-				if (dayDate >= subCreated && dayDate <= subExpires) {
+				// expiresAt is already a date string (YYYY-MM-DD)
+				const subExpiresStr = String(sub.expiresAt).split('T')[0];
+
+				// Active rule: Created on or before current day, and expires on or after current day
+				if (dayStr >= subCreatedStr && dayStr <= subExpiresStr) {
 					if (counts[sub.type] !== undefined) {
 						counts[sub.type]++;
 					}
@@ -111,8 +117,7 @@
 				...counts
 			});
 
-			// Advance to the next day
-			curr.setDate(curr.getDate() + 1);
+			curr = curr.add({ days: 1 });
 		}
 
 		return results;
@@ -169,7 +174,7 @@
 </svelte:head>
 
 <!-- Statistic cards -->
-<div class="flex w-full gap-6">
+<div class="flex w-full max-w-7xl gap-6">
 	<!-- Users card -->
 	<a href={resolve('/(protected)/users')} class="flex-1">
 		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
@@ -286,7 +291,7 @@
 	</a>
 </div>
 
-<div class="flex w-full gap-4">
+<div class="flex w-full max-w-7xl gap-4">
 	<ButtonGroup.Root>
 		<Button
 			variant={rangeType === 'week' ? 'default' : 'outline'}
@@ -383,8 +388,8 @@
 	</ButtonGroup.Root>
 </div>
 
-<!-- Bar chart -->
-<div class="w-full">
+<!-- Activity chart -->
+<div class="w-full max-w-7xl">
 	<Card.Root>
 		<Card.Header class="flex items-center justify-between">
 			<Card.Title>Activities</Card.Title>
@@ -419,58 +424,131 @@
 	</Card.Root>
 </div>
 
-<!-- Line chart -->
-<div class="w-full">
+<!-- Subscription chart -->
+<div class="w-full max-w-7xl">
 	<Card.Root>
-		<Card.Header>
+		<Card.Header class="flex items-center justify-between">
 			<Card.Title>Subscriptions</Card.Title>
+			<ButtonGroup.Root>
+				<Button
+					variant={subscriptionChartType === 'area' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						subscriptionChartType = 'area';
+					}}>Area</Button
+				>
+				<Button
+					variant={subscriptionChartType === 'line' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						subscriptionChartType = 'line';
+					}}>Line</Button
+				>
+			</ButtonGroup.Root>
 		</Card.Header>
 		<Separator />
 		<Card.Content>
-			<LineChart
-				class="h-100 px-5"
-				config={subscriptionChartConfig}
-				data={subscriptionChartData}
-				series={subscriptionSeries}
-			/>
+			{#if subscriptionChartType === 'area'}
+				<AreaChart
+					class="h-100 px-5"
+					config={subscriptionChartConfig}
+					data={subscriptionChartData}
+					series={subscriptionSeries}
+				/>
+			{:else}
+				<LineChart
+					class="h-100 px-5"
+					config={subscriptionChartConfig}
+					data={subscriptionChartData}
+					series={subscriptionSeries}
+				/>
+			{/if}
 		</Card.Content>
 	</Card.Root>
 </div>
 
-<!-- Area chart -->
-<!-- <div class="w-full">
+<!-- Users chart -->
+<div class="w-full max-w-7xl">
 	<Card.Root>
-		<Card.Header>
-			<Card.Title>Revenue</Card.Title>
+		<Card.Header class="flex items-center justify-between">
+			<Card.Title>Users</Card.Title>
+			<ButtonGroup.Root>
+				<Button
+					variant={subscriptionChartType === 'area' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						subscriptionChartType = 'area';
+					}}>Area</Button
+				>
+				<Button
+					variant={subscriptionChartType === 'line' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						subscriptionChartType = 'line';
+					}}>Line</Button
+				>
+			</ButtonGroup.Root>
 		</Card.Header>
 		<Separator />
 		<Card.Content>
-			<AreaChart
-				class="h-100 px-5"
-				data={chartData}
-				series={[
-					{
-						key: 'home',
-						label: 'Home',
-						color: chartConfig.home.color
-					},
-					{
-						key: 'home+',
-						label: 'Home+',
-						color: chartConfig['home+'].color
-					},
-					{
-						key: 'pro',
-						label: 'Pro',
-						color: chartConfig.pro.color
-					},
-					{
-						key: 'pro+',
-						label: 'Pro+',
-						color: chartConfig['pro+'].color
-					}
-				]}
-			/>
+			{#if subscriptionChartType === 'area'}
+				<AreaChart
+					class="h-100 px-5"
+					config={subscriptionChartConfig}
+					data={subscriptionChartData}
+					series={subscriptionSeries}
+				/>
+			{:else}
+				<LineChart
+					class="h-100 px-5"
+					config={subscriptionChartConfig}
+					data={subscriptionChartData}
+					series={subscriptionSeries}
+				/>
+			{/if}
 		</Card.Content>
 	</Card.Root>
-</div> -->
+</div>
+
+<!-- Products chart -->
+<div class="w-full max-w-7xl">
+	<Card.Root>
+		<Card.Header class="flex items-center justify-between">
+			<Card.Title>Products</Card.Title>
+			<ButtonGroup.Root>
+				<Button
+					variant={subscriptionChartType === 'area' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						subscriptionChartType = 'area';
+					}}>Area</Button
+				>
+				<Button
+					variant={subscriptionChartType === 'line' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						subscriptionChartType = 'line';
+					}}>Line</Button
+				>
+			</ButtonGroup.Root>
+		</Card.Header>
+		<Separator />
+		<Card.Content>
+			{#if subscriptionChartType === 'area'}
+				<AreaChart
+					class="h-100 px-5"
+					config={subscriptionChartConfig}
+					data={subscriptionChartData}
+					series={subscriptionSeries}
+				/>
+			{:else}
+				<LineChart
+					class="h-100 px-5"
+					config={subscriptionChartConfig}
+					data={subscriptionChartData}
+					series={subscriptionSeries}
+				/>
+			{/if}
+		</Card.Content>
+	</Card.Root>
+</div>
