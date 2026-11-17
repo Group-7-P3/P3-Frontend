@@ -13,15 +13,16 @@
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
-	import { ChevronDown, Plus } from '@lucide/svelte';
+	import { ChevronDown, Copy, Plus } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { tick } from 'svelte';
-	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
+	import DataTableOpenButton from './data-table-open-button.svelte';
+	import DataTableDate from './data-table-date.svelte';
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
@@ -99,22 +100,16 @@
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
-			id: 'select',
+			id: 'open',
 			meta: {
 				class: 'mr-4 pr-4',
 				className: 'mr-4 pr-4'
 			},
-			header: ({ table }) =>
-				renderComponent(DataTableCheckbox, {
-					checked: table.getIsAllPageRowsSelected(),
-					indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
-					onCheckedChange: (value: boolean) => table.toggleAllPageRowsSelected(!!value),
-					'aria-label': 'Select all'
-				}),
 			cell: ({ row }) =>
-				renderComponent(DataTableCheckbox, {
-					checked: row.getIsSelected(),
-					onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
+				renderComponent(DataTableOpenButton, {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					row: row as any,
+					onClick: onRowClick as (row: RowData) => void,
 					'aria-label': 'Select row'
 				}),
 			enableSorting: false,
@@ -139,29 +134,10 @@
 					});
 				},
 				...(isTimestamp && {
-					cell: ({ getValue }) => {
-						const value = getValue();
-						if (!value) return '';
-
-						// Handles numbers (epochs), ISO strings, or Date objects
-						const dateInput =
-							typeof value === 'number' || typeof value === 'string' || value instanceof Date
-								? value
-								: String(value);
-						const date = new Date(
-							typeof dateInput === 'number' && dateInput.toString().length === 10
-								? dateInput * 1000
-								: dateInput
-						);
-
-						// Format nicely, e.g., "Nov 2, 2026, 11:15 AM"
-						return isNaN(date.getTime())
-							? String(value)
-							: new Intl.DateTimeFormat('en-US', {
-									dateStyle: 'medium',
-									timeStyle: 'short'
-								}).format(date);
-					}
+					cell: ({ getValue }) =>
+						renderComponent(DataTableDate, {
+							value: getValue()
+						})
 				})
 			});
 		})
@@ -207,6 +183,7 @@
 			value={filter}
 			oninput={(e) => {
 				updateFilter(e.currentTarget.value);
+				updateFilter(e.currentTarget.value);
 			}}
 			class="max-w-sm"
 		/>
@@ -226,7 +203,7 @@
 							class="capitalize"
 							bind:checked={() => column.getIsVisible(), (v) => column.toggleVisibility(!!v)}
 						>
-							{column.id}
+							{camelToTitleCase(column.id)}
 						</DropdownMenu.CheckboxItem>
 					{/each}
 				</DropdownMenu.Content>
@@ -259,24 +236,32 @@
 			</Table.Header>
 			<Table.Body>
 				{#each table.getRowModel().rows as row (row.id)}
-					<Table.Row
-						data-state={row.getIsSelected() && 'selected'}
-						class={cn(onRowClick && 'cursor-pointer transition-colors hover:bg-muted/50')}
-						onclick={() => {
-							if (!onRowClick) return;
-							onRowClick(row.original);
-						}}
-					>
+					<Table.Row>
 						{#each row.getVisibleCells() as cell (cell.id)}
 							<Table.Cell
-								class="px-3"
+								class="group relative px-3 py-2"
 								onclick={(e: MouseEvent) => {
-									if (cell.column.id === 'select') {
-										e.stopPropagation();
-									}
+									if (cell.column.id === 'select') e.stopPropagation();
 								}}
 							>
-								<FlexRender {cell} />
+								<div class="flex min-h-8 items-center justify-between gap-2">
+									<span class="flex items-center gap-2 truncate">
+										<FlexRender {cell} />
+										{#if cell.column.id !== 'open'}
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+												onclick={(e) => {
+													e.stopPropagation();
+													navigator.clipboard.writeText(String(cell.getValue()));
+												}}
+											>
+												<Copy class="h-3 w-3" />
+											</Button>
+										{/if}
+									</span>
+								</div>
 							</Table.Cell>
 						{/each}
 					</Table.Row>
@@ -300,13 +285,13 @@
 			}}
 		>
 			<Select.Trigger size="sm">
-				<Select.Value />
+				Results: <Select.Value />
 			</Select.Trigger>
 			<Select.Content align="start">
-				<Select.Item value="12">12</Select.Item>
-				<Select.Item value="24">24</Select.Item>
-				<Select.Item value="48">48</Select.Item>
-				<Select.Item value="96">96</Select.Item>
+				<Select.Item value="10">10</Select.Item>
+				<Select.Item value="25">25</Select.Item>
+				<Select.Item value="50">50</Select.Item>
+				<Select.Item value="100">100</Select.Item>
 			</Select.Content>
 		</Select.Root>
 		<div>

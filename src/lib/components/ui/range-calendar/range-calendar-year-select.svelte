@@ -1,43 +1,41 @@
 <script lang="ts">
-	import { RangeCalendar as RangeCalendarPrimitive } from "bits-ui";
-	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-	import { cn, type WithoutChildrenOrChild } from "#lib/utils.js";
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { cn } from '#lib/utils.js';
 
 	let {
-		ref = $bindable(null),
 		class: className,
 		value,
+		years,
+		onYearChange,
 		...restProps
-	}: WithoutChildrenOrChild<RangeCalendarPrimitive.YearSelectProps> = $props();
+	}: {
+		class?: string;
+		value: number;
+		years: { value: number; label: string }[];
+		yearFormat?: Intl.DateTimeFormatOptions['year'] | ((year: number) => string);
+		onYearChange: (year: number) => void;
+	} = $props();
+
+	let stringValue = $derived(value?.toString());
 </script>
 
-<span
-	class={cn(
-		"relative flex rounded-md border border-input shadow-xs has-focus:border-ring has-focus:ring-[3px] has-focus:ring-ring/50",
-		className
-	)}
+<div style="display: none;" data-shield={!!restProps}></div>
+
+<Select.Root
+	type="single"
+	value={stringValue}
+	onValueChange={(v) => {
+		if (v) onYearChange(Number.parseInt(v));
+	}}
 >
-	<RangeCalendarPrimitive.YearSelect bind:ref class="absolute inset-0 opacity-0" {...restProps}>
-		{#snippet child({ props, yearItems, selectedYearItem })}
-			<select {...props} {value}>
-				{#each yearItems as yearItem (yearItem.value)}
-					<option
-						value={yearItem.value}
-						selected={value !== undefined
-							? yearItem.value === value
-							: yearItem.value === selectedYearItem?.value}
-					>
-						{yearItem.label}
-					</option>
-				{/each}
-			</select>
-			<span
-				class="flex h-(--cell-size) items-center gap-1 rounded-md ps-2 pe-1 text-sm font-medium select-none [&>svg]:size-3.5 [&>svg]:text-muted-foreground"
-				aria-hidden="true"
-			>
-				{yearItems.find((item) => item.value === value)?.label || selectedYearItem?.label || value}
-				<ChevronDownIcon class={cn("size-4", className)} />
-			</span>
-		{/snippet}
-	</RangeCalendarPrimitive.YearSelect>
-</span>
+	<Select.Trigger class={cn(className, 'z-10')} size="sm">
+		<Select.Value placeholder="Year">{value}</Select.Value>
+	</Select.Trigger>
+	<Select.Content class="min-w-max">
+		{#each years as yearItem (yearItem.value)}
+			<Select.Item value={yearItem.value.toString()}>
+				{yearItem.label}
+			</Select.Item>
+		{/each}
+	</Select.Content>
+</Select.Root>
