@@ -21,13 +21,13 @@
 	<Popover.Trigger>
 		{#snippet child({ props })}
 			<Button {...props} variant="outline" class="w-48 justify-between font-normal">
-				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString('en-US', {
+				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString(undefined, {
 					day: '2-digit',
 					month: '2-digit',
 					year: '2-digit'
 				})}-{value.end
 					?.toDate(getLocalTimeZone())
-					.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+					.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })}
 				<ChevronDownIcon />
 			</Button>
 		{/snippet}

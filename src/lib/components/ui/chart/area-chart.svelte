@@ -55,7 +55,9 @@
 			},
 			xAxis: {
 				format: (v: Date) =>
-					v instanceof Date ? v.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : v
+					v instanceof Date
+						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
+						: v
 			}
 		}}
 	>
@@ -63,7 +65,7 @@
 			<Chart.Tooltip
 				labelFormatter={(v: Date) =>
 					v instanceof Date
-						? v.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: '2-digit' })
+						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: '2-digit' })
 						: v}
 				indicator="line"
 			/>
