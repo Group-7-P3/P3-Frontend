@@ -32,6 +32,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const startDate = startDateObj.toDate(timeZone);
 	const endDate = endDateObj.toDate(timeZone);
 
+	//#region Activities
 	const activities = await db
 		.select({
 			activity: schema.activity.activity,
@@ -43,8 +44,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		.groupBy(schema.activity.activity);
 
 	const [{ totalActivities }] = await db.select({ totalActivities: count() }).from(schema.activity);
+	//#endregion
 
-	// Fetch subscriptions that overlap with the selected range window
+	//#region Subscriptions
 	const subscriptions = await db
 		.select({
 			type: schema.subscription.type,
@@ -58,6 +60,21 @@ export const load: PageServerLoad = async ({ url }) => {
 				gte(schema.subscription.expiresAt, startDateStr)
 			)
 		);
+	//#endregion
 
-	return { activities, totalActivities, subscriptions };
+	//#region Users
+	const users = await db
+		.select({ createdAt: schema.user.createdAt })
+		.from(schema.user)
+		.where(lte(schema.user.createdAt, endDate));
+	//#endregion
+
+	//#region Products
+	const products = await db
+		.select({ sn: schema.product.serialNumber, createdAt: schema.product.createdAt })
+		.from(schema.product)
+		.where(lte(schema.product.createdAt, endDate));
+	//#endregion
+
+	return { activities, totalActivities, subscriptions, users, products };
 };

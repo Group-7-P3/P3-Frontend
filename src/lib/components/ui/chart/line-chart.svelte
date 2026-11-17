@@ -14,6 +14,7 @@
 		config?: Chart.ChartConfig;
 		x?: Accessor<any>;
 		series?: SeriesData<any, Component<SplineProps>>[];
+		showTotal?: boolean;
 	}
 
 	let {
@@ -23,7 +24,8 @@
 			amount: { label: 'Amount', color: 'var(--chart-1)' }
 		},
 		x = 'month',
-		series
+		series,
+		showTotal = false
 	}: Props = $props();
 
 	// Automatically derive series from config if none are explicitly passed
@@ -53,13 +55,17 @@
 			xAxis: {
 				format: (v: Date) =>
 					v instanceof Date
-						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
+						? v.toLocaleDateString(undefined, {
+								day: '2-digit',
+								month: 'short',
+								year: v.getFullYear() !== new Date().getFullYear() ? '2-digit' : undefined
+							})
 						: v
 			}
 		}}
 	>
 		{#snippet tooltip()}
-			<Tooltip.Root class="p-0">
+			<Tooltip.Root class="min-w-32 p-0">
 				{#snippet children({ data: tooltipData }: { data: any })}
 					<!-- Safely extract payload or entries depending on LayerChart's active point structure -->
 					{@const payload =
@@ -106,11 +112,13 @@
 							{/each}
 						</div>
 					</div>
-					<Separator />
-					<div class="inline-flex w-full justify-between p-2 text-xs">
-						<span>Total</span>
-						<span class="font-mono tabular-nums">{total}</span>
-					</div>
+					{#if showTotal}
+						<Separator />
+						<div class="inline-flex w-full justify-between p-2 text-xs">
+							<span>Total</span>
+							<span class="font-mono tabular-nums">{total}</span>
+						</div>
+					{/if}
 				{/snippet}
 			</Tooltip.Root>
 		{/snippet}
