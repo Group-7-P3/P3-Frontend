@@ -19,9 +19,9 @@
 	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { tick } from 'svelte';
-	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
+	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
 
 	type DataTableProps<TData extends RowData> = {
@@ -100,7 +100,7 @@
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
 		columnHelper.display({
-			id: 'select',
+			id: 'open',
 			meta: {
 				class: 'mr-4 pr-4',
 				className: 'mr-4 pr-4'
@@ -183,6 +183,7 @@
 			value={filter}
 			oninput={(e) => {
 				updateFilter(e.currentTarget.value);
+				updateFilter(e.currentTarget.value);
 			}}
 			class="max-w-sm"
 		/>
@@ -244,23 +245,22 @@
 								}}
 							>
 								<div class="flex min-h-8 items-center justify-between gap-2">
-									<span class="truncate">
+									<span class="flex items-center gap-2 truncate">
 										<FlexRender {cell} />
+										{#if cell.column.id !== 'open'}
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+												onclick={(e) => {
+													e.stopPropagation();
+													navigator.clipboard.writeText(String(cell.getValue()));
+												}}
+											>
+												<Copy class="h-3 w-3" />
+											</Button>
+										{/if}
 									</span>
-
-									{#if cell.column.id !== 'select'}
-										<Button
-											variant="ghost"
-											size="icon-xs"
-											class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-											onclick={(e) => {
-												e.stopPropagation();
-												navigator.clipboard.writeText(String(cell.getValue()));
-											}}
-										>
-											<Copy class="h-3 w-3" />
-										</Button>
-									{/if}
 								</div>
 							</Table.Cell>
 						{/each}

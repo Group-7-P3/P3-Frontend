@@ -1,8 +1,8 @@
 import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
-import type { PageServerLoad } from '../users/$types';
-import { error } from '@sveltejs/kit';
-import { and, asc, countDistinct, desc, eq, getTableColumns, ilike, or, sql } from 'drizzle-orm';
+import { error } from 'console';
+import { eq, or, ilike, sql, and, desc, asc, getTableColumns, countDistinct } from 'drizzle-orm';
+import type { PageServerLoad } from '../$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staff = locals.user;
@@ -14,8 +14,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
+
 	const conditions = [];
 	if (staff.group !== 'INNOVAID') conditions.push(eq(schema.user.managedBy, staff.group));
+
 	const searchFilter = filter.trim();
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
@@ -29,7 +31,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			)
 		);
 	}
+
 	const where = conditions.length ? and(...conditions) : undefined;
+
 	const sortColumn =
 		(
 			{
@@ -41,7 +45,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			} as const
 		)[sort as 'serialNumber' | 'status' | 'createdAt' | 'updatedAt' | 'managedBy'] ??
 		schema.product.serialNumber;
+
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
+
 	const products = await db
 		.selectDistinct({
 			...getTableColumns(schema.product),
@@ -61,6 +67,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.orderBy(orderBy)
 		.limit(pageSize)
 		.offset((page - 1) * pageSize);
+
 	const [{ total }] = await db
 		.select({ total: countDistinct(schema.product.serialNumber) })
 		.from(schema.product)
