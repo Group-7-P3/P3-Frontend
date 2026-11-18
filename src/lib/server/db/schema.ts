@@ -18,7 +18,6 @@ export const user = pgTable(
 	'user',
 	{
 		id: serial('id').primaryKey(),
-		customerId: integer('customer_id').notNull().unique(),
 		managedBy: text('managed_by').notNull().default('INNOVAID'),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()
@@ -30,9 +29,10 @@ export const subscription = pgTable(
 	'subscription',
 	{
 		licenseKey: serial('license_key').primaryKey(),
-		customerId: integer('customer_id')
+		userId: integer('user_id')
 			.notNull()
-			.references(() => user.customerId, { onDelete: 'cascade' }),
+			.references(() => user.id, { onDelete: 'cascade' }),
+		customerId: integer('customer_id').notNull(),
 		type: subscriptionType('type').notNull().default('home'),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow(),

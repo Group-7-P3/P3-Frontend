@@ -2,7 +2,7 @@ import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import { user as userTable, subscription } from '$lib/server/db/schema';
 import { error, fail, type Actions } from '@sveltejs/kit';
-import { and, ne, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const userId = Number(params.id);
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const userSubscriptions = await db
 		.select()
 		.from(subscription)
-		.where(eq(subscription.customerId, userRows[0].customerId));
+		.where(eq(subscription.userId, userRows[0].id));
 
 	return {
 		user: userRows[0],
@@ -45,17 +45,7 @@ export const actions: Actions = {
 			return fail(400, { customerIdInvalid: true });
 		}
 		// Check is another user (ne means not equal) already exists with this customer id
-		const duplicate = await db
-			.select({ id: userTable.id })
-			.from(userTable)
-			.where(and(eq(userTable.customerId, customerId), ne(userTable.id, userId)))
-			.limit(1);
-
-		if (duplicate.length > 0) {
-			return fail(400, { customerIdDuplicate: true });
-		}
-		// Save the updated user changes
-		await db.update(userTable).set({ customerId, managedBy }).where(eq(userTable.id, userId));
+		await db.update(userTable).set({ managedBy }).where(eq(userTable.id, userId));
 
 		return { succes: true };
 	}
