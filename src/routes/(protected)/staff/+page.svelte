@@ -1,8 +1,6 @@
 <script lang="ts">
 	import DataTable from '$lib/components/ui/data-table/data-table.svelte';
 	import type { PageData } from './$types';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import NewStaffFormDialog from './newStaff-form.svelte';
 
 	// Toggle for Dialog box
@@ -11,21 +9,6 @@
 	// Staff Table, i think
 	let { data }: { data: PageData } = $props();
 	const columns = ['id', 'name', 'email', 'createdAt', 'updatedAt', 'role', 'group'];
-
-	/*
-	 * formattedStaff changes data.staff to uppercase
-	 */
-	const formattedStaff = $derived(
-		data.staff.map((staff) => ({
-			...staff,
-			group: wordsToTitleCase(staff.group),
-			role: wordsToTitleCase(staff.role)
-		}))
-	);
-
-	function handleRowClick(row: (typeof data.staff)[number]) {
-		goto(resolve('/(protected)/staff/[UUID]', { UUID: String(row.id) }));
-	}
 </script>
 
 <svelte:head>
