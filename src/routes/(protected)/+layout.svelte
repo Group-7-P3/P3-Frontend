@@ -6,6 +6,7 @@
 	import Footer from '#lib/components/ui/footer.svelte';
 	import { ModeWatcher } from 'mode-watcher';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import Navigation from '#lib/components/ui/navigation/navigation.svelte';
 
 	let { children }: LayoutProps = $props();
@@ -16,13 +17,15 @@
 </svelte:head>
 
 <Sidebar.Provider>
-	<Navigation />
-	<Sidebar.Inset class="flex min-h-screen w-full min-w-0 flex-col bg-background">
-		<Header sidebar />
-		<main class="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-6 p-6">
-			<ModeWatcher />
-			{@render children()}
-		</main>
-		<Footer />
-	</Sidebar.Inset>
+	<Tooltip.Provider>
+		<Navigation />
+		<Sidebar.Inset class="flex min-h-screen w-full min-w-0 flex-col bg-background">
+			<Header sidebar />
+			<main class="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-6 p-6">
+				<ModeWatcher />
+				{@render children()}
+			</main>
+			<Footer />
+		</Sidebar.Inset>
+	</Tooltip.Provider>
 </Sidebar.Provider>
