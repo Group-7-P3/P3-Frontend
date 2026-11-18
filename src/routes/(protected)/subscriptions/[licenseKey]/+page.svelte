@@ -120,12 +120,12 @@
 				<Card.Title>Edit Subscription</Card.Title>
 				<Card.Content class="space-y-2">
 					<form method="POST" use:enhance class="space-y-4">
-						<!-- User ID -->
+						<!-- Customer ID -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
-							<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
+							<dt class="text-sm font-normal text-muted-foreground">Customer ID</dt>
 							<dd class="text-sm font-medium text-foreground">
 								<Field.Field>
-									<Input id="user-Id" type="userID" placeholder="Enter new User ID" />
+									<Input id="customer-Id" type="customerID" placeholder="Enter new Customer ID" />
 								</Field.Field>
 							</dd>
 						</div>
@@ -147,23 +147,9 @@
 								</Select.Root>
 							</dd>
 						</div>
-						<!-- Max Devices -->
-						<div class="flex items-center justify-between border-b py-2 last:border-0">
-							<dt class="text-sm font-normal text-muted-foreground">Max Devices</dt>
-							<dd class="text-sm font-medium text-foreground">
-								<Field.Field>
-									<Input id="user-Id" type="userID" placeholder="Enter Max Devices" />
-								</Field.Field>
-							</dd>
-						</div>
 						<!-- Created At -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Created At</dt>
-							<dd class="text-sm font-medium text-foreground">Calender missing for now</dd>
-						</div>
-						<!-- Updated At -->
-						<div class="flex items-center justify-between border-b py-2 last:border-0">
-							<dt class="text-sm font-normal text-muted-foreground">Updated At</dt>
 							<dd class="text-sm font-medium text-foreground">Calender missing for now</dd>
 						</div>
 						<!-- Expires At -->
@@ -191,7 +177,7 @@
 						</div>
 					</form>
 					<div class="flex flex-wrap items-center gap-2 md:flex-row">
-						<Button variant="destructive">Confirm edits</Button>
+						<Button variant="destructive" type="submit">Confirm edits</Button>
 						<Button variant="secondary">Clear</Button>
 					</div>
 				</Card.Content>
