@@ -18,8 +18,8 @@ export const productStatus = pgEnum('product_status', ['inactive', 'active', 'de
 export const user = pgTable(
 	'user',
 	{
-		id: serial('id').primaryKey(),
-		customerId: integer('customer_id').notNull(),
+		id: serial('id').notNull(),
+		customerId: integer('customer_id').primaryKey(),
 		managedBy: text('managed_by').notNull().default('INNOVAID'),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()

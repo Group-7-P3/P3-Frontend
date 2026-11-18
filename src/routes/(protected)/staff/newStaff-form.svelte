@@ -244,7 +244,7 @@
 													bind:value={newStaffGroup}
 													type="text"
 													autocomplete="off"
-													placeholder="Denmark"
+													placeholder="I.e. INNOVAID"
 												/>
 											</Field.Field>
 											<!-- Reports any errors back to the user -->
