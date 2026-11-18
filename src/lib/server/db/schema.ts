@@ -31,7 +31,7 @@ export const subscription = pgTable(
 		licenseKey: serial('license_key').primaryKey(),
 		userId: integer('user_id')
 			.notNull()
-			.references(() => user.id),
+			.references(() => user.id, { onDelete: 'cascade' }),
 		customerId: integer('customer_id').notNull(),
 		type: subscriptionType('type').notNull().default('home'),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
