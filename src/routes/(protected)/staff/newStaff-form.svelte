@@ -10,6 +10,8 @@
 	import { deserialize } from '$app/forms';
 	import { refreshAll } from '$app/navigation';
 	import { groupRules } from '#lib/utils.ts';
+	import * as RadioGroup from '$lib/components/ui/radio-group';
+	import { Label } from '$lib/components/ui/label/index.js';
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
@@ -21,7 +23,7 @@
 	let wasOpen = false;
 
 	// Store if staff should be admin, default is moderator
-	let makeAdmin = $state(false);
+	let newStaffRole = $state('moderator');
 
 	// Keeps track of whether the form has been submitted and if the password has changed.
 	let formSubmitted = $state(false);
@@ -85,7 +87,7 @@
 		newStaffEmail = '';
 		newStaffPassword = '';
 		newRepeatStaffPassword = '';
-		makeAdmin = false;
+		newStaffRole = 'moderator';
 		newStaffGroup = '';
 		errors = {};
 		successMessage = '';
@@ -122,6 +124,7 @@
 		// If the form submission was successful, resets the form, displays a success message and refreshes the staff list.
 		if (result.type === 'success') {
 			resetStaffForm();
+			open = !open;
 			successMessage = (result.data?.message as string) ?? 'User created successfully.';
 			errors = {};
 			await refreshAll();
@@ -148,7 +151,7 @@
 {/snippet}
 
 <Dialog bind:open>
-	<DialogContent class="gap-2 sm:max-w-xl">
+	<DialogContent class="gap-2 sm:max-w-xl" interactOutsideBehavior="ignore">
 		<DialogHeader>
 			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
@@ -237,7 +240,7 @@
 										<!-- INNOVAID only, input group for new staff -->
 										{#if group === 'INNOVAID'}
 											<Field.Field>
-												<Field.Label for="newStaffGroup">Group for the new staff</Field.Label>
+												<Field.Label for="newStaffGroup">Distributor group</Field.Label>
 												<Input
 													id="newStaffGroup"
 													name="newStaffGroup"
@@ -254,12 +257,21 @@
 										{/if}
 										<!-- Owner only field, gives admin role to staff -->
 										{#if role === 'owner'}
-											<Field.Field orientation="horizontal" class="justify-start gap-1">
-												<Field.Label for="makeAdmin" class="w-auto flex-none"
-													>Make admin?</Field.Label
-												>
-												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
-											</Field.Field>
+											<Field.Set class="w-full max-w-xs">
+												<Field.Label for="newStaffRole">Role</Field.Label>
+												<RadioGroup.Root bind:value={newStaffRole}>
+													<Field.Field orientation="horizontal">
+														<RadioGroup.Item value="moderator" id="newStaffRole" />
+														<Field.Label for="newStaffRole" class="font-normal"
+															>Moderator</Field.Label
+														>
+													</Field.Field>
+													<Field.Field orientation="horizontal">
+														<RadioGroup.Item value="admin" id="newStaffRole" />
+														<Field.Label for="newStaffRole" class="font-normal">Admin</Field.Label>
+													</Field.Field>
+												</RadioGroup.Root>
+											</Field.Set>
 										{/if}
 										<!-- Reports general errors at bottom, i.e. if something goes wrong in actually creating the user -->
 										{#if errors.general}
