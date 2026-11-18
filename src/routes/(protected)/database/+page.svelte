@@ -7,6 +7,7 @@
 	import { Check, Code, Copy, Play, Redo2, Table2, Undo2 } from '@lucide/svelte';
 	import { tick } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+	import { Download } from '@lucide/svelte';
 
 	type TableSchema = {
 		name: string;
@@ -979,6 +980,22 @@ ORDER BY s.expires_at ASC;`;
 	function resultColumns() {
 		return queryRows.length ? Object.keys(queryRows[0]) : [];
 	}
+
+	/**
+	 * Converts JSON to csv
+	*/
+	function jsonToCsv(data: QueryRow[]): string {
+		if (data.length === 0) {
+			return "";
+		}
+
+		const headers = Object.keys(data[0]);
+		const rows = data.map(obj =>
+			headers.map(header => obj[header] ?? "").join(",")
+		);
+
+		return [headers.join(","), ...rows].join("\n");
+	}
 </script>
 
 <svelte:window onmousemove={moveLineSelection} onmouseup={endLineSelection} />
@@ -1137,10 +1154,32 @@ ORDER BY s.expires_at ASC;`;
 					{/if}
 
 					{#if queryStatus === 'success'}
-						<span
-							class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
-							>Completed</span
-						>
+						<div class="flex gap-2">
+							<span
+								class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+								>Completed</span
+							>
+							{#if queryRows.length !== 0}
+							<Button
+								variant="outline"
+								size="icon-xs"
+								onclick={async() => {
+									const csvData = jsonToCsv(queryRows);
+									const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
+									const url = URL.createObjectURL(blob);
+
+									const link = document.createElement('a');
+									link.href = url;
+									link.download = 'query-results';
+									link.click();
+
+									setTimeout(() => URL.revokeObjectURL(url), 1000);
+								}}
+							>
+								<Download />
+							</Button>
+							{/if}
+						</div>
 					{:else if queryStatus === 'error'}
 						<span
 							class="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive"
