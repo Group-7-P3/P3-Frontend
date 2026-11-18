@@ -3,7 +3,7 @@
 	import { getLocalTimeZone, today } from '@internationalized/date';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { RangeCalendar } from '#lib/components/ui/range-calendar/index.ts';
+	import { RangeCalendar } from '$lib/components/ui/range-calendar/index.js';
 	import type { DateRange, RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 
 	interface Props {
@@ -21,13 +21,13 @@
 	<Popover.Trigger>
 		{#snippet child({ props })}
 			<Button {...props} variant="outline" class="w-48 justify-between font-normal">
-				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString('en-US', {
+				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString(undefined, {
 					day: '2-digit',
 					month: '2-digit',
 					year: '2-digit'
 				})}-{value.end
 					?.toDate(getLocalTimeZone())
-					.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+					.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })}
 				<ChevronDownIcon />
 			</Button>
 		{/snippet}
@@ -37,6 +37,7 @@
 			bind:value
 			captionLayout="dropdown"
 			maxValue={today(getLocalTimeZone())}
+			weekStartsOn={1}
 			{years}
 		/>
 	</Popover.Content>

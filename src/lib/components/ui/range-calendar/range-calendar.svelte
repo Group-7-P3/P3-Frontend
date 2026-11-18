@@ -27,7 +27,7 @@
 		class: className,
 		buttonVariant = 'ghost',
 		captionLayout = 'label',
-		locale = 'en-US',
+		locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US',
 		months: monthsProp,
 		years: yearsProp,
 		monthFormat: monthFormatProp,
