@@ -21,31 +21,37 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
 		conditions.push(
-			or(
-				ilike(sql`${schema.user.id}::text`, pattern),
-				ilike(sql`${schema.user.customerId}::text`, pattern),
-				ilike(schema.user.managedBy, pattern)
-			)
+			or(ilike(sql`${schema.user.id}::text`, pattern), ilike(schema.user.managedBy, pattern))
 		);
 	}
+
+	const subscriptions = count(schema.subscription.licenseKey).as('subscriptionCount');
 
 	const sortColumn =
 		(
 			{
 				id: schema.user.id,
-				customerId: schema.user.customerId,
 				managedBy: schema.user.managedBy,
 				createdAt: schema.user.createdAt,
-				updatedAt: schema.user.updatedAt
+				updatedAt: schema.user.updatedAt,
+				subscriptions
 			} as const
-		)[sort as 'id' | 'customerId' | 'managedBy' | 'createdAt' | 'updatedAt'] ?? schema.user.id;
+		)[sort as 'id' | 'managedBy' | 'createdAt' | 'updatedAt' | 'subscriptions'] ?? schema.user.id;
 	const where = conditions.length ? and(...conditions) : undefined;
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
 	const users = await db
-		.select()
+		.select({
+			id: schema.user.id,
+			managedBy: schema.user.managedBy,
+			createdAt: schema.user.createdAt,
+			updatedAt: schema.user.updatedAt,
+			subscriptions: count(schema.subscription.licenseKey)
+		})
 		.from(schema.user)
+		.leftJoin(schema.subscription, eq(schema.subscription.userId, schema.user.id))
 		.where(where)
+		.groupBy(schema.user.id)
 		.orderBy(orderBy)
 		.limit(pageSize)
 		.offset((page - 1) * pageSize);
