@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getLocalTimeZone, isEqualMonth, type DateValue } from '@internationalized/date';
+	import { isEqualMonth, type DateValue } from '@internationalized/date';
 	import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 	import type { ButtonVariant } from '#lib/components/ui/button/index.js';
 	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
@@ -27,7 +27,7 @@
 		class: className,
 		buttonVariant = 'ghost',
 		captionLayout = 'label',
-		locale = getLocalTimeZone(),
+		locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US',
 		months: monthsProp,
 		years: yearsProp,
 		monthFormat: monthFormatProp,

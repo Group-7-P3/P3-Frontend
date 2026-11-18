@@ -24,13 +24,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		conditions.push(
 			or(
 				ilike(sql`${schema.subscription.licenseKey}::text`, pattern),
-				ilike(sql`${schema.subscription.userId}::text`, pattern),
+				ilike(sql`${schema.subscription.customerId}::text`, pattern),
 				ilike(sql`${schema.subscription.type}::text`, pattern),
-				ilike(sql`${schema.subscription.maxDevices}::text`, pattern),
 				ilike(sql`${schema.subscription.createdAt}::text`, pattern),
 				ilike(sql`${schema.subscription.updatedAt}::text`, pattern),
 				ilike(sql`${schema.subscription.expiresAt}::text`, pattern),
-				ilike(sql`${schema.subscription.autoRenew}::text`, pattern),
 				ilike(schema.user.managedBy, pattern)
 			)
 		);
@@ -42,26 +40,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		(
 			{
 				licenseKey: schema.subscription.licenseKey,
-				userId: schema.subscription.userId,
+				customerId: schema.subscription.customerId,
 				type: schema.subscription.type,
-				maxDevices: schema.subscription.maxDevices,
 				createdAt: schema.subscription.createdAt,
 				updatedAt: schema.subscription.updatedAt,
 				expiresAt: schema.subscription.expiresAt,
-				autoRenew: schema.subscription.autoRenew,
 				managedBy: schema.user.managedBy
 			} as const
 		)[
 			sort as
-				| 'licenseKey'
-				| 'userId'
-				| 'type'
-				| 'maxDevices'
-				| 'createdAt'
-				| 'updatedAt'
-				| 'expiresAt'
-				| 'autoRenew'
-				| 'managedBy'
+				'licenseKey' | 'customerId' | 'type' | 'createdAt' | 'updatedAt' | 'expiresAt' | 'managedBy'
 		] ?? schema.subscription.licenseKey;
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
@@ -77,7 +65,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+		.innerJoin(schema.user, eq(schema.subscription.customerId, schema.user.id))
 		.where(where)
 		.orderBy(orderBy)
 		.limit(pageSize)
@@ -86,7 +74,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const [{ total }] = await db
 		.select({ total: count() })
 		.from(schema.subscription)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+		.innerJoin(schema.user, eq(schema.subscription.customerId, schema.user.id))
 		.where(where);
 
 	return {

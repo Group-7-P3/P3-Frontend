@@ -6,13 +6,11 @@
 	let { data }: { data: PageData } = $props();
 	const columns = [
 		'licenseKey',
-		'userId',
+		'customerId',
 		'type',
-		'maxDevices',
 		'createdAt',
 		'updatedAt',
 		'expiresAt',
-		'autoRenew',
 		'devices',
 		'managedBy'
 	];
@@ -23,8 +21,7 @@
 	const formattedSubs = $derived(
 		data.subscriptions.map((sub) => ({
 			...sub,
-			type: wordsToTitleCase(sub.type),
-			autoRenew: sub.autoRenew ? 'True' : 'False'
+			type: wordsToTitleCase(sub.type)
 		}))
 	);
 </script>

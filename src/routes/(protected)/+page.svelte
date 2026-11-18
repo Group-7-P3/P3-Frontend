@@ -122,6 +122,7 @@
 	//#endregion
 
 	//#region Users Chart
+	let userChartType: 'total' | 'new' = $state('total');
 	const userChartConfig = {
 		total: { label: 'Total Users', color: '#648fff' },
 		new: { label: 'New Signups', color: '#00cc99' }
@@ -165,11 +166,11 @@
 		return results;
 	});
 
-	// Order the series so 'total' is rendered first (bottom/background layer) and 'new' is on top
-	const userSeries = [
-		{ key: 'total', label: userChartConfig.total.label, color: userChartConfig.total.color },
-		{ key: 'new', label: userChartConfig.new.label, color: userChartConfig.new.color }
-	];
+	const userSeries = $derived(
+		userChartType === 'total'
+			? [{ key: 'total', label: userChartConfig.total.label, color: userChartConfig.total.color }]
+			: [{ key: 'new', label: userChartConfig.new.label, color: userChartConfig.new.color }]
+	);
 	//#endregion
 
 	//#region Products Chart
@@ -518,6 +519,7 @@
 					data={subscriptionChartData}
 					series={subscriptionSeries}
 					showTotal
+					legend
 				/>
 			{/if}
 		</Card.Content>
@@ -527,17 +529,47 @@
 <!-- Users chart -->
 <div class="w-full max-w-7xl">
 	<Card.Root>
-		<Card.Header>
+		<Card.Header class="flex items-center justify-between">
 			<Card.Title>Users</Card.Title>
+			<ButtonGroup.Root>
+				<Button
+					variant={userChartType === 'total' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						userChartType = 'total';
+					}}
+				>
+					Total
+				</Button>
+				<Button
+					variant={userChartType === 'new' ? 'default' : 'outline'}
+					size="sm"
+					onclick={() => {
+						userChartType = 'new';
+					}}
+				>
+					New
+				</Button>
+			</ButtonGroup.Root>
 		</Card.Header>
 		<Separator />
 		<Card.Content>
-			<LineChart
-				class="h-100 px-5"
-				config={userChartConfig}
-				data={userChartData}
-				series={userSeries}
-			/>
+			{#if userChartType === 'total'}
+				<LineChart
+					class="h-100 px-5"
+					config={userChartConfig}
+					data={userChartData}
+					series={userSeries}
+					y={userChartType === 'total' ? 'total' : 'new'}
+				/>
+			{:else}
+				<LineChart
+					class="h-100 px-5"
+					config={userChartConfig}
+					data={userChartData}
+					series={userSeries}
+				/>
+			{/if}
 		</Card.Content>
 	</Card.Root>
 </div>
@@ -585,6 +617,7 @@
 					data={productChartData}
 					series={productSeries}
 					showTotal
+					legend
 				/>
 			{/if}
 		</Card.Content>

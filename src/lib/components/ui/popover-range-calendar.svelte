@@ -3,7 +3,7 @@
 	import { getLocalTimeZone, today } from '@internationalized/date';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { RangeCalendar } from '#lib/components/ui/range-calendar/index.ts';
+	import { RangeCalendar } from '$lib/components/ui/range-calendar/index.js';
 	import type { DateRange, RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 
 	interface Props {
@@ -37,6 +37,7 @@
 			bind:value
 			captionLayout="dropdown"
 			maxValue={today(getLocalTimeZone())}
+			weekStartsOn={1}
 			{years}
 		/>
 	</Popover.Content>

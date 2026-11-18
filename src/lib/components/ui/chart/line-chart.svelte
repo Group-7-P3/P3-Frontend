@@ -12,7 +12,9 @@
 		class?: string;
 		data?: any[];
 		config?: Chart.ChartConfig;
+		legend?: boolean;
 		x?: Accessor<any>;
+		y?: Accessor<any>;
 		series?: SeriesData<any, Component<SplineProps>>[];
 		showTotal?: boolean;
 	}
@@ -23,7 +25,9 @@
 		config = {
 			amount: { label: 'Amount', color: 'var(--chart-1)' }
 		},
+		legend = false,
 		x = 'month',
+		y,
 		series,
 		showTotal = false
 	}: Props = $props();
@@ -43,7 +47,8 @@
 	<LineChart
 		{data}
 		{x}
-		legend
+		{y}
+		{legend}
 		xScale={scaleUtc()}
 		series={resolvedSeries}
 		props={{
