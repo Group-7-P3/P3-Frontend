@@ -344,8 +344,9 @@
 		</Card.Root>
 	</a>
 </div>
-
-<div class="flex w-full max-w-7xl gap-4">
+<div
+	class="sticky top-12 z-20 flex w-[calc(100%+48px)] max-w-7xl gap-4 border-b border-border bg-background/50 px-6 py-4 backdrop-blur-sm"
+>
 	<ButtonGroup.Root>
 		<Button
 			variant={rangeType === 'week' ? 'default' : 'outline'}

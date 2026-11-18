@@ -21,7 +21,7 @@
 		<Navigation />
 		<Sidebar.Inset class="flex min-h-screen w-full min-w-0 flex-col bg-background">
 			<Header sidebar />
-			<main class="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-6 p-6">
+			<main class="relative flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-6 p-6">
 				<ModeWatcher />
 				{@render children()}
 			</main>
