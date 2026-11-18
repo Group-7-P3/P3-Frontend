@@ -10,7 +10,7 @@
 	import PopoverRangeCalendar from '#lib/components/ui/popover-range-calendar.svelte';
 	import { Button } from '#lib/components/ui/button/index.ts';
 	import type { DateRange } from 'bits-ui';
-	import { today, getLocalTimeZone, CalendarDate } from '@internationalized/date';
+	import { today, getLocalTimeZone, CalendarDate, type DateValue } from '@internationalized/date';
 	import type { PageData } from './$types';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import { snakeToTitleCase } from '#lib/utils.ts';
@@ -20,7 +20,8 @@
 
 	let start = $state(today(getLocalTimeZone()).set({ month: 1, day: 1 }));
 	let end = $state(today(getLocalTimeZone()));
-	let dateRange: DateRange | undefined = $derived({ start, end });
+	// svelte-ignore state_referenced_locally
+	let calendarValue: DateRange = $state({ start, end });
 	let rangeType: 'week' | 'month' | 'year' | 'ytd' | 'all-time' = $state('ytd');
 
 	const years = $derived.by(() => {
@@ -241,9 +242,9 @@
 		}
 	});
 
-	async function setDate(startDate?: CalendarDate, endDate?: CalendarDate) {
-		if (startDate) start = startDate;
-		if (endDate) end = endDate;
+	async function setDate(startDate?: DateValue, endDate?: DateValue) {
+		if (startDate) start = startDate as CalendarDate;
+		if (endDate) end = endDate as CalendarDate;
 
 		handleDateChange(start, end);
 	}
@@ -261,6 +262,11 @@
 			route: page.url.pathname
 		});
 	}
+
+	$effect(() => {
+		if (!calendarValue?.start || !calendarValue?.end) return;
+		setDate(calendarValue.start, calendarValue.end);
+	});
 </script>
 
 <svelte:head>
@@ -388,7 +394,7 @@
 		</Button>
 	</ButtonGroup.Root>
 
-	<PopoverRangeCalendar bind:value={dateRange} {years} />
+	<PopoverRangeCalendar bind:value={calendarValue} {years} />
 
 	<ButtonGroup.Root>
 		<Button
