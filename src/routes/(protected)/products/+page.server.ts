@@ -62,7 +62,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			schema.subscription,
 			eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
 		)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id)) // <-- Change user.id to user.customerId
+		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
 		.where(where)
 		.orderBy(orderBy)
 		.limit(pageSize)
