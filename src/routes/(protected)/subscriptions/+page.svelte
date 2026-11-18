@@ -8,13 +8,11 @@
 	let { data }: { data: PageData } = $props();
 	const columns = [
 		'licenseKey',
-		'userId',
+		'customerId',
 		'type',
-		'maxDevices',
 		'createdAt',
 		'updatedAt',
 		'expiresAt',
-		'autoRenew',
 		'devices',
 		'managedBy'
 	];
@@ -23,11 +21,10 @@
 	 * formattedSubs changes data.subs to uppercase
 	 */
 	const formattedSubs = $derived(
-    	data.subscriptions.map((sub) => ({
+		data.subscriptions.map((sub) => ({
 			...sub,
-			typeDisplay: wordsToTitleCase(sub.type),
-			autoRenewDisplay: sub.autoRenew ? 'True' : 'False'
-    	}))
+			type: wordsToTitleCase(sub.type)
+		}))
 	);
 
 	function handleRowClick(row: (typeof data.subscriptions)[number]) {

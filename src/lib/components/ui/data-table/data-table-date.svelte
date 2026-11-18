@@ -24,12 +24,14 @@
 	const isValid = $derived(!isNaN(date.getTime()));
 
 	const formattedDate = $derived(
-		isValid ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date) : String(value)
+		isValid
+			? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
+			: String(value)
 	);
 
 	const fullTimestamp = $derived(
 		isValid
-			? new Intl.DateTimeFormat('en-US', {
+			? new Intl.DateTimeFormat(undefined, {
 					year: 'numeric',
 					month: 'short',
 					day: 'numeric',

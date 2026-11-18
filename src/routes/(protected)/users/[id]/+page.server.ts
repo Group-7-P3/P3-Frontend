@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const userSubscriptions = await db
 		.select()
 		.from(subscription)
-		.where(eq(subscription.userId, userId));
+		.where(eq(subscription.customerId, userRows[0].customerId));
 
 	return {
 		user: userRows[0],

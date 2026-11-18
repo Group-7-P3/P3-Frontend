@@ -12,8 +12,26 @@ const connectionString =
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 
+// Helper to ensure generated dates align correctly with Copenhagen time (Europe/Copenhagen)
+function getCopenhagenDate(date: Date = new Date()): Date {
+	const copenhagenString = date.toLocaleString('en-US', { timeZone: 'Europe/Copenhagen' });
+	return new Date(copenhagenString);
+}
+
+// Generate a random date strictly between 1 year ago and now (Copenhagen timezone)
+function randomCopenhagenPast(): Date {
+	const now = new Date();
+	const past = new Date();
+	past.setFullYear(now.getFullYear() - 2);
+
+	const rawDate = faker.date.between({ from: past, to: now });
+	return getCopenhagenDate(rawDate);
+}
+
 async function main() {
-	console.log('🌱 Starting database seeding...');
+	console.log(
+		'🌱 Starting database seeding (Copenhagen timezone, strictly past year up to today)...'
+	);
 
 	// 1. Clear existing data (in reverse order of dependencies)
 	console.log('🧹 Cleaning existing data...');
@@ -28,8 +46,8 @@ async function main() {
 	const dummyProducts = Array.from({ length: 100 }).map(() => ({
 		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
 		status: faker.helpers.arrayElement(['inactive', 'active', 'deactivated'] as const),
-		createdAt: faker.date.past(),
-		updatedAt: faker.date.past()
+		createdAt: randomCopenhagenPast(),
+		updatedAt: randomCopenhagenPast()
 	}));
 
 	const insertedProducts = await db.insert(schema.product).values(dummyProducts).returning();
@@ -40,8 +58,8 @@ async function main() {
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		customerId: faker.number.int({ min: 1000, max: 9999 }),
 		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const),
-		createdAt: faker.date.past(),
-		updatedAt: faker.date.past()
+		createdAt: randomCopenhagenPast(),
+		updatedAt: randomCopenhagenPast()
 	}));
 
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
@@ -50,18 +68,24 @@ async function main() {
 	// 4. Seed Subscriptions
 	console.log('💳 Inserting dummy subscriptions...');
 	const dummySubscriptions = insertedUsers.flatMap((user) => {
-		const subCount = faker.number.int({ min: 1, max: 2 });
+		const subCount = faker.number.int({ min: 1, max: 3 });
 
-		return Array.from({ length: subCount }).map(() => ({
-			userId: user.id,
-			type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
-			expiresAt: faker.helpers.arrayElement([faker.date.past(), faker.date.future()]).toISOString(),
-			licenseKey: faker.number.int({ min: 100000, max: 999999 }),
-			maxDevices: faker.number.int({ min: 1, max: 5 }),
-			createdAt: faker.date.past(),
-			updatedAt: faker.date.past(),
-			autoRenew: faker.datatype.boolean()
-		}));
+		return Array.from({ length: subCount }).map(() => {
+			const createdAt = randomCopenhagenPast();
+			const durationDays = faker.number.int({ min: 30, max: 365 });
+			const expiresAt = new Date(createdAt);
+			expiresAt.setDate(expiresAt.getDate() + durationDays);
+			const finalExpiresAt = getCopenhagenDate(expiresAt);
+
+			return {
+				customerId: user.customerId, // Uses the exact customerId generated for that user row
+				type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
+				expiresAt: finalExpiresAt.toISOString(),
+				licenseKey: faker.number.int({ min: 100000, max: 999999 }),
+				createdAt: createdAt,
+				updatedAt: createdAt
+			};
+		});
 	});
 
 	const insertedSubscriptions = await db
@@ -101,8 +125,8 @@ async function main() {
 
 	const dummyActivities = Array.from({ length: 500 }).map(() => ({
 		activity: faker.helpers.arrayElement(activityNames),
-		time: faker.date.recent({ days: 30 }),
-		seconds: faker.number.int({ min: 1, max: 3600 })
+		time: randomCopenhagenPast(),
+		seconds: faker.number.int({ min: 1, max: 60 })
 	}));
 
 	const insertedActivities = await db.insert(schema.activity).values(dummyActivities).returning();
