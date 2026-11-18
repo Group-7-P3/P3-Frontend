@@ -56,7 +56,6 @@ async function main() {
 	// 3. Seed Users
 	console.log('👤 Inserting dummy users...');
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
-		customerId: faker.number.int({ min: 1000, max: 9999 }),
 		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const),
 		createdAt: randomCopenhagenPast(),
 		updatedAt: randomCopenhagenPast()
@@ -78,7 +77,8 @@ async function main() {
 			const finalExpiresAt = getCopenhagenDate(expiresAt);
 
 			return {
-				customerId: user.customerId, // Uses the exact customerId generated for that user row
+				userId: user.id,
+				customerId: faker.number.int({ min: 1000, max: 9999 }),
 				type: faker.helpers.arrayElement(['home', 'pro', 'home+', 'pro+'] as const),
 				expiresAt: finalExpiresAt.toISOString(),
 				licenseKey: faker.number.int({ min: 100000, max: 999999 }),

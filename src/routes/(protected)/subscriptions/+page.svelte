@@ -9,6 +9,7 @@
 	const columns = [
 		'licenseKey',
 		'customerId',
+		'userId',
 		'type',
 		'createdAt',
 		'updatedAt',

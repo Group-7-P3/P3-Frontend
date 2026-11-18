@@ -28,7 +28,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const userRows = await db
 		.select()
 		.from(userTable)
-		.where(eq(userTable.customerId, subscriptionRows[0].customerId))
+		.where(eq(userTable.id, subscriptionRows[0].userId))
 		.limit(1);
 
 	if (userRows.length === 0) {

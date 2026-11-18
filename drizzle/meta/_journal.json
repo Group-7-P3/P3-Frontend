@@ -29,6 +29,13 @@
       "when": 1795000815815,
       "tag": "0004_sour_sunset_bain",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795005233188,
+      "tag": "0005_flippant_red_hulk",
+      "breakpoints": true
     }
   ]
 }
