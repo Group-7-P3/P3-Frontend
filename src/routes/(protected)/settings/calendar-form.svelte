@@ -48,7 +48,7 @@
 <Card.Root class="basis-6/12 px-6">
 	<form method="POST" use:enhance={handleCalendarSubmit}>
 		<Field.Set>
-			<Field.Legend class="mb-4">Calendar settings</Field.Legend>
+			<Field.Legend class="mb-4">Date and time format</Field.Legend>
 			<Field.Group class="grid grid-cols-2 gap-4">
                 <!-- First day -->
 				<Field.Field>

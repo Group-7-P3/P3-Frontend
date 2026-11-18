@@ -75,6 +75,11 @@
 					<Checkbox id="remember-me" bind:checked={rememberMe} />
 					<Field.Label for="remember-me">Remember me</Field.Label>
 				</Field.Field>
+
+				<!-- Forgot password -->
+				<Field.Field orientation="horizontal">
+					<Field.Label class="text-sm font-normal text-muted-foreground">Please contact your manager if you have forgotten your password.</Field.Label>
+				</Field.Field>
 			</Field.Group>
 		</Card.Content>
 	</form>
