@@ -65,7 +65,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)
-		.innerJoin(schema.user, eq(schema.subscription.customerId, schema.user.id))
+		.innerJoin(schema.user, eq(schema.subscription.customerId, schema.user.customerId)) // <-- Change user.id to user.customerId
 		.where(where)
 		.orderBy(orderBy)
 		.limit(pageSize)
@@ -74,7 +74,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const [{ total }] = await db
 		.select({ total: count() })
 		.from(schema.subscription)
-		.innerJoin(schema.user, eq(schema.subscription.customerId, schema.user.id))
+		.innerJoin(schema.user, eq(schema.subscription.customerId, schema.user.customerId)) // <-- Change user.id to user.customerId
 		.where(where);
 
 	return {
