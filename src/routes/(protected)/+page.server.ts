@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const timeZone = getLocalTimeZone();
 	const currentDate = today(timeZone);
 
-	let startDateObj = currentDate.subtract({ months: 1 });
+	let startDateObj = currentDate.set({ day: 1, month: 1 });
 	const startParam = url.searchParams.get('start');
 	if (startParam) {
 		try {
