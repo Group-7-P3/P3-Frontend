@@ -4,8 +4,8 @@
 	import * as Field from '$lib/components/ui/field/index.js'
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import { timeZoneOptions } from '#lib/utils/timezones.ts';
 	import { Label } from '$lib/components/ui/label/index.js';
-
 	import { enhance, type SubmitFunction } from '$app/forms';
 
 	// Keeps track of whether the form has been submitted.
@@ -15,21 +15,10 @@
 	let newDateFormat = $state('');
 	let newFirstDay = $state('');
 
-
-	const statusOptionsType = Array.from({ length: 27 }, (_, i) => {
-		const offset = i - 12;
-
-		return {
-			value: offset.toString(),
-			label: `UTC${offset >= 0 ? '+' : ''}${offset}`
-		};
-	});
-
 	let selectedTimeZone = $state('');
 
 	/**
 	 * Resets the calendar form.
-	 * Marks the input fields 'not touched'.
 	 */
 	function resetCalendarForm() {
 		calendarSubmitted = false;
@@ -58,7 +47,7 @@
 	};
 </script>
 
-<Card.Root class="basis-6/12 px-6">
+<Card.Root class="basis-8/12 px-6">
 	<form method="POST" use:enhance={handleCalendarSubmit}>
 		<Field.Set>
 			<Field.Legend class="mb-4">Date and time format</Field.Legend>
@@ -108,7 +97,7 @@
 							<Select.Value />
 						</Select.Trigger>
 						<Select.Content>
-							{#each statusOptionsType as option (option.value)}
+							{#each timeZoneOptions as option (option.value)}
 								<Select.Item value={option.value} label={option.label}>
 									{option.label}
 								</Select.Item>
