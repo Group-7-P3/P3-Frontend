@@ -3,11 +3,14 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import * as Field from '$lib/components/ui/field/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Check, Code, Copy, Play, Redo2, Table2, Undo2 } from '@lucide/svelte';
 	import { tick } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { Download } from '@lucide/svelte';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { enhance, type SubmitFunction } from '$app/forms';
 
 	type TableSchema = {
 		name: string;
@@ -137,7 +140,6 @@
 	 */
 	const initialQuery = `SELECT
   u.id,
-  u.customer_id,
   s.type,
   s.expires_at
 FROM "user" AS u
@@ -996,6 +998,55 @@ ORDER BY s.expires_at ASC;`;
 
 		return [headers.join(","), ...rows].join("\n");
 	}
+	// Keeps track of the inputted password.
+	let password = $state('');
+	// Keeps track of whether the password has been submitted.
+	let passwordSubmitted = $state(false);
+	// Keeps track of when password field has been touched.
+	let passwordTouched = $state(false);
+	// Keeps track of whether the password has been rejected.
+	let passwordRejected = $state(false);
+	// Keeps track of the error status on the password field.
+	const currentPasswordError = $derived((passwordTouched || passwordSubmitted) && password === '');
+	// Keeps track of whether the password form is ok (If the password is not rejected and not empty)
+	const passwordFormOk = $derived(password !== '' && !passwordRejected);
+
+	// Resets the password form
+	function resetPasswordForm() {
+		password = '';
+		passwordTouched = false;
+		passwordSubmitted = false;
+		passwordRejected = false;
+	}
+
+	function setDialogOpen(open: boolean) {
+		dialogOpen = open;
+		if (!open) resetPasswordForm();
+	}
+
+	const handlePasswordSubmit: SubmitFunction = ({ cancel }) => {
+		passwordSubmitted = true;
+		if (!passwordFormOk) {
+			// Cancels the server's check of the password
+			cancel();
+			return;
+		}
+
+		// Runs after the server has answered the password check
+		return async ({ result }) => {
+			if (result.type === 'failure') {
+				passwordRejected = true;
+				return;
+			}
+			if (result.type !== 'success') {
+				passwordRejected = true;
+				return;
+			}
+
+			forceRunQuery();
+			setDialogOpen(false);
+		};
+	};
 </script>
 
 <svelte:window onmousemove={moveLineSelection} onmouseup={endLineSelection} />
@@ -1268,25 +1319,44 @@ ORDER BY s.expires_at ASC;`;
 </div>
 
 <!-- The Dangerous Query Dialog -->
-<Dialog.Root bind:open={dialogOpen}>
-	<Dialog.Content>
+<Dialog.Root bind:open={() => dialogOpen, setDialogOpen}>
+	<Dialog.Content onOpenAutoFocus={(event) => event.preventDefault()}>
 		<Dialog.Header>
 			<Dialog.Title>Dangerous Query!</Dialog.Title>
 			<Dialog.Description>
-				This action cannot be undone. This will permanently {querySeverity} the database. Are you sure
-				you want to continue?
+				This action cannot be undone. This will permanently {querySeverity} the database.
+				Enter your password to continue.
 			</Dialog.Description>
 		</Dialog.Header>
-		<Dialog.Footer>
-			<Button
-				variant="destructive"
-				onclick={() => {
-					forceRunQuery();
-					dialogOpen = false;
-				}}>Confirm</Button
-			>
-			<Button onclick={() => (dialogOpen = false)}>Cancel</Button>
-		</Dialog.Footer>
+
+		<form method="POST" action="?/verifyPassword" use:enhance={handlePasswordSubmit}>
+			<Field.Set>
+				<Field.Field>
+					<Field.Label for="password">Password</Field.Label>
+					<Input
+						id="password"
+						name="password"
+						bind:value={password}
+						type="password"
+						autocomplete="off"
+						onblur={() => {
+							if (dialogOpen) passwordTouched = true;
+						}}
+						oninput={() => {
+							passwordRejected = false;
+						}}
+						aria-invalid={currentPasswordError || passwordRejected}
+					/>
+					{#if currentPasswordError}
+						<Field.Error>Please enter your password</Field.Error>
+					{:else if passwordRejected}
+						<Field.Error>Invalid password</Field.Error>
+					{/if}
+				</Field.Field>
+				<Button variant="destructive" type="submit" class="w-full">Confirm</Button>
+				<Button onclick={() => setDialogOpen(false)}>Cancel</Button>
+			</Field.Set>
+		</form>
 	</Dialog.Content>
 </Dialog.Root>
 
