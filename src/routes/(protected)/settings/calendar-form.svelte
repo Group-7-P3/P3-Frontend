@@ -14,7 +14,7 @@
 
 	// Keeps track of the inputs in the form.
 	let newFirstDay = $state('');
-    let newDateFormat = $state('');
+	let newDateFormat = $state('');
 
 	/**
 	 * Resets the calendar form.
@@ -35,11 +35,11 @@
 			return;
 		}
 
-        // Actually apply the changes here
+		// Actually apply the changes here
 
 		console.log('Selected first day:', newFirstDay);
 
-        console.log('Selected date format:', newDateFormat);
+		console.log('Selected date format:', newDateFormat);
 
 		resetCalendarForm();
 	};
@@ -48,9 +48,9 @@
 <Card.Root class="basis-6/12 px-6">
 	<form method="POST" use:enhance={handleCalendarSubmit}>
 		<Field.Set>
-			<Field.Legend class="mb-4">Calendar settings</Field.Legend>
+			<Field.Legend class="mb-4">Date and time format</Field.Legend>
 			<Field.Group class="grid grid-cols-2 gap-4">
-                <!-- First day -->
+				<!-- First day -->
 				<Field.Field>
 					<Field.Label for="firstDay">First day of the week</Field.Label>
 					<RadioGroup.Root name="firstDay" bind:value={newFirstDay}>
@@ -66,7 +66,7 @@
 					</RadioGroup.Root>
 				</Field.Field>
 
-                <!-- Date format -->
+				<!-- Date format -->
 				<Field.Field>
 					<Field.Label for="dateFormat">Date format</Field.Label>
 					<RadioGroup.Root name="dateFormat" bind:value={newDateFormat}>
@@ -80,14 +80,14 @@
 							<Label for="MDY" class="font-normal">Month-Day-Year (MM-DD-YYYY)</Label>
 						</div>
 
-                        <div class="flex items-center space-x-2">
+						<div class="flex items-center space-x-2">
 							<RadioGroup.Item value="YMD" id="YMD" />
 							<Label for="YMD" class="font-normal">Year-Month-Day (YYYY-MM-DD)</Label>
 						</div>
 					</RadioGroup.Root>
 				</Field.Field>
 
-				<Button type="submit" class="w-full mt-4">Apply calendar settings</Button>
+				<Button type="submit" class="mt-4 w-full">Apply calendar settings</Button>
 			</Field.Group>
 		</Field.Set>
 	</form>

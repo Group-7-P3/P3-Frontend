@@ -4,7 +4,6 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { resolve } from '$app/paths';
-	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { ExternalLink } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 
@@ -18,18 +17,13 @@
 	let products = $derived(data.products);
 	let user = $derived(data.user);
 
-	const statusOptionsAutoRenew = [
-		{ value: 'Yes', label: 'Yes' },
-		{ value: 'No', label: 'No' }
-	];
-	let selectedStatusAutoRenew = $state(subscription.autoRenew ? 'Yes' : 'No');
-
 	const statusOptionsType = [
 		{ value: 'home', label: 'home' },
 		{ value: 'home+', label: 'home+' },
 		{ value: 'pro', label: 'pro' },
 		{ value: 'pro+', label: 'pro+' }
 	];
+	// svelte-ignore state_referenced_locally
 	let selectedStatusType = $state(subscription.type);
 
 	const statusOptionsManagedBy = [
@@ -37,6 +31,7 @@
 		{ value: 'Italy', label: 'Italy' },
 		{ value: 'Norway', label: 'Norway' }
 	];
+	// svelte-ignore state_referenced_locally
 	let selectedStatusManagedBy = $state(user.managedBy);
 </script>
 
@@ -71,20 +66,9 @@
 
 				<!-- Subscription User Index -->
 				<div class="flex items-center justify-between border-b py-2 last:border-0">
-					<dt class="text-sm font-normal text-muted-foreground">User Index</dt>
+					<dt class="text-sm font-normal text-muted-foreground">Customer ID</dt>
 					<dd class="text-sm font-medium text-foreground">
-						{subscription.userId}
-							<Button
-								variant="outline"
-								size="icon-xs"
-								onclick={() => {
-									goto(resolve('/(protected)/users/[id]', {
-									id: String(subscription.userId)
-								}));
-								}}
-							>
-							<ExternalLink />
-							</Button>
+						{subscription.customerId}
 					</dd>
 				</div>
 
@@ -93,14 +77,6 @@
 					<dt class="text-sm font-normal text-muted-foreground">Type</dt>
 					<dd class="text-sm font-medium text-foreground">
 						{subscription.type}
-					</dd>
-				</div>
-
-				<!-- Subscription Max Devices -->
-				<div class="flex items-center justify-between border-b py-2 last:border-0">
-					<dt class="text-sm font-normal text-muted-foreground">Max Devices</dt>
-					<dd class="text-sm font-medium text-foreground">
-						{subscription.maxDevices}
 					</dd>
 				</div>
 
@@ -128,20 +104,6 @@
 					</dd>
 				</div>
 
-				<!-- Subscription Auto Renew -->
-				<div class="flex items-center justify-between border-b py-2 last:border-0">
-					<dt class="text-sm font-normal text-muted-foreground">Auto Renew</dt>
-					<dd class="text-sm font-medium text-foreground">
-						{#if subscription.autoRenew}
-							<Badge class="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
-								>Yes</Badge
-							>
-						{:else}
-							<Badge class="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">No</Badge>
-						{/if}
-					</dd>
-				</div>
-
 				<!-- Subscription Managed By -->
 				<div class="flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">Managed By</dt>
@@ -158,7 +120,7 @@
 				<Card.Title>Edit Subscription</Card.Title>
 				<Card.Content class="space-y-2">
 					<form method="POST" use:enhance class="space-y-4">
-					<!-- User ID -->
+						<!-- User ID -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
 							<dd class="text-sm font-medium text-foreground">
@@ -167,7 +129,7 @@
 								</Field.Field>
 							</dd>
 						</div>
-					<!-- Type -->
+						<!-- Type -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Type</dt>
 							<dd class="text-sm font-medium text-foreground">
@@ -185,7 +147,7 @@
 								</Select.Root>
 							</dd>
 						</div>
-					<!-- Max Devices -->
+						<!-- Max Devices -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Max Devices</dt>
 							<dd class="text-sm font-medium text-foreground">
@@ -194,46 +156,22 @@
 								</Field.Field>
 							</dd>
 						</div>
-					<!-- Created At -->
+						<!-- Created At -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Created At</dt>
-							<dd class="text-sm font-medium text-foreground">
-								Calender missing for now
-							</dd>
+							<dd class="text-sm font-medium text-foreground">Calender missing for now</dd>
 						</div>
-					<!-- Updated At -->
+						<!-- Updated At -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Updated At</dt>
-							<dd class="text-sm font-medium text-foreground">
-								Calender missing for now
-							</dd>
+							<dd class="text-sm font-medium text-foreground">Calender missing for now</dd>
 						</div>
-					<!-- Expires At -->
+						<!-- Expires At -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Expires At</dt>
-							<dd class="text-sm font-medium text-foreground">
-								Calender missing for now
-							</dd>
+							<dd class="text-sm font-medium text-foreground">Calender missing for now</dd>
 						</div>
-					<!-- Auto Renew -->
-						<div class="flex items-center justify-between border-b py-2 last:border-0">
-							<dt class="text-sm font-normal text-muted-foreground">Auto Renew</dt>
-							<dd class="text-sm font-medium text-foreground">
-								<Select.Root type="single" name="status" bind:value={selectedStatusAutoRenew}>
-									<Select.Trigger class="w-full max-w-48">
-										<Select.Value />
-									</Select.Trigger>
-									<Select.Content>
-										{#each statusOptionsAutoRenew as option (option.value)}
-											<Select.Item value={option.value} label={option.label}>
-												{option.label}
-											</Select.Item>
-										{/each}
-									</Select.Content>
-								</Select.Root>
-							</dd>
-						</div>
-					<!-- Managed By -->
+						<!-- Managed By -->
 						<div class="flex items-center justify-between border-b py-2 last:border-0">
 							<dt class="text-sm font-normal text-muted-foreground">Managed By</dt>
 							<dd class="text-sm font-medium text-foreground">
@@ -278,19 +216,23 @@
 									variant="outline"
 									size="icon-xs"
 									onclick={() => {
-										goto(resolve('/(protected)/products/[serialNumber]', {
-										serialNumber: String(product.serialNumber)
-									}));
+										goto(
+											resolve('/(protected)/products/[serialNumber]', {
+												serialNumber: String(product.serialNumber)
+											})
+										);
 									}}
 								>
-								<ExternalLink />
+									<ExternalLink />
 								</Button>
 							</dd>
 						</div>
 					</div>
 				{/each}
 				{#if products.length === 0}
-					<dt class="text-sm font-normal text-muted-foreground">This subscription has no products.</dt>
+					<dt class="text-sm font-normal text-muted-foreground">
+						This subscription has no products.
+					</dt>
 				{/if}
 			</Card.Content>
 		</Card.Root>

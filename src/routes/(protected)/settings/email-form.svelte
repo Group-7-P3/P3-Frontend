@@ -132,6 +132,26 @@
 			<Field.Legend>Change email</Field.Legend>
 			<Field.Group>
 				<Field.Field>
+					<Field.Label for="emailPassword">Current password</Field.Label>
+					<Input
+						id="emailPassword"
+						name="password"
+						bind:value={emailPassword}
+						type="password"
+						autocomplete="off"
+						onblur={() => (emailPasswordTouched = true)}
+						// Set emailPasswordTouched to true when the user leaves the input field.
+						oninput={() => (emailPasswordRejected = false)}
+						// Set emailPasswordRejected to false when the user inputs something in the field.
+						aria-invalid={emailPasswordError}
+					/>
+					{#if emailPasswordError}
+						<Field.Error>
+							{emailPassword === '' ? 'Please enter your current password' : 'Invalid password'}
+						</Field.Error>
+					{/if}
+				</Field.Field>
+				<Field.Field>
 					<Field.Label for="newEmail">New email</Field.Label>
 					<Input
 						id="newEmail"
@@ -169,26 +189,6 @@
 					/>
 					{#if repeatEmailError}
 						<Field.Error>Emails must match</Field.Error>
-					{/if}
-				</Field.Field>
-				<Field.Field>
-					<Field.Label for="emailPassword">Current password</Field.Label>
-					<Input
-						id="emailPassword"
-						name="password"
-						bind:value={emailPassword}
-						type="password"
-						autocomplete="off"
-						onblur={() => (emailPasswordTouched = true)}
-						// Set emailPasswordTouched to true when the user leaves the input field.
-						oninput={() => (emailPasswordRejected = false)}
-						// Set emailPasswordRejected to false when the user inputs something in the field.
-						aria-invalid={emailPasswordError}
-					/>
-					{#if emailPasswordError}
-						<Field.Error>
-							{emailPassword === '' ? 'Please enter your current password' : 'Invalid password'}
-						</Field.Error>
 					{/if}
 				</Field.Field>
 				{#if emailPendingTo !== ''}

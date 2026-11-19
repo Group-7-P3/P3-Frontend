@@ -2,7 +2,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar/index.js';
-	import { ChevronsUpDown, LogOut, Cog } from '@lucide/svelte';
+	import { LogOut, Cog, EllipsisVertical } from '@lucide/svelte';
 	import UnknownAvatar from '#lib/assets/profile-unknown.png';
 	import { stringToHex } from '#lib/utils.ts';
 	import { resolve } from '$app/paths';
@@ -24,7 +24,7 @@
 				<Sidebar.MenuButton
 					{...props}
 					size="lg"
-					class="rounded-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+					class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
 					<Avatar class="h-8 w-8 overflow-clip rounded-full">
 						<div style:background-color={color} class="p-0.5">
@@ -36,7 +36,7 @@
 						<span class="truncate font-semibold">{username}</span>
 						<span class="truncate text-xs">{email}</span>
 					</div>
-					<ChevronsUpDown class="ml-auto size-4" />
+					<EllipsisVertical class="mr-1 ml-auto size-4" />
 				</Sidebar.MenuButton>
 			{/snippet}
 		</DropdownMenu.Trigger>

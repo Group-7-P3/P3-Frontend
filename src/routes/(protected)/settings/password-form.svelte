@@ -191,28 +191,6 @@
 							<Field.Error>Passwords must match</Field.Error>
 						{/if}
 					</Field.Field>
-					<Field.Field>
-						<Field.Label for="password">Current password</Field.Label>
-						<Input
-							id="password"
-							bind:value={password}
-							type="password"
-							autocomplete="off"
-							onblur={() => (passwordTouched = true)}
-							// Set passwordTouched to true when the user leaves the input field.
-							oninput={() => {
-								passwordRejected = false;
-								passwordFormError = '';
-							}}
-							// Set passwordRejected to false and passwordFormError to empty when the user inputs something in the field.
-							aria-invalid={passwordError}
-						/>
-						{#if passwordError}
-							<Field.Error>
-								{password === '' ? 'Please enter your current password' : 'Invalid password'}
-							</Field.Error>
-						{/if}
-					</Field.Field>
 					{#if passwordChanged}
 						<div class="rounded-md border border-green-600 p-2 text-green-600">
 							Your password has been changed
