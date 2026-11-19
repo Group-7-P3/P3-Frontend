@@ -11,10 +11,13 @@
 	import { wordsToTitleCase } from '$lib/utils';
 	import { ExternalLink } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
 
 	let { data }: { data: PageData } = $props();
 	let product = $derived(data.product);
 	let selectedStatus = $derived(product.status);
+	let dialogOpen = $state(false);
 
 	const statusOptions = [
 		{ value: 'active', label: 'active' },
@@ -22,10 +25,10 @@
 		{ value: 'deactivated', label: 'deactivated' }
 	];
 
-	let selectedScope = $state('All Subscriptions');
+	let selectedScope = $state('all subscriptions');
 
 	const licenseOptions = $derived([
-		{ value: 'All', label: 'All Subscriptions' },
+		{ value: 'all', label: 'all subscriptions' },
 		...data.subscriptions.map((sub) => ({
 			value: String(sub.licenseKey),
 			label: sub.licenseKey
@@ -109,7 +112,20 @@
 			</Card.Header>
 			<Card.Content class="space-y-2">
 				<!------ Choose License key ------>
-				<form method="POST" use:enhance class="space-y-4">
+				<form
+					id="product-edit-form"
+					method="POST"
+					use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'success') {
+								dialogOpen = false;
+							}
+
+							await update();
+						};
+					}}
+					class="space-y-4"
+				>
 					<div class="flex items-center justify-between border-b py-2 last:border-0">
 						<dt class="text-sm font-normal text-muted-foreground">Choose License key</dt>
 						<dd class="text-sm font-normal text-foreground">
@@ -131,7 +147,6 @@
 					</div>
 
 					<!------ Activity Status ------>
-
 					<div class="flex items-center justify-between border-b py-2 last:border-0">
 						<dt class="text-sm font-normal text-muted-foreground">Activity Status</dt>
 						<dd class="text-sm font-medium text-foreground">
@@ -151,30 +166,52 @@
 					</div>
 
 					<!------ Change license key ------>
-
 					<div class="flex items-center justify-between border-b py-2 last:border-0">
 						<dt class="text-sm font-normal text-muted-foreground">License key</dt>
 						<dd class="text-sm font-medium text-foreground">
 							<Field.Field class="border-b py-2 last:border-0">
-								<Input id="licenseKey" type="text" placeholder="License key here" />
+								<Input
+									id="licenseKey"
+									name="newLicenseKey"
+									type="text"
+									placeholder={selectedScope === 'all'
+										? 'Not avaliable for all subscriptions'
+										: 'Write new license key here'}
+									disabled={selectedScope === 'all'}
+								/>
 							</Field.Field>
 						</dd>
 					</div>
 
 					<!------ Confirm button ------>
-					<div class="flex flex-wrap items-center gap-2 md:flex-row">
-						<Button variant="destructive" type="submit">Confirm edits</Button>
-					</div>
+					<AlertDialog.Root bind:open={dialogOpen}>
+						<AlertDialog.Trigger type="button" class={buttonVariants({ variant: 'outline' })}>
+							Confirm Edits
+						</AlertDialog.Trigger>
+						<AlertDialog.Content>
+							<AlertDialog.Header>
+								<AlertDialog.Title>Are you sure?</AlertDialog.Title>
+								<AlertDialog.Description>
+									This action will change the product
+								</AlertDialog.Description>
+							</AlertDialog.Header>
+							<AlertDialog.Footer>
+								<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>
+								<AlertDialog.Action type="submit" form="product-edit-form">
+									Continue
+								</AlertDialog.Action>
+							</AlertDialog.Footer>
+						</AlertDialog.Content>
+					</AlertDialog.Root>
 				</form>
 			</Card.Content>
 		</Card.Root>
 
-		<!------------------------------ Product Placeholder ------------------------------>
+		<!------------------------------ Product Subscriptions ------------------------------>
 		<Card.Root class="md:col-span-3">
 			<Card.Header>
 				<Card.Title>Subscriptions</Card.Title>
 			</Card.Header>
-
 			<Card.Content class="space-y-2">
 				<!-- Subscriptions List -->
 				{#if data.subscriptions && data.subscriptions.length > 0}
