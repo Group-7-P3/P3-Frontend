@@ -7,7 +7,6 @@ import {
 	text,
 	date,
 	timestamp,
-	boolean,
 	primaryKey,
 	index
 } from 'drizzle-orm/pg-core';
@@ -18,8 +17,7 @@ export const productStatus = pgEnum('product_status', ['inactive', 'active', 'de
 export const user = pgTable(
 	'user',
 	{
-		id: serial('id').notNull(),
-		customerId: integer('customer_id').primaryKey(),
+		id: serial('id').primaryKey(),
 		managedBy: text('managed_by').notNull().default('INNOVAID'),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()
@@ -34,14 +32,13 @@ export const subscription = pgTable(
 		userId: integer('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
+		customerId: integer('customer_id').notNull(),
 		type: subscriptionType('type').notNull().default('home'),
-		maxDevices: integer('max_devices').notNull().default(6),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow(),
-		expiresAt: date('expires_at').notNull(),
-		autoRenew: boolean('auto_renew').notNull().default(false)
+		expiresAt: date('expires_at').notNull()
 	},
-	(table) => [index('subscription_user_id_idx').on(table.userId)]
+	(table) => [index('subscription_user_id_idx').on(table.customerId)]
 );
 
 export const product = pgTable('product', {
@@ -85,7 +82,7 @@ export const userRelations = relations(user, ({ many }) => ({
 
 export const subscriptionRelations = relations(subscription, ({ many, one }) => ({
 	user: one(user, {
-		fields: [subscription.userId],
+		fields: [subscription.customerId],
 		references: [user.id],
 		relationName: 'userToSubscriptions'
 	}),

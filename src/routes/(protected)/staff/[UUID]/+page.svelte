@@ -8,11 +8,13 @@
 	import { wordsToTitleCase } from '#lib/utils.ts';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Field from '$lib/components/ui/field/index.js';
+	import { Copy } from '@lucide/svelte';
 
 	let { data }: { data: PageData } = $props();
 
+	let test = 'What to show here?';
 	let staff = $derived(data.staff);
-	let showAbleStaffUUID = $derived(staff.id.slice(0, 8) + '. . .');
+	let showableStaffUUID = $derived(staff.id.slice(0, 9) + '. . .');
 </script>
 
 <svelte:head>
@@ -54,25 +56,16 @@ Group
 			<!-- Staff information -->
 			<Card.Root class="md:col-span-1">
 				<Card.Header>
-					<Card.Title>{staff.name}</Card.Title>
+					<Card.Title>{wordsToTitleCase(staff.name)}</Card.Title>
 				</Card.Header>
 				<Card.Content class="space-y-0">
+					<!-- Email -->
 					<div class="flex items-center justify-between border-b py-2 last:border-0">
-						<!-- Email -->
 						<dt class="text-sm font-normal text-muted-foreground">Email</dt>
 						<dd class="text-sm font-medium text-foreground">
 							{staff.email}
 						</dd>
 					</div>
-
-					<!-- Created at -->
-					<div class="flex items-center justify-between border-b py-2 last:border-0">
-						<dt class="text-sm font-normal text-muted-foreground">Creation date</dt>
-						<dd class="text-sm font-medium text-foreground">
-							<DataTableDate value={staff.createdAt} />
-						</dd>
-					</div>
-
 					<!-- Role -->
 					<div class="flex items-center justify-between border-b py-2 last:border-0">
 						<dt class="text-sm font-normal text-muted-foreground">Role</dt>
@@ -88,18 +81,39 @@ Group
 							{staff.group}
 						</dd>
 					</div>
+
+					<!-- Created at -->
+					<div class="flex items-center justify-between border-b py-2 last:border-0">
+						<dt class="text-sm font-normal text-muted-foreground">Creation date</dt>
+						<dd class="text-sm font-medium text-foreground">
+							<DataTableDate value={staff.createdAt} />
+						</dd>
+					</div>
 					<!-- UserID -->
 					<div class="flex items-center justify-between border-b py-2 last:border-0">
 						<dt class="text-sm font-normal text-muted-foreground">Staff id</dt>
-						<Tooltip.Root disableHoverableContent>
-							<Tooltip.Trigger
-								class="cursor-default text-sm font-medium text-foreground underline decoration-dotted underline-offset-4"
-								>{showAbleStaffUUID}
-							</Tooltip.Trigger>
-							<Tooltip.Content class="pointer-events-none">
-								<p>{staff.id}</p>
-							</Tooltip.Content>
-						</Tooltip.Root>
+						<div class="flex items-center gap-1">
+							<Button
+								variant="ghost"
+								size="icon-xs"
+								class="h-6 w-6 shrink-0 opacity-100"
+								onclick={(e) => {
+									e.stopPropagation();
+									navigator.clipboard.writeText(String(staff.id));
+								}}
+							>
+								<Copy class="h-3 w-3" />
+							</Button>
+							<Tooltip.Root disableHoverableContent>
+								<Tooltip.Trigger
+									class="cursor-default text-sm font-medium text-foreground underline decoration-dotted underline-offset-4"
+									>{showableStaffUUID}
+								</Tooltip.Trigger>
+								<Tooltip.Content class="pointer-events-none">
+									<p>{staff.id}</p>
+								</Tooltip.Content>
+							</Tooltip.Root>
+						</div>
 					</div>
 				</Card.Content>
 			</Card.Root>
@@ -143,7 +157,7 @@ Group
 			<!-- Product Placeholder -->
 			<Card.Root class="md:col-span-3">
 				<Card.Header>
-					<Card.Title>What should be shown here?</Card.Title>
+					<Card.Title>{wordsToTitleCase(test)}</Card.Title>
 				</Card.Header>
 			</Card.Root>
 		</div>
