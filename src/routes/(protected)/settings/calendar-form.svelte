@@ -7,15 +7,18 @@
 	import { timeZoneOptions } from '#lib/utils/timezones.ts';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { enhance, type SubmitFunction } from '$app/forms';
-
+	import { page } from '$app/state';
+	
 	// Keeps track of whether the form has been submitted.
 	let calendarSubmitted = $state(false);
 
 	// Keeps track of the inputs in the form.
 	let newDateFormat = $state('');
-	let newFirstDay = $state('');
 
-	let selectedTimeZone = $state('');
+	let selectedTimeZone = $state(page.data.timeZone);
+	let selectedLabelTimeZone = $derived(timeZoneOptions.find((option) => option.value === selectedTimeZone)?.label ?? 'Select a timezone');
+
+	let selectedFirstDay = $state(page.data.firstDay);
 
 	/**
 	 * Resets the calendar form.
@@ -30,28 +33,22 @@
 	const handleCalendarSubmit: SubmitFunction = ({ cancel }) => {
 		calendarSubmitted = true;
 
-		if (!newFirstDay || !newDateFormat || !selectedTimeZone) {
+		if (!selectedTimeZone) {
 			cancel();
 			return;
 		}
 
-        // Actually apply the changes here
-
-		console.log('Selected first day: ' + newFirstDay);
-
-        console.log('Selected date format: ' + newDateFormat);
-
-		console.log('Selected timezone: ' + selectedTimeZone)
+		// The form's 'action="?/saveCalendar"' does the actual changes 
 
 		resetCalendarForm();
 	};
 </script>
 
 <Card.Root class="basis-8/12 px-6">
-	<form method="POST" use:enhance={handleCalendarSubmit}>
+	<form method="POST" action="?/saveCalendar" use:enhance={handleCalendarSubmit}>
 		<Field.Set>
 			<Field.Legend class="mb-4">Date and time format</Field.Legend>
-			<Field.Group class="grid grid-cols-[auto_auto_auto] gap-x-4 gap-y-4">
+			<Field.Group class="grid grid-cols-[2fr_2fr_4fr] gap-x-4 gap-y-4">
                 <!-- Date format -->
 				<Field.Field>
 					<Field.Label for="dateFormat">Date format</Field.Label>
@@ -76,14 +73,14 @@
 				<!-- First day -->
 				<Field.Field>
 					<Field.Label for="firstDay">First day of the week</Field.Label>
-					<RadioGroup.Root name="firstDay" bind:value={newFirstDay}>
+					<RadioGroup.Root name="firstday" bind:value={selectedFirstDay}>
 						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="monday" id="monday" />
+							<RadioGroup.Item value="1" id="monday" />
 							<Label for="monday" class="font-normal">Monday</Label>
 						</div>
 
 						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="sunday" id="sunday" />
+							<RadioGroup.Item value="0" id="sunday" />
 							<Label for="sunday" class="font-normal">Sunday</Label>
 						</div>
 					</RadioGroup.Root>
@@ -92,9 +89,9 @@
 				<!-- Timezone -->
 				<Field.Field>
 					<Field.Label for="timeZone">Timezone</Field.Label>
-					<Select.Root type="single" name="status" bind:value={selectedTimeZone}>
-						<Select.Trigger class="w-full max-w-48">
-							<Select.Value />
+					<Select.Root type="single" name="timezone" bind:value={selectedTimeZone}>
+						<Select.Trigger class="w-full max-w-80">
+							{selectedLabelTimeZone}
 						</Select.Trigger>
 						<Select.Content>
 							{#each timeZoneOptions as option (option.value)}

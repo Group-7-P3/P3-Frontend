@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { RangeCalendar } from '$lib/components/ui/range-calendar/index.js';
 	import type { DateRange, RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
+	import { page } from '$app/state';
 
 	interface Props {
 		value?: DateRange;
@@ -37,7 +38,7 @@
 			bind:value
 			captionLayout="dropdown"
 			maxValue={today(getLocalTimeZone())}
-			weekStartsOn={1}
+			weekStartsOn={Number(page.data.firstDay) as 0 | 1}
 			{years}
 		/>
 	</Popover.Content>

@@ -1,6 +1,8 @@
 import { fail, type Actions } from '@sveltejs/kit';
 import { auth } from '#lib/server/auth.ts';
 
+import { isValidTimeZone } from '#lib/utils/timezone.ts';
+
 export const actions: Actions = {
     verifyPassword: async ({ request }) => {
         const data = await request.formData();
@@ -15,5 +17,18 @@ export const actions: Actions = {
         } catch {
             return fail(400, { passwordIncorrect: true});
         }
+    },
+    saveCalendar: async ({ request, cookies }) => {
+        const data = await request.formData();
+        const zone = String(data.get('timezone') ?? '');
+        const day = String(data.get('firstday') ?? '');
+
+        if (!isValidTimeZone(zone) || !(day === '0' || day === '1')) {
+            return fail(400, { formInvalid: true});
+        }
+
+        cookies.set('timezone', zone, {path: '/', maxAge: 60*60*24*365}); //lasts 1 year
+        cookies.set('firstday', day, {path: '/', maxAge: 60*60*24*365}); //lasts 1 year
+        return { success: true};
     }
 };

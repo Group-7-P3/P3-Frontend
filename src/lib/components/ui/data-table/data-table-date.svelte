@@ -1,5 +1,7 @@
 <script lang="ts">
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { page } from '$app/state';
+	import { dbTimeToInstant } from '$lib/utils/timezone.ts';
 
 	interface Props {
 		value: unknown;
@@ -15,9 +17,10 @@
 
 	const date = $derived(
 		new Date(
-			typeof dateInput === 'number' && dateInput.toString().length === 10
+			dateInput instanceof Date ? dbTimeToInstant(dateInput) :
+			(typeof dateInput === 'number' && dateInput.toString().length === 10
 				? dateInput * 1000
-				: dateInput
+				: dateInput)
 		)
 	);
 
