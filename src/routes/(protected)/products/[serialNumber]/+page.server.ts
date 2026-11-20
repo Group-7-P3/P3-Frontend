@@ -1,21 +1,58 @@
-import type { PageServerLoad } from './$types';
-
-const mockProducts = [
-    { serialNumber: '72273', status: 'Active', type: 'Pad Pro', userId: 'DK-1080' },
-    { serialNumber: '38491', status: 'Inactive', type: 'Pad Home', userId: 'DE-0789' }
-]
+import type { PageServerLoad, Actions } from './$types';
+import { db } from '$lib/server/db';
+import * as schema from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
+import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
-    const foundProduct = mockProducts.find(p => p.serialNumber === params.serialNumber);
-    
-    const product = foundProduct ?? {
-        serialNumber: params.serialNumber,
-        status: 'Inactive',
-        type: 'Unknown',
-        userId: 'DK-0000'
-    }
+	const [product] = await db
+		.select()
+		.from(schema.product)
+		.where(eq(schema.product.serialNumber, Number(params.serialNumber)));
 
-    return {
-        product 
-    }
-}
+	const subscriptions = await db
+		.select({
+			licenseKey: schema.subscription.licenseKey,
+			type: schema.subscription.type
+		})
+		.from(schema.subscription)
+		.innerJoin(
+			schema.subscriptionToProduct,
+			eq(schema.subscription.licenseKey, schema.subscriptionToProduct.licenseKey)
+		)
+		.where(eq(schema.subscriptionToProduct.serialNumber, Number(params.serialNumber)));
+
+	if (!product) {
+		throw error(404, 'The product was not found');
+	}
+
+	return { product, subscriptions };
+};
+
+export const actions: Actions = {
+	default: async ({ request, params }) => {
+		const formData = await request.formData();
+		const status = formData.get('status') as 'active' | 'inactive' | 'deactivated';
+		const targetScope = formData.get('targetScope') as string;
+		const newLicenseKey = formData.get('newLicenseKey') as string | null;
+
+		await db
+			.update(schema.product)
+			.set({ status })
+			.where(eq(schema.product.serialNumber, Number(params.serialNumber)));
+
+		if (targetScope && targetScope !== 'all' && newLicenseKey && newLicenseKey !== targetScope) {
+			await db
+				.update(schema.subscriptionToProduct)
+				.set({ licenseKey: Number(newLicenseKey) })
+				.where(
+					and(
+						eq(schema.subscriptionToProduct.serialNumber, Number(params.serialNumber)),
+						eq(schema.subscriptionToProduct.licenseKey, Number(targetScope))
+					)
+				);
+		}
+
+		return { success: true };
+	}
+};
