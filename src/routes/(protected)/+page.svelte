@@ -23,7 +23,7 @@
 	let end = $state(today(getLocalTimeZone()));
 	// svelte-ignore state_referenced_locally
 	let calendarValue: DateRange = $state({ start, end });
-	let rangeType: 'week' | 'month' | 'year' | 'ytd' | 'all-time' = $state('ytd');
+	let rangeType: 'week' | 'month' | 'year' | 'ytd' | 'all-time' | 'custom' = $state('ytd');
 
 	const years = $derived.by(() => {
 		const currentYear = new Date().getFullYear();
@@ -295,6 +295,8 @@
 
 	$effect(() => {
 		if (!calendarValue?.start || !calendarValue?.end) return;
+		if (calendarValue.start === start || calendarValue.end === end) return;
+		rangeType = 'custom';
 		setDate(calendarValue.start, calendarValue.end);
 	});
 </script>
