@@ -126,7 +126,8 @@ async function main() {
 	const dummyActivities = Array.from({ length: 500 }).map(() => ({
 		activity: faker.helpers.arrayElement(activityNames),
 		time: randomCopenhagenPast(),
-		seconds: faker.number.int({ min: 1, max: 60 })
+		seconds: faker.number.int({ min: 1, max: 60 }),
+		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const)
 	}));
 
 	const insertedActivities = await db.insert(schema.activity).values(dummyActivities).returning();
