@@ -7,6 +7,7 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import Navigation from '#lib/components/ui/navigation/navigation.svelte';
 
 	let { children }: LayoutProps = $props();
@@ -23,6 +24,7 @@
 			<Header sidebar />
 			<main class="relative flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-6 p-6">
 				<ModeWatcher />
+				<Toaster />
 				{@render children()}
 			</main>
 			<Footer />
