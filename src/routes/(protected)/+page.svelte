@@ -15,6 +15,7 @@
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import { snakeToTitleCase } from '#lib/utils.ts';
 	import { updateQueryParams } from '#lib/utils/url.ts';
+	import StatCard from '#lib/components/ui/stat-card.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -32,7 +33,7 @@
 	});
 
 	//#region Activity Chart
-	let activityChartType: 'seconds' | 'uses' = $state('seconds');
+	let activityChartType: 'time' | 'uses' = $state('time');
 	const activityChartData = $derived.by(() => {
 		const activityMap = new Map(
 			data.activities.map((a) => [
@@ -43,10 +44,11 @@
 
 		return Object.keys(activityChartConfig).map((key) => {
 			const title = snakeToTitleCase(key);
-			const existing = activityMap.get(key) || { seconds: 0, uses: 0 };
+			const existing = activityMap.get(key) || { seconds: 0, minutes: 0, uses: 0 };
 			return {
 				activity: title,
-				seconds: existing.seconds,
+				// seconds: existing.seconds,
+				minutes: Math.floor(existing.seconds / 60),
 				uses: existing.uses
 			};
 		});
@@ -61,10 +63,12 @@
 		balance: { label: 'Balance', color: '#0099ff' },
 		force: { label: 'Force', color: '#00cc99' }
 	};
-
 	const activitySeries = $derived(
-		activityChartType === 'seconds'
-			? [{ key: 'seconds', label: 'Seconds' }]
+		activityChartType === 'time'
+			? [
+					// { key: 'seconds', label: 'Seconds' },
+					{ key: 'minutes', label: 'Minutes' }
+				]
 			: [{ key: 'uses', label: 'Uses' }]
 	);
 	//#endregion
@@ -242,16 +246,21 @@
 		}
 	});
 
-	async function setDate(startDate?: DateValue, endDate?: DateValue) {
-		if (startDate) start = startDate as CalendarDate;
-		if (endDate) end = endDate as CalendarDate;
+	let lastSyncedKey = '';
 
-		handleDateChange(start, end);
-	}
+	async function syncUrlRange(newStart: CalendarDate, newEnd: CalendarDate) {
+		const nextKey = `${newStart.toString()}..${newEnd.toString()}`;
+		const currentStart = page.url.searchParams.get('start');
+		const currentEnd = page.url.searchParams.get('end');
 
-	async function handleDateChange(newStart: CalendarDate, newEnd: CalendarDate) {
-		start = newStart;
-		end = newEnd;
+		if (
+			nextKey === lastSyncedKey ||
+			(currentStart === newStart.toString() && currentEnd === newEnd.toString())
+		) {
+			return;
+		}
+
+		lastSyncedKey = nextKey;
 
 		await updateQueryParams({
 			currentUrl: new URL(page.url.toString()),
@@ -261,6 +270,27 @@
 			},
 			route: page.url.pathname
 		});
+	}
+
+	async function setDate(startDate?: DateValue, endDate?: DateValue, syncUrl = true) {
+		const nextStart = startDate ? (startDate as CalendarDate) : start;
+		const nextEnd = endDate ? (endDate as CalendarDate) : end;
+
+		const startChanged = nextStart.toString() !== start.toString();
+		const endChanged = nextEnd.toString() !== end.toString();
+
+		if (startChanged) start = nextStart;
+		if (endChanged) end = nextEnd;
+
+		const calStartStr = calendarValue?.start?.toString();
+		const calEndStr = calendarValue?.end?.toString();
+		if (calStartStr !== nextStart.toString() || calEndStr !== nextEnd.toString()) {
+			calendarValue = { start: nextStart, end: nextEnd };
+		}
+
+		if (syncUrl && (startChanged || endChanged || !lastSyncedKey)) {
+			await syncUrlRange(nextStart, nextEnd);
+		}
 	}
 
 	$effect(() => {
@@ -274,75 +304,34 @@
 </svelte:head>
 
 <!-- Statistic cards -->
-<div class="flex w-full max-w-7xl gap-6">
-	<!-- Users card -->
-	<a href={resolve('/(protected)/users')} class="flex-1">
-		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
-			<Card.Header>
-				<Card.Title>Users</Card.Title>
-			</Card.Header>
-			<Separator />
-			<Card.Content>
-				<div class="flex justify-between"><span>Day</span><span>12</span></div>
-				<div class="flex justify-between"><span>Week</span><span>123</span></div>
-				<div class="flex justify-between"><span>Month</span><span>1234</span></div>
-				<div class="flex justify-between"><span>Year</span><span>12345</span></div>
-			</Card.Content>
-			<Separator />
-			<Card.Footer>
-				<div class="flex w-full justify-between font-semibold">
-					<span>Total</span>
-					<span>12345678</span>
-				</div>
-			</Card.Footer>
-		</Card.Root>
-	</a>
-
-	<!-- Subscriptions card -->
-	<a href={resolve('/(protected)/subscriptions')} class="flex-1">
-		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
-			<Card.Header>
-				<Card.Title>Subscriptions</Card.Title>
-			</Card.Header>
-			<Separator />
-			<Card.Content>
-				<div class="flex justify-between"><span>Day</span><span>12</span></div>
-				<div class="flex justify-between"><span>Week</span><span>123</span></div>
-				<div class="flex justify-between"><span>Month</span><span>1234</span></div>
-				<div class="flex justify-between"><span>Year</span><span>12345</span></div>
-			</Card.Content>
-			<Separator />
-			<Card.Footer>
-				<div class="flex w-full justify-between font-semibold">
-					<span>Total</span>
-					<span>12345678</span>
-				</div>
-			</Card.Footer>
-		</Card.Root>
-	</a>
-
-	<!-- Products card -->
-	<a href={resolve('/(protected)/products')} class="flex-1">
-		<Card.Root class="w-full gap-5 transition-all duration-100 ease-out hover:outline-8">
-			<Card.Header>
-				<Card.Title>Products</Card.Title>
-			</Card.Header>
-			<Separator />
-			<Card.Content>
-				<div class="flex justify-between"><span>Day</span><span>12</span></div>
-				<div class="flex justify-between"><span>Week</span><span>123</span></div>
-				<div class="flex justify-between"><span>Month</span><span>1234</span></div>
-				<div class="flex justify-between"><span>Year</span><span>12345</span></div>
-			</Card.Content>
-			<Separator />
-			<Card.Footer>
-				<div class="flex w-full justify-between font-semibold">
-					<span>Total</span>
-					<span>12345678</span>
-				</div>
-			</Card.Footer>
-		</Card.Root>
-	</a>
+<div class="m-0 flex w-full max-w-7xl gap-6">
+	<StatCard
+		title="Users"
+		href={resolve('/(protected)/users')}
+		day={12}
+		week={123}
+		month={1234}
+		year={12345}
+		total={123456}
+	/>
+	<StatCard
+		title="Subscriptions"
+		href={resolve('/(protected)/subscriptions')}
+		day={12}
+		week={123}
+		month={1234}
+		year={12345}
+		total={123456}
+	/>
+	<StatCard
+		title="Products"
+		href={resolve('/(protected)/products')}
+		day={12}
+		week={123}
+		month={1234}
+		year={12345}
+		total={123456}
+	/>
 </div>
 <div
 	class="sticky top-12 z-20 flex w-[calc(100%+48px)] max-w-7xl gap-4 border-b border-border bg-background/50 px-6 py-4 backdrop-blur-sm"
@@ -450,10 +439,10 @@
 			<Card.Title>Activities</Card.Title>
 			<ButtonGroup.Root>
 				<Button
-					variant={activityChartType === 'seconds' ? 'default' : 'outline'}
+					variant={activityChartType === 'time' ? 'default' : 'outline'}
 					size="sm"
 					onclick={() => {
-						activityChartType = 'seconds';
+						activityChartType = 'time';
 					}}
 				>
 					Seconds
@@ -477,7 +466,8 @@
 				config={activityChartConfig}
 				series={activitySeries}
 				x="activity"
-				y={activityChartType === 'seconds' ? 'seconds' : 'uses'}
+				y={activityChartType === 'time' ? 'minutes' : 'uses'}
+				yLabel="Minutes"
 			/>
 		</Card.Content>
 	</Card.Root>

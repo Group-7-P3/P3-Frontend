@@ -12,6 +12,7 @@
 		config?: Chart.ChartConfig;
 		x?: Accessor<any>;
 		y?: Accessor<any>;
+		yLabel?: string;
 		series?: SeriesData<any, Component<BarsProps>>[];
 	}
 
@@ -30,6 +31,7 @@
 		},
 		x = Object.keys(data[0])[0],
 		y = Object.keys(data[0])[1],
+		yLabel,
 		series = [
 			{
 				key: 'amount',
@@ -56,6 +58,12 @@
 		{series}
 		seriesLayout="group"
 		cRange={chartColors}
+		padding={{
+			left: yLabel ? 54 : 0,
+			bottom: 24,
+			top: 0,
+			right: 0
+		}}
 		props={{
 			bars: {
 				stroke: 'none',
@@ -69,6 +77,9 @@
 					v instanceof Date
 						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
 						: v
+			},
+			yAxis: {
+				label: yLabel
 			}
 		}}
 	>
