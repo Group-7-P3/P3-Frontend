@@ -48,39 +48,40 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
-	const products = await db
-		.selectDistinct({
-			...getTableColumns(schema.product),
-			managedBy: schema.user.managedBy
-		})
-		.from(schema.product)
-		.innerJoin(
-			schema.subscriptionToProduct,
-			eq(schema.product.serialNumber, schema.subscriptionToProduct.serialNumber)
-		)
-		.innerJoin(
-			schema.subscription,
-			eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
-		)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
-		.where(where)
-		.orderBy(orderBy)
-		.limit(pageSize)
-		.offset((page - 1) * pageSize);
-
-	const [{ total }] = await db
-		.select({ total: countDistinct(schema.product.serialNumber) })
-		.from(schema.product)
-		.innerJoin(
-			schema.subscriptionToProduct,
-			eq(schema.product.serialNumber, schema.subscriptionToProduct.serialNumber)
-		)
-		.innerJoin(
-			schema.subscription,
-			eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
-		)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
-		.where(where);
+	const [products, [{ total }]] = await Promise.all([
+		db
+			.selectDistinct({
+				...getTableColumns(schema.product),
+				managedBy: schema.user.managedBy
+			})
+			.from(schema.product)
+			.innerJoin(
+				schema.subscriptionToProduct,
+				eq(schema.product.serialNumber, schema.subscriptionToProduct.serialNumber)
+			)
+			.innerJoin(
+				schema.subscription,
+				eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
+			)
+			.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+			.where(where)
+			.orderBy(orderBy)
+			.limit(pageSize)
+			.offset((page - 1) * pageSize),
+		db
+			.select({ total: countDistinct(schema.product.serialNumber) })
+			.from(schema.product)
+			.innerJoin(
+				schema.subscriptionToProduct,
+				eq(schema.product.serialNumber, schema.subscriptionToProduct.serialNumber)
+			)
+			.innerJoin(
+				schema.subscription,
+				eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
+			)
+			.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+			.where(where)
+	]);
 
 	return {
 		products,
