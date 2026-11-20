@@ -3,7 +3,7 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+
 	import { authClient } from '$lib/client.ts';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import XIcon from '@lucide/svelte/icons/x';
@@ -12,11 +12,15 @@
 	import { groupRules } from '#lib/utils.ts';
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
 	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'moderator' | undefined);
 	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
+
+	let dialogOpen = $state(false);
 
 	// Make open bindable
 	let { open = $bindable(false) }: { open: boolean } = $props();
@@ -131,6 +135,13 @@
 		}
 	}
 
+	function handleWindowKeyDown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			dialogOpen = true;
+		}
+	}
+
 	// Resets the form when the dialog is closed.
 	$effect(() => {
 		if (!open && wasOpen) {
@@ -150,8 +161,14 @@
 	{/if}
 {/snippet}
 
+<!--<svelte:window onkeydown={handleWindowKeyDown} />-->
+
 <Dialog bind:open>
-	<DialogContent class="gap-2 sm:max-w-xl" interactOutsideBehavior="ignore">
+	<DialogContent
+		class="gap-2 sm:max-w-xl"
+		interactOutsideBehavior="ignore"
+		onEscapeKeydown={handleWindowKeyDown}
+	>
 		<DialogHeader>
 			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
@@ -165,6 +182,26 @@
 							<Field.Set>
 								<div class="flex gap-6">
 									<Field.Group class="basis-2/3">
+										<!-- Pop up box -->
+
+										<AlertDialog.Root bind:open={dialogOpen}>
+											<AlertDialog.Trigger
+												type="button"
+												class={buttonVariants({ variant: 'outline' })}
+											></AlertDialog.Trigger>
+											<AlertDialog.Content>
+												<AlertDialog.Header>
+													<AlertDialog.Title>Are you sure?</AlertDialog.Title>
+													<AlertDialog.Description>
+														This action will change the product
+													</AlertDialog.Description>
+												</AlertDialog.Header>
+												<AlertDialog.Footer>
+													<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>
+													<AlertDialog.Action type="button">Continue</AlertDialog.Action>
+												</AlertDialog.Footer>
+											</AlertDialog.Content>
+										</AlertDialog.Root>
 										<!-- Name field -->
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffName">Name</Field.Label>
