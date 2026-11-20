@@ -36,6 +36,13 @@
       "when": 1795005233188,
       "tag": "0005_flippant_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795175561753,
+      "tag": "0006_cute_hiroim",
+      "breakpoints": true
     }
   ]
 }

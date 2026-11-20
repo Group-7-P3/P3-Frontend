@@ -21,11 +21,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
 		conditions.push(
-			or(
-				ilike(sql`${schema.user.id}::text`, pattern),
-				ilike(sql`${schema.user.customerId}::text`, pattern),
-				ilike(schema.user.managedBy, pattern)
-			)
+			or(ilike(sql`${schema.user.id}::text`, pattern), ilike(schema.user.managedBy, pattern))
 		);
 	}
 
@@ -33,23 +29,24 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		(
 			{
 				id: schema.user.id,
-				customerId: schema.user.customerId,
 				managedBy: schema.user.managedBy,
 				createdAt: schema.user.createdAt,
 				updatedAt: schema.user.updatedAt
 			} as const
-		)[sort as 'id' | 'customerId' | 'managedBy' | 'createdAt' | 'updatedAt'] ?? schema.user.id;
+		)[sort as 'id' | 'managedBy' | 'createdAt' | 'updatedAt'] ?? schema.user.id;
 	const where = conditions.length ? and(...conditions) : undefined;
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
-	const users = await db
-		.select()
-		.from(schema.user)
-		.where(where)
-		.orderBy(orderBy)
-		.limit(pageSize)
-		.offset((page - 1) * pageSize);
-	const [{ total }] = await db.select({ total: count() }).from(schema.user).where(where);
+	const [users, [{ total }]] = await Promise.all([
+		db
+			.select()
+			.from(schema.user)
+			.where(where)
+			.orderBy(orderBy)
+			.limit(pageSize)
+			.offset((page - 1) * pageSize),
+		db.select({ total: count() }).from(schema.user).where(where)
+	]);
 
 	return {
 		users,
