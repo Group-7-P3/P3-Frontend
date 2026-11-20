@@ -308,29 +308,29 @@
 	<StatCard
 		title="Users"
 		href={resolve('/(protected)/users')}
-		day={12}
-		week={123}
-		month={1234}
-		year={12345}
-		total={123456}
+		day={data.stats.users.day}
+		week={data.stats.users.week}
+		month={data.stats.users.month}
+		year={data.stats.users.year}
+		total={data.stats.users.total}
 	/>
 	<StatCard
 		title="Subscriptions"
 		href={resolve('/(protected)/subscriptions')}
-		day={12}
-		week={123}
-		month={1234}
-		year={12345}
-		total={123456}
+		day={data.stats.subscriptions.day}
+		week={data.stats.subscriptions.week}
+		month={data.stats.subscriptions.month}
+		year={data.stats.subscriptions.year}
+		total={data.stats.subscriptions.total}
 	/>
 	<StatCard
 		title="Products"
 		href={resolve('/(protected)/products')}
-		day={12}
-		week={123}
-		month={1234}
-		year={12345}
-		total={123456}
+		day={data.stats.products.day}
+		week={data.stats.products.week}
+		month={data.stats.products.month}
+		year={data.stats.products.year}
+		total={data.stats.products.total}
 	/>
 </div>
 <div
