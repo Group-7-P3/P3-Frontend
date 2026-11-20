@@ -463,7 +463,7 @@
 		<Separator />
 		<Card.Content>
 			<BarChart
-				class="h-100 px-5"
+				class="h-100"
 				data={activityChartData}
 				config={activityChartConfig}
 				series={activitySeries}
@@ -505,7 +505,7 @@
 		<Card.Content>
 			{#if subscriptionChartType === 'area'}
 				<AreaChart
-					class="h-100 px-5"
+					class="h-100"
 					config={subscriptionChartConfig}
 					data={subscriptionChartData}
 					series={subscriptionSeries}
@@ -513,7 +513,7 @@
 				/>
 			{:else}
 				<LineChart
-					class="h-100 px-5"
+					class="h-100"
 					config={subscriptionChartConfig}
 					data={subscriptionChartData}
 					series={subscriptionSeries}
@@ -555,7 +555,7 @@
 		<Card.Content>
 			{#if userChartType === 'total'}
 				<LineChart
-					class="h-100 px-5"
+					class="h-100"
 					config={userChartConfig}
 					data={userChartData}
 					series={userSeries}
@@ -563,7 +563,7 @@
 				/>
 			{:else}
 				<LineChart
-					class="h-100 px-5"
+					class="h-100"
 					config={userChartConfig}
 					data={userChartData}
 					series={userSeries}
@@ -603,7 +603,7 @@
 		<Card.Content>
 			{#if productChartType === 'area'}
 				<AreaChart
-					class="h-100 px-5"
+					class="h-100"
 					config={productChartConfig}
 					data={productChartData}
 					series={productSeries}
@@ -611,7 +611,7 @@
 				/>
 			{:else}
 				<LineChart
-					class="h-100 px-5"
+					class="h-100"
 					config={productChartConfig}
 					data={productChartData}
 					series={productSeries}

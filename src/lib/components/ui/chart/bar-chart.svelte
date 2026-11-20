@@ -70,8 +70,8 @@
 		{cRange}
 		padding={{
 			left: yLabel ? 54 : 0,
-			bottom: 24,
-			top: 0,
+			bottom: 14,
+			top: 6,
 			right: 0
 		}}
 		props={{
