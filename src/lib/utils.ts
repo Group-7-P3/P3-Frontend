@@ -102,3 +102,7 @@ export const groupRules = [
 export function snakeToTitleCase(str: string) {
 	return str.replace(/^_*(.)|_+(.)/g, (_, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
 }
+
+export function isTimestamp(value: string): boolean {
+	return /At$|Date$|Time$/i.test(value);
+}
