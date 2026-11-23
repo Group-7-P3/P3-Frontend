@@ -13,6 +13,7 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
+	import GroupCombobox from './group-combobox.svelte';
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();

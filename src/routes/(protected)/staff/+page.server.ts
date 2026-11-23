@@ -4,6 +4,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from '../users/$types';
 import { stringCheck, stringCheckTrim } from '#lib/utils.ts';
 import { fail } from '@sveltejs/kit';
+
 import 'dotenv';
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -137,7 +138,7 @@ export const actions = {
 		const name = stringCheckTrim(data.get('newStaffName'));
 		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
 		const email = emailRaw?.toLowerCase() ?? null;
-		const makeAdmin = data.get('makeAdmin');
+		const newStaffRole = data.get('newStaffRole') as Role | null;
 		let group = stringCheckTrim(data.get('newStaffGroup'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));
@@ -185,7 +186,7 @@ export const actions = {
 			errors.password = 'Password needs to fulfill 3 of the 4 rules';
 		}
 
-		if (locals.user.role === 'owner' && makeAdmin === 'on') {
+		if (locals.user.role === 'owner' && newStaffRole === 'admin') {
 			role = 'admin';
 		}
 
@@ -214,7 +215,7 @@ export const actions = {
 
 		return {
 			success: true,
-			message: `User ${name} created successfully.`
+			message: `New staff member${name} created successfully.`
 		};
 	}
 } satisfies Actions;
