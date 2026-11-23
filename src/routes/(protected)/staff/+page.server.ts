@@ -13,7 +13,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
 import { groupRules } from '#lib/utils.ts';
-import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
@@ -30,6 +30,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
 	const conditions = [];
+
+	if (staffUser.role === 'admin' && staffUser.group === 'INNOVAID') {
+		conditions.push(
+			inArray(schema.staff.role, ['moderator', 'admin']),
+			or(ne(schema.staff.role, 'admin'), ne(schema.staff.group, 'INNOVAID'))
+		);
+	}
 	if (staffUser.group !== 'INNOVAID') {
 		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'moderator'));
 	}
@@ -126,7 +133,7 @@ export const actions = {
 		const name = stringCheckTrim(data.get('newStaffName'));
 		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
 		const email = emailRaw?.toLowerCase() ?? null;
-		const newStaffRole = data.get('newStaffRole');
+		const newStaffRole = data.get('newStaffRole') as Role | null;
 		let group = stringCheckTrim(data.get('newStaffGroup'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));

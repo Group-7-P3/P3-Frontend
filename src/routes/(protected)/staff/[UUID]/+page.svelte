@@ -14,7 +14,7 @@
 
 	let test = 'What to show here?';
 	let staff = $derived(data.staff);
-	let showableStaffUUID = $derived(staff.id.slice(0, 9) + '. . .');
+	let showableStaffUUID = $derived(staff.id.slice(0, 8) + '. . .');
 </script>
 
 <svelte:head>

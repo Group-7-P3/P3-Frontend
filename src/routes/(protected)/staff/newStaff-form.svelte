@@ -3,7 +3,6 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-
 	import { authClient } from '$lib/client.ts';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import XIcon from '@lucide/svelte/icons/x';
@@ -11,7 +10,6 @@
 	import { refreshAll } from '$app/navigation';
 	import { groupRules } from '#lib/utils.ts';
 	import * as RadioGroup from '$lib/components/ui/radio-group';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
 
@@ -20,10 +18,9 @@
 	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'moderator' | undefined);
 	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
 
-	let dialogOpen = $state(false);
-
 	// Make open bindable
 	let { open = $bindable(false) }: { open: boolean } = $props();
+	let dialogOpen = $state(false);
 	let wasOpen = false;
 
 	// Store if staff should be admin, default is moderator
@@ -136,10 +133,8 @@
 	}
 
 	function handleWindowKeyDown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			event.preventDefault();
-			dialogOpen = true;
-		}
+		event.preventDefault();
+		dialogOpen = true;
 	}
 
 	// Resets the form when the dialog is closed.
@@ -149,6 +144,7 @@
 		}
 		wasOpen = open;
 	});
+	let cancelButton = $state<HTMLButtonElement | null>(null);
 </script>
 
 <!-- Snippet for the checkmark/x bullets on the requirement list -->
@@ -161,14 +157,24 @@
 	{/if}
 {/snippet}
 
-<!--<svelte:window onkeydown={handleWindowKeyDown} />-->
-
 <Dialog bind:open>
 	<DialogContent
 		class="gap-2 sm:max-w-xl"
 		interactOutsideBehavior="ignore"
 		onEscapeKeydown={handleWindowKeyDown}
+		showCloseButton={false}
 	>
+		<Button
+			variant="ghost"
+			class="absolute top-4 right-4"
+			size="icon-sm"
+			onclick={() => {
+				dialogOpen = true;
+			}}
+		>
+			<XIcon />
+			<span class="sr-only">Close</span>
+		</Button>
 		<DialogHeader>
 			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
@@ -183,22 +189,34 @@
 								<div class="flex gap-6">
 									<Field.Group class="basis-2/3">
 										<!-- Pop up box -->
-
 										<AlertDialog.Root bind:open={dialogOpen}>
-											<AlertDialog.Trigger
-												type="button"
-												class={buttonVariants({ variant: 'outline' })}
-											></AlertDialog.Trigger>
-											<AlertDialog.Content>
+											<AlertDialog.Content
+												onOpenAutoFocus={(e) => {
+													e.preventDefault();
+													cancelButton?.focus();
+												}}
+											>
 												<AlertDialog.Header>
-													<AlertDialog.Title>Are you sure?</AlertDialog.Title>
+													<AlertDialog.Title>Proceed?</AlertDialog.Title>
 													<AlertDialog.Description>
-														This action will change the product
+														Are you sure you want to close the form? <br /> All unsaved changes will be
+														lost.
 													</AlertDialog.Description>
 												</AlertDialog.Header>
 												<AlertDialog.Footer>
-													<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>
-													<AlertDialog.Action type="button">Continue</AlertDialog.Action>
+													<AlertDialog.Cancel type="button" bind:ref={cancelButton}
+														>Cancel</AlertDialog.Cancel
+													>
+													<AlertDialog.Action
+														class={buttonVariants({ variant: 'destructive' })}
+														type="button"
+														onclick={() => {
+															dialogOpen = false;
+															open = false;
+														}}
+													>
+														Continue
+													</AlertDialog.Action>
 												</AlertDialog.Footer>
 											</AlertDialog.Content>
 										</AlertDialog.Root>
@@ -295,17 +313,23 @@
 										<!-- Owner only field, gives admin role to staff -->
 										{#if role === 'owner'}
 											<Field.Set class="w-full max-w-xs">
-												<Field.Label for="newStaffRole">Role</Field.Label>
-												<RadioGroup.Root bind:value={newStaffRole}>
+												<Field.Legend variant="label">Role</Field.Legend>
+												<RadioGroup.Root
+													bind:value={newStaffRole}
+													name="newStaffRole"
+													class="flex flex-col gap-2"
+												>
 													<Field.Field orientation="horizontal">
-														<RadioGroup.Item value="moderator" id="newStaffRole" />
-														<Field.Label for="newStaffRole" class="font-normal"
+														<RadioGroup.Item value="moderator" id="newStaffRoleModerator" />
+														<Field.Label for="newStaffRoleModerator" class="font-normal"
 															>Moderator</Field.Label
 														>
 													</Field.Field>
 													<Field.Field orientation="horizontal">
-														<RadioGroup.Item value="admin" id="newStaffRole" />
-														<Field.Label for="newStaffRole" class="font-normal">Admin</Field.Label>
+														<RadioGroup.Item value="admin" id="newStaffRoleAdmin" />
+														<Field.Label for="newStaffRoleAdmin" class="font-normal"
+															>Admin</Field.Label
+														>
 													</Field.Field>
 												</RadioGroup.Root>
 											</Field.Set>
