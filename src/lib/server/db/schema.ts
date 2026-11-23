@@ -53,7 +53,8 @@ export const activity = pgTable(
 	{
 		activity: text('activity').notNull(),
 		time: timestamp('time').notNull().defaultNow(),
-		seconds: integer('seconds').notNull().default(0)
+		seconds: integer('seconds').notNull().default(0),
+		managedBy: text('managedBy').notNull().default('INNOVAID')
 	},
 	(table) => [primaryKey({ columns: [table.activity, table.time] })]
 );

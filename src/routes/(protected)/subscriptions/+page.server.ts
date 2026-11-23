@@ -54,28 +54,29 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
-	const subscriptions = await db
-		.select({
-			...getTableColumns(schema.subscription),
-			devices: sql<number>`(
+	const [subscriptions, [{ total }]] = await Promise.all([
+		db
+			.select({
+				...getTableColumns(schema.subscription),
+				devices: sql<number>`(
         SELECT count(*)::int 
         FROM ${schema.subscriptionToProduct} 
         WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
       )`,
-			managedBy: schema.user.managedBy
-		})
-		.from(schema.subscription)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
-		.where(where)
-		.orderBy(orderBy)
-		.limit(pageSize)
-		.offset((page - 1) * pageSize);
-
-	const [{ total }] = await db
-		.select({ total: count() })
-		.from(schema.subscription)
-		.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
-		.where(where);
+				managedBy: schema.user.managedBy
+			})
+			.from(schema.subscription)
+			.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+			.where(where)
+			.orderBy(orderBy)
+			.limit(pageSize)
+			.offset((page - 1) * pageSize),
+		db
+			.select({ total: count() })
+			.from(schema.subscription)
+			.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+			.where(where)
+	]);
 
 	return {
 		subscriptions,
