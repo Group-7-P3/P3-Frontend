@@ -12,6 +12,8 @@
 	import { ExternalLink } from '@lucide/svelte';
 	import DataTableDate from '$lib/components/ui/data-table/data-table-date.svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
+	import Separator from '#lib/components/ui/separator/separator.svelte';
+	import Badge from '#lib/components/ui/badge/badge.svelte';
 
 	let { data, form }: { data: PageData; form: { error?: string; success?: boolean } | null } =
 		$props();
@@ -94,31 +96,34 @@
 					Information for User {data.user.id}
 				</Card.Title>
 			</Card.Header>
-			<Card.Content>
-				<dl class="divide-y">
-					<!-- Row 1: User ID -->
-					<div class="flex h-14 items-center justify-between pb-4">
-						<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
-						<dd class="font-mono text-sm font-medium text-foreground">
-							{data.user.id}
-						</dd>
-					</div>
+			<Separator />
+			<Card.Content class="flex flex-col gap-4">
+				<!-- Row 1: User ID -->
+				<div class="flex items-center justify-between">
+					<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
+					<dd class="font-mono text-sm font-medium text-foreground">
+						{data.user.id}
+					</dd>
+				</div>
 
-					<!-- Row 2: Distributor -->
-					<div class="flex h-14 items-center justify-between">
-						<dt class="text-sm font-normal text-muted-foreground">Distributor</dt>
-						<dd class="text-sm font-medium text-foreground">
-							{data.user.managedBy}
-						</dd>
-					</div>
+				<Separator />
 
-					<div class="flex h-14 items-center justify-between">
-						<dt class="text-sm font-normal text-muted-foreground">Created at:</dt>
-						<dd class="text-sm font-medium text-foreground">
-							<DataTableDate value={data.user.createdAt} />
-						</dd>
-					</div>
-				</dl>
+				<!-- Row 2: Distributor -->
+				<div class="flex items-center justify-between">
+					<dt class="text-sm font-normal text-muted-foreground">Distributor</dt>
+					<dd class="text-sm font-medium text-foreground">
+						{data.user.managedBy}
+					</dd>
+				</div>
+
+				<Separator />
+
+				<div class="flex items-center justify-between">
+					<dt class="text-sm font-normal text-muted-foreground">Created at:</dt>
+					<dd class="text-sm font-medium text-foreground">
+						<DataTableDate value={data.user.createdAt} />
+					</dd>
+				</div>
 			</Card.Content>
 		</Card.Root>
 
@@ -127,6 +132,7 @@
 			<Card.Header>
 				<Card.Title>Edit User</Card.Title>
 			</Card.Header>
+			<Separator />
 			<Card.Content>
 				<form
 					bind:this={formElement}
@@ -137,9 +143,9 @@
 							if (result.type === 'success') clearForm();
 						}}
 				>
-					<dl class="divide-y">
+					<dl class="grid gap-4">
 						<!-- Row 1: User ID ) -->
-						<div class="flex h-14 items-center justify-between gap-4 pb-4">
+						<div class="flex items-center justify-between gap-4">
 							<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
 							<dd class="w-56">
 								<Field.Field>
@@ -161,8 +167,10 @@
 							</dd>
 						</div>
 
+						<Separator />
+
 						<!-- Row 2: Distributor -->
-						<div class="flex h-14 items-center justify-between gap-4">
+						<div class="flex items-center justify-between gap-4">
 							<dt class="text-sm font-normal text-muted-foreground">Distributor</dt>
 							<dd class="w-56">
 								<Select.Root type="single" name="managedBy" bind:value={editDistributor}>
@@ -180,16 +188,14 @@
 							</dd>
 						</div>
 					</dl>
-					<div class="flex items-center gap-2 py-2">
-						<Button type="button" variant="outline" onclick={openConfirmDialog}
-							>Confirm edits</Button
-						>
-						<Button type="button" variant="outline" onclick={() => (clearDialogOpen = true)}
-							>Clear</Button
-						>
-					</div>
 				</form>
 			</Card.Content>
+			<Card.Footer class="flex items-center gap-2">
+				<Button type="button" variant="outline" onclick={openConfirmDialog}>Confirm Edits</Button>
+				<Button type="button" variant="destructive" onclick={() => (clearDialogOpen = true)}>
+					Clear
+				</Button>
+			</Card.Footer>
 		</Card.Root>
 	</div>
 	<!-- Bottom: Full Width Box -->
@@ -200,55 +206,58 @@
 
 		<Card.Content>
 			{#if data.subscriptions && data.subscriptions.length > 0}
-				<div class="flex flex-wrap gap-4">
+				<div class="grid grid-cols-[repeat(3,minmax(275px,1fr))] gap-4">
 					{#each data.subscriptions as sub, i (sub.licenseKey)}
-						<dl class="flex-1 basis-[calc(33.333%-0.75rem)] rounded-lg">
-							<!-- Subscription Number -->
-							<div class="flex items-center justify-between border-b last:border-0">
-								<dt class="text-sm font-normal text-muted-foreground">Subscription Number</dt>
-								<dd class="font-mono text-sm font-medium text-foreground">
-									{i + 1}
-								</dd>
-							</div>
+						<Card.Root class="relative flex-1 overflow-visible rounded-sm">
+							<Badge class="absolute -top-2 -left-2 w-5">{i + 1}</Badge>
+							<Card.Content>
+								<dl class="grid gap-2">
+									<!-- License Key -->
+									<div class="flex items-center justify-between">
+										<dt class="text-sm font-normal text-muted-foreground">License Key</dt>
+										<dd
+											class="inline-flex items-center gap-2 font-mono text-sm font-medium text-foreground"
+										>
+											<span>{sub.licenseKey}</span>
+											<!-- Button to go to subscription -->
+											<Button
+												variant="outline"
+												size="icon-xs"
+												onclick={() => {
+													goto(
+														resolve('/(protected)/subscriptions/[licenseKey]', {
+															licenseKey: String(sub.licenseKey)
+														})
+													);
+												}}
+											>
+												<ExternalLink />
+											</Button>
+										</dd>
+									</div>
 
-							<!-- License Key -->
-							<div class="flex items-center justify-between border-b py-2 last:border-0">
-								<dt class="text-sm font-normal text-muted-foreground">License Key</dt>
-								<dd class="font-mono text-sm font-medium text-foreground">
-									{sub.licenseKey}
-									<!-- Button to go to subscription -->
-									<Button
-										variant="outline"
-										size="icon-xs"
-										onclick={() => {
-											goto(
-												resolve('/(protected)/subscriptions/[licenseKey]', {
-													licenseKey: String(sub.licenseKey)
-												})
-											);
-										}}
-									>
-										<ExternalLink />
-									</Button>
-								</dd>
-							</div>
+									<Separator />
 
-							<!-- Type -->
-							<div class="flex items-center justify-between border-b py-2 last:border-0">
-								<dt class="text-sm font-normal text-muted-foreground">Subscription Type</dt>
-								<dd class="text-sm font-medium text-foreground">
-									{wordsToTitleCase(sub.type)}
-								</dd>
-							</div>
+									<!-- Type -->
+									<div class="flex items-center justify-between">
+										<dt class="text-sm font-normal text-muted-foreground">Subscription Type</dt>
+										<dd class="text-sm font-medium text-foreground">
+											{wordsToTitleCase(sub.type)}
+										</dd>
+									</div>
 
-							<!-- Expires -->
-							<div class="flex items-center justify-between border-b py-2 last:border-0">
-								<dt class="text-sm font-normal text-muted-foreground">Expires</dt>
-								<dd class="text-sm font-medium text-foreground">
-									<DataTableDate value={sub.expiresAt} />
-								</dd>
-							</div>
-						</dl>
+									<Separator />
+
+									<!-- Expires -->
+									<div class="flex items-center justify-between">
+										<dt class="text-sm font-normal text-muted-foreground">Expires</dt>
+										<dd class="text-sm font-medium text-foreground">
+											<DataTableDate value={sub.expiresAt} />
+										</dd>
+									</div>
+								</dl>
+							</Card.Content>
+						</Card.Root>
 					{/each}
 				</div>
 			{:else}
