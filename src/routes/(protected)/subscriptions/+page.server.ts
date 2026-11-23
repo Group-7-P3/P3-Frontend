@@ -58,10 +58,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.select({
 			...getTableColumns(schema.subscription),
 			devices: sql<number>`(
-        SELECT count(*)::int 
-        FROM ${schema.subscriptionToProduct} 
-        WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
-      )`,
+			SELECT count(*)::int 
+			FROM ${schema.subscriptionToProduct} 
+			WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
+		)`,
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)

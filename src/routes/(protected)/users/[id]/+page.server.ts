@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import { user as userTable, subscription } from '$lib/server/db/schema';
-import { error, fail, type Actions } from '@sveltejs/kit';
+import { error, fail, redirect, type Actions } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -11,42 +11,50 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(400, 'Invalid user ID');
 	}
 	// Fetch the user matching the route id
-	const userRows = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1);
+	const [user] = await db.select().from(userTable).where(eq(userTable.id, userId));
 
-	if (userRows.length === 0) {
+	if (!user) {
 		error(404, 'User not found');
 	}
 	// Fetch all subscriptions linked to the user
-	const userSubscriptions = await db
-		.select()
-		.from(subscription)
-		.where(eq(subscription.userId, userRows[0].id));
+	const subscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
 
-	return {
-		user: userRows[0],
-		subscriptions: userSubscriptions
-	};
+	return { user, subscriptions };
 };
 
 export const actions: Actions = {
-	updateUser: async ({ request, params }) => {
-		const data = await request.formData();
-		const userId = Number(params.id);
-		const rawCustomerId = String(data.get('customerId') ?? '').trim();
-		const customerId = Number(rawCustomerId);
-		const managedBy = String(data.get('managedBy') ?? '').trim();
-		// make sure that customer id is a non-empty valid number
-		if (
-			!rawCustomerId ||
-			!Number.isInteger(customerId) ||
-			customerId < -2147483648 ||
-			customerId > 2147483647
-		) {
-			return fail(400, { customerIdInvalid: true });
-		}
-		// Check is another user (ne means not equal) already exists with this customer id
-		await db.update(userTable).set({ managedBy }).where(eq(userTable.id, userId));
+	default: async ({ request, params }) => {
+		const currentId = Number(params.id);
+		const formData = await request.formData();
 
+		const rawId = String(formData.get('userId') ?? '').trim();
+		const managedBy = String(formData.get('managedBy') ?? '').trim();
+		const newId = rawId === '' ? currentId : Number(rawId);
+
+		if (isNaN(newId) || newId <= 0) {
+			return fail(400, { error: 'Please enter a valid User ID' });
+		}
+
+		if (newId !== currentId) {
+			const [existing] = await db
+				.select({ id: userTable.id })
+				.from(userTable)
+				.where(eq(userTable.id, newId));
+			if (existing) {
+				return fail(400, { error: 'This User ID is already in use' });
+			}
+
+			await db.transaction(async (tx) => {
+				await tx.update(userTable).set({ id: newId, managedBy }).where(eq(userTable.id, currentId));
+				await tx
+					.update(subscription)
+					.set({ userId: newId })
+					.where(eq(subscription.userId, currentId));
+			});
+
+			redirect(303, `/users/${newId}`);
+		}
+		await db.update(userTable).set({ managedBy }).where(eq(userTable.id, currentId));
 		return { succes: true };
 	}
 };

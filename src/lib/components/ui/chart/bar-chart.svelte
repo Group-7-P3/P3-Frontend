@@ -10,10 +10,20 @@
 		class?: string;
 		data?: any[];
 		config?: Chart.ChartConfig;
+		series?: SeriesData<any, Component<BarsProps>>[];
 		x?: Accessor<any>;
 		y?: Accessor<any>;
-		series?: SeriesData<any, Component<BarsProps>>[];
+		yLabel?: string;
+		palette?: string[];
 	}
+
+	const defaultPalette = [
+		'var(--chart-1)',
+		'var(--chart-2)',
+		'var(--chart-3)',
+		'var(--chart-4)',
+		'var(--chart-5)'
+	];
 
 	const {
 		class: className,
@@ -25,37 +35,45 @@
 			{ activity: 'Reaction', started: 130 },
 			{ activity: 'Neglect Color', started: 140 }
 		],
-		config = {
-			started: { label: 'Started' }
-		},
+		config: configProp,
+		series,
 		x = Object.keys(data[0])[0],
 		y = Object.keys(data[0])[1],
-		series = [
-			{
-				key: 'amount',
-				label: 'Amount',
-				color: 'var(--chart-1)'
-			}
-		]
+		yLabel,
+		palette = defaultPalette
 	}: Props = $props();
 
-	const chartColors = [
-		'var(--chart-1)',
-		'var(--chart-2)',
-		'var(--chart-3)',
-		'var(--chart-4)',
-		'var(--chart-5)'
-	];
+	function labelOf(d: any): string {
+		const v = typeof x === 'function' ? x(d) : typeof x === 'string' ? d[x] : undefined;
+		return String(v);
+	}
+
+	const yKey = $derived(typeof y === 'string' ? y : 'value');
+
+	// Each bar gets the next color in the palette, wrapping around after the last one
+	const cDomain = $derived(data.map(labelOf));
+	const cRange = $derived(cDomain.map((_, i) => palette[i % palette.length]));
+
+	const config = $derived<Chart.ChartConfig>(
+		configProp ?? { [yKey]: { label: yLabel ?? 'Started' } }
+	);
 </script>
 
 <Chart.Container {config} class={cn('w-full max-w-7xl', className)}>
 	<BarChart
 		{data}
+		{series}
 		{x}
 		{y}
-		{series}
-		seriesLayout="group"
-		cRange={chartColors}
+		c={x}
+		{cDomain}
+		{cRange}
+		padding={{
+			left: yLabel ? 54 : 0,
+			bottom: 14,
+			top: 6,
+			right: 0
+		}}
 		props={{
 			bars: {
 				stroke: 'none',
@@ -69,6 +87,9 @@
 					v instanceof Date
 						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
 						: v
+			},
+			yAxis: {
+				label: yLabel
 			}
 		}}
 	>
