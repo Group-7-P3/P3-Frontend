@@ -1,6 +1,6 @@
 {
-  "id": "2010449f-11e7-4f77-9cb5-1a4bff5f2a7a",
-  "prevId": "938ffea3-64e0-4fae-b2a6-2237be82498b",
+  "id": "f9bcd32f-a6b0-413a-9d83-b15bffb3ff3a",
+  "prevId": "3fd5c5c9-f337-4cff-9ab2-c21cbf129aca",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -27,6 +27,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "managedBy": {
+          "name": "managedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INNOVAID'"
         }
       },
       "indexes": {},
@@ -40,6 +47,25 @@
           ]
         }
       },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.group": {
+      "name": "group",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -102,6 +128,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "type": {
           "name": "type",
           "type": "subscription_type",
@@ -109,13 +141,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'home'"
-        },
-        "max_devices": {
-          "name": "max_devices",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 6
         },
         "created_at": {
           "name": "created_at",
@@ -136,13 +161,6 @@
           "type": "date",
           "primaryKey": false,
           "notNull": true
-        },
-        "auto_renew": {
-          "name": "auto_renew",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {
@@ -150,31 +168,31 @@
           "name": "subscription_user_id_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "customer_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "subscription_user_id_user_id_fk": {
           "name": "subscription_user_id_user_id_fk",
           "tableFrom": "subscription",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -212,37 +230,37 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "subscription_to_product_license_key_subscription_license_key_fk": {
           "name": "subscription_to_product_license_key_subscription_license_key_fk",
           "tableFrom": "subscription_to_product",
-          "tableTo": "subscription",
           "columnsFrom": [
             "license_key"
           ],
+          "tableTo": "subscription",
           "columnsTo": [
             "license_key"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "subscription_to_product_serial_number_product_serial_number_fk": {
           "name": "subscription_to_product_serial_number_product_serial_number_fk",
           "tableFrom": "subscription_to_product",
-          "tableTo": "product",
           "columnsFrom": [
             "serial_number"
           ],
+          "tableTo": "product",
           "columnsTo": [
             "serial_number"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -267,12 +285,6 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
-          "notNull": true
-        },
-        "customer_id": {
-          "name": "customer_id",
-          "type": "integer",
-          "primaryKey": false,
           "notNull": true
         },
         "managed_by": {
@@ -309,12 +321,26 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "user_managed_by_group_name_fk": {
+          "name": "user_managed_by_group_name_fk",
+          "tableFrom": "user",
+          "columnsFrom": [
+            "managed_by"
+          ],
+          "tableTo": "group",
+          "columnsTo": [
+            "name"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -417,24 +443,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "account_user_id_staff_id_fk": {
           "name": "account_user_id_staff_id_fk",
           "tableFrom": "account",
-          "tableTo": "staff",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "staff",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -509,34 +535,34 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "session_user_id_staff_id_fk": {
           "name": "session_user_id_staff_id_fk",
           "tableFrom": "session",
-          "tableTo": "staff",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "staff",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "token"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -597,7 +623,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'moderator'"
+          "default": "'supporter'"
         },
         "group": {
           "name": "group",
@@ -612,10 +638,10 @@
       "uniqueConstraints": {
         "staff_email_unique": {
           "name": "staff_email_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -677,9 +703,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -712,10 +738,10 @@
     }
   },
   "schemas": {},
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

@@ -4,7 +4,7 @@ import type { LayoutServerLoad } from './$types';
 
 import { isValidTimeZone } from '#lib/utils/timezones.ts';
 
-export const DEFAULT_TIME_ZONE = "Europe/Copenhagen"
+const DEFAULT_TIME_ZONE = "Europe/Copenhagen"
 
 export const load: LayoutServerLoad = async ({ locals, request, cookies }) => {
 	const session = await auth.api.getSession({

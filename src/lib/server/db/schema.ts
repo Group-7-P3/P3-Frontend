@@ -18,7 +18,7 @@ export const user = pgTable(
 	'user',
 	{
 		id: serial('id').primaryKey(),
-		managedBy: text('managed_by').notNull().default('INNOVAID'),
+		managedBy: text('managed_by').notNull().default('INNOVAID').references(() => group.name),
 		createdAt: timestamp('created_at', {withTimezone: true}).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', {withTimezone: true}).notNull().defaultNow()
 	},
@@ -53,10 +53,15 @@ export const activity = pgTable(
 	{
 		activity: text('activity').notNull(),
 		time: timestamp('time').notNull().defaultNow(),
-		seconds: integer('seconds').notNull().default(0)
+		seconds: integer('seconds').notNull().default(0),
+		managedBy: text('managedBy').notNull().default('INNOVAID')
 	},
 	(table) => [primaryKey({ columns: [table.activity, table.time] })]
 );
+
+export const group = pgTable('group', {
+	name: text('name').primaryKey()
+});
 
 export const subscriptionToProduct = pgTable(
 	'subscription_to_product',

@@ -13,7 +13,8 @@
 	let calendarSaved = $state(false);
 
 	// Keeps track of the inputs in the form.
-	let newDateFormat = $state('');
+	let selectedDateFormat = $state('');
+	let selectedFirstDay = $state(page.data.firstDay);
 
 	let selectedTimeZone = $state(page.data.timeZone);
 	let selectedLabelTimeZone = $derived(
@@ -49,7 +50,7 @@
 				<!-- Date format -->
 				<Field.Field>
 					<Field.Label for="dateFormat">Date format</Field.Label>
-					<RadioGroup.Root name="dateFormat" bind:value={newDateFormat}>
+					<RadioGroup.Root name="dateFormat" bind:value={selectedDateFormat}>
 						<div class="flex items-center space-x-2">
 							<RadioGroup.Item value="DMY" id="DMY" />
 							<Label for="DMY" class="font-normal">Day-Month-Year</Label>
@@ -70,7 +71,7 @@
 				<!-- First day -->
 				<Field.Field>
 					<Field.Label for="firstDay">First day of the week</Field.Label>
-					<RadioGroup.Root name="firstday">
+					<RadioGroup.Root name="firstday" bind:value={selectedFirstDay}>
 						<div class="flex items-center space-x-2">
 							<RadioGroup.Item value="1" id="monday" />
 							<Label for="monday" class="font-normal">Monday</Label>

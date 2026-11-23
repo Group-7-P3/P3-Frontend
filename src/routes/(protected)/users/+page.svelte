@@ -6,7 +6,7 @@
 	import { wordsToTitleCase } from '#lib/utils.ts';
 
 	let { data }: { data: PageData } = $props();
-	const columns = ['id', 'createdAt', 'updatedAt', 'managedBy'];
+	const columns = ['id', 'createdAt', 'updatedAt', 'subscriptions', 'managedBy'];
 
 	/*
 	 * formattedStaff changes data.staff to uppercase

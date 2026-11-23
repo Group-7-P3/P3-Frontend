@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
 	if (!staffUser) throw error(401, 'You must be signed in to view products');
 
-	if (!staffUser.role || staffUser.role === 'moderator') {
+	if (!staffUser.role || staffUser.role === 'supporter') {
 		throw error(403, 'Only owners and admins can access the Staff page');
 	}
 
@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
 	const conditions = [];
 	if (staffUser.group !== 'INNOVAID') {
-		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'moderator'));
+		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'supporter'));
 	}
 	const searchFilter = filter.trim();
 	if (searchFilter) {
@@ -63,14 +63,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		)[sort as 'id' | 'name' | 'email' | 'createdAt' | 'updatedAt' | 'role' | 'group'] ??
 		schema.staff.id;
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
-	const staff = await db
-		.select()
-		.from(schema.staff)
-		.where(where)
-		.orderBy(orderBy)
-		.limit(pageSize)
-		.offset((page - 1) * pageSize);
-	const [{ total }] = await db.select({ total: count() }).from(schema.staff).where(where);
+
+	const [staff, [{ total }]] = await Promise.all([
+		db
+			.select()
+			.from(schema.staff)
+			.where(where)
+			.orderBy(orderBy)
+			.limit(pageSize)
+			.offset((page - 1) * pageSize),
+		db.select({ total: count() }).from(schema.staff).where(where)
+	]);
 
 	return {
 		staff,
@@ -104,7 +107,7 @@ if (!connectionString) {
 const client = postgres(connectionString);
 const dbd = drizzle(client);
 
-type Role = 'moderator' | 'admin';
+type Role = 'supporter' | 'admin';
 
 export const actions = {
 	createStaff: async ({ locals, request }) => {
@@ -130,7 +133,7 @@ export const actions = {
 		let group = stringCheckTrim(data.get('newStaffGroup'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));
-		let role: Role = 'moderator';
+		let role: Role = 'supporter';
 
 		// Name checks
 		if (name === null) {

@@ -4,7 +4,12 @@ CREATE TABLE "activity" (
 	"activity" text NOT NULL,
 	"time" timestamp DEFAULT now() NOT NULL,
 	"seconds" integer DEFAULT 0 NOT NULL,
+	"managedBy" text DEFAULT 'INNOVAID' NOT NULL,
 	CONSTRAINT "activity_activity_time_pk" PRIMARY KEY("activity","time")
+);
+--> statement-breakpoint
+CREATE TABLE "group" (
+	"name" text PRIMARY KEY NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "product" (
@@ -17,12 +22,11 @@ CREATE TABLE "product" (
 CREATE TABLE "subscription" (
 	"license_key" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
+	"customer_id" integer NOT NULL,
 	"type" "subscription_type" DEFAULT 'home' NOT NULL,
-	"max_devices" integer DEFAULT 6 NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"expires_at" date NOT NULL,
-	"auto_renew" boolean DEFAULT false NOT NULL
+	"expires_at" date NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscription_to_product" (
@@ -33,7 +37,6 @@ CREATE TABLE "subscription_to_product" (
 --> statement-breakpoint
 CREATE TABLE "user" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"customer_id" integer NOT NULL,
 	"managed_by" text DEFAULT 'INNOVAID' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -64,7 +67,6 @@ CREATE TABLE "session" (
 	"ip_address" text,
 	"user_agent" text,
 	"user_id" text NOT NULL,
-	"impersonated_by" text,
 	CONSTRAINT "session_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
@@ -76,10 +78,7 @@ CREATE TABLE "staff" (
 	"image" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"role" text DEFAULT 'moderator',
-	"banned" boolean DEFAULT false,
-	"ban_reason" text,
-	"ban_expires" timestamp,
+	"role" text DEFAULT 'supporter' NOT NULL,
 	"group" text NOT NULL,
 	CONSTRAINT "staff_email_unique" UNIQUE("email")
 );
@@ -96,9 +95,10 @@ CREATE TABLE "verification" (
 ALTER TABLE "subscription" ADD CONSTRAINT "subscription_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subscription_to_product" ADD CONSTRAINT "subscription_to_product_license_key_subscription_license_key_fk" FOREIGN KEY ("license_key") REFERENCES "public"."subscription"("license_key") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subscription_to_product" ADD CONSTRAINT "subscription_to_product_serial_number_product_serial_number_fk" FOREIGN KEY ("serial_number") REFERENCES "public"."product"("serial_number") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user" ADD CONSTRAINT "user_managed_by_group_name_fk" FOREIGN KEY ("managed_by") REFERENCES "public"."group"("name") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_staff_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."staff"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_staff_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."staff"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "subscription_user_id_idx" ON "subscription" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "subscription_user_id_idx" ON "subscription" USING btree ("customer_id");--> statement-breakpoint
 CREATE INDEX "subscription_to_product_serial_number_idx" ON "subscription_to_product" USING btree ("serial_number");--> statement-breakpoint
 CREATE INDEX "user_managed_by_idx" ON "user" USING btree ("managed_by");--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint

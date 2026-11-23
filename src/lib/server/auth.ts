@@ -6,14 +6,15 @@ import { getRequestEvent } from '$app/server';
 import { db } from '#lib/server/db/index.ts';
 import { sendMail } from './email/sender.ts';
 import { createAuthMiddleware, APIError } from 'better-auth/api';
-
 import { and, eq } from 'drizzle-orm';
 import { staff } from '#lib/server/db/auth.schema.ts';
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
 	secret: BETTER_AUTH_SECRET,
-	database: drizzleAdapter(db, { provider: 'pg' }),
+	database: drizzleAdapter(db, {
+		provider: 'pg'
+	}),
 	emailAndPassword: { enabled: true },
 	plugins: [
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
@@ -26,9 +27,9 @@ export const auth = betterAuth({
 		},
 		additionalFields: {
 			role: {
-				type: ['owner', 'admin', 'moderator'],
+				type: ['owner', 'admin', 'supporter'],
 				required: true,
-				defaultValue: 'moderator',
+				defaultValue: 'supporter',
 				input: false,
 				returned: true
 			},
@@ -108,9 +109,9 @@ export const auth = betterAuth({
 			});
 
 			let bossEmail;
-			// If the staff is a moderator, find the admin of the same group
+			// If the staff is a supporter, find the admin of the same group
 			// If the staff is an admin, find the owner
-			if (ctx.context.session?.user.role === 'moderator') {
+			if (ctx.context.session?.user.role === 'supporter') {
 				bossEmail = (
 					await db
 						.select({ email: staff.email })

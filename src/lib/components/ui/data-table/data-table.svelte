@@ -9,6 +9,7 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import { toast } from 'svelte-sonner';
 	import { features, type DataTableFeatures } from './data-table-features.js';
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
@@ -18,9 +19,8 @@
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
-	import { tick } from 'svelte';
 	import DataTableButton from './data-table-button.svelte';
-	import { camelToTitleCase } from '#lib/utils.js';
+	import { camelToTitleCase, isTimestamp } from '#lib/utils.js';
 	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
 
@@ -78,9 +78,6 @@
 	});
 
 	async function updateQuery(updates: Record<string, string>) {
-		const refocusFilter = 'filter' in updates;
-		const selectionStart = filterInput?.selectionStart;
-		const selectionEnd = filterInput?.selectionEnd;
 		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
 		for (const [key, value] of Object.entries(updates)) {
 			if (value) params.set(key, value);
@@ -88,13 +85,7 @@
 			else params.delete(key);
 		}
 		const target = `${route}?${params}` as PaginatedRoute;
-		await goto(resolve(target));
-		if (!refocusFilter || !filterInput) return;
-		await tick();
-		filterInput.focus();
-		const start = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
-		const end = Math.min(selectionEnd ?? start, filterInput.value.length);
-		filterInput.setSelectionRange(start, end);
+		await goto(resolve(target), { reset: false });
 	}
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
@@ -119,7 +110,7 @@
 		// svelte-ignore state_referenced_locally
 		...columns.map((col) => {
 			const label = camelToTitleCase(col);
-			const isTimestamp = /At$|Date$|Time$/i.test(col);
+			const isTime = isTimestamp(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: col,
@@ -133,7 +124,7 @@
 						onclick
 					});
 				},
-				...(isTimestamp && {
+				...(isTime && {
 					cell: ({ getValue }) =>
 						renderComponent(DataTableDate, {
 							value: getValue()
@@ -252,9 +243,23 @@
 												variant="ghost"
 												size="icon-xs"
 												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-												onclick={(e) => {
+												onclick={async (e) => {
 													e.stopPropagation();
-													navigator.clipboard.writeText(String(cell.getValue()));
+													try {
+														const value = String(cell.getValue());
+														const isTime = isTimestamp(cell.column.id);
+
+														await navigator.clipboard.writeText(
+															isTime
+																? new Intl.DateTimeFormat(undefined, {
+																		dateStyle: 'medium'
+																	}).format(new Date(value))
+																: value
+														);
+														toast.success('Successfully copied to clipboard.');
+													} catch {
+														toast.error('Failed to copy to clipboard! Check browser permissions.');
+													}
 												}}
 											>
 												<Copy class="h-3 w-3" />
