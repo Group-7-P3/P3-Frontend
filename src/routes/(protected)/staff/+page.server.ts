@@ -63,14 +63,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		)[sort as 'id' | 'name' | 'email' | 'createdAt' | 'updatedAt' | 'role' | 'group'] ??
 		schema.staff.id;
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
-	const staff = await db
-		.select()
-		.from(schema.staff)
-		.where(where)
-		.orderBy(orderBy)
-		.limit(pageSize)
-		.offset((page - 1) * pageSize);
-	const [{ total }] = await db.select({ total: count() }).from(schema.staff).where(where);
+
+	const [staff, [{ total }]] = await Promise.all([
+		db
+			.select()
+			.from(schema.staff)
+			.where(where)
+			.orderBy(orderBy)
+			.limit(pageSize)
+			.offset((page - 1) * pageSize),
+		db.select({ total: count() }).from(schema.staff).where(where)
+	]);
 
 	return {
 		staff,

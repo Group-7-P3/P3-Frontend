@@ -9,6 +9,7 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import { toast } from 'svelte-sonner';
 	import { features, type DataTableFeatures } from './data-table-features.js';
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
@@ -252,9 +253,14 @@
 												variant="ghost"
 												size="icon-xs"
 												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-												onclick={(e) => {
+												onclick={async (e) => {
 													e.stopPropagation();
-													navigator.clipboard.writeText(String(cell.getValue()));
+													try {
+														await navigator.clipboard.writeText(String(cell.getValue()));
+														toast.success('Successfully copied to clipboard.');
+													} catch {
+														toast.error('Failed to copy to clipboard! Check browser permissions.');
+													}
 												}}
 											>
 												<Copy class="h-3 w-3" />

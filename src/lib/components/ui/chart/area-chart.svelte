@@ -15,6 +15,7 @@
 		x?: Accessor<any>;
 		series?: SeriesData<any, Component<AreaProps>>[];
 		showTotal?: boolean;
+		seriesLayout?: 'overlap' | 'stack' | 'stackExpand' | 'stackDiverging';
 	}
 
 	let {
@@ -25,7 +26,8 @@
 		},
 		x = 'month',
 		series,
-		showTotal = false
+		showTotal = false,
+		seriesLayout = 'stack'
 	}: Props = $props();
 
 	const resolvedSeries = $derived(
@@ -45,6 +47,7 @@
 		legend
 		xScale={scaleUtc()}
 		series={resolvedSeries}
+		{seriesLayout}
 		props={{
 			area: {
 				curve: curveStepAfter,
