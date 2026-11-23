@@ -1,5 +1,9 @@
 {
+<<<<<<< Updated upstream
   "id": "3fa60974-7bf7-4999-81da-94cc2f209147",
+=======
+  "id": "3fd5c5c9-f337-4cff-9ab2-c21cbf129aca",
+>>>>>>> Stashed changes
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -47,6 +51,25 @@
           ]
         }
       },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.group": {
+      "name": "group",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -307,7 +330,21 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "user_managed_by_group_name_fk": {
+          "name": "user_managed_by_group_name_fk",
+          "tableFrom": "user",
+          "tableTo": "group",
+          "columnsFrom": [
+            "managed_by"
+          ],
+          "columnsTo": [
+            "name"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

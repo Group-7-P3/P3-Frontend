@@ -33,13 +33,18 @@ async function main() {
 		'🌱 Starting database seeding (Copenhagen timezone, strictly past year up to today)...'
 	);
 
-	// 1. Clear existing data (in reverse order of dependencies)
+	// 0. Clear existing data (in reverse order of dependencies)
 	console.log('🧹 Cleaning existing data...');
 	await db.delete(schema.activity);
 	await db.delete(schema.subscriptionToProduct);
 	await db.delete(schema.subscription);
 	await db.delete(schema.product);
 	await db.delete(schema.user);
+
+	// 1. Seed Groups
+	const groupNames = ['INNOVAID', 'Norway', 'Italy'];
+	const groups = groupNames.map((g) => ({ name: g }));
+	await db.insert(schema.group).values(groups).returning();
 
 	// 2. Seed Products
 	console.log('📦 Inserting dummy products...');

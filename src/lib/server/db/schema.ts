@@ -18,7 +18,10 @@ export const user = pgTable(
 	'user',
 	{
 		id: serial('id').primaryKey(),
-		managedBy: text('managed_by').notNull().default('INNOVAID'),
+		managedBy: text('managed_by')
+			.notNull()
+			.default('INNOVAID')
+			.references(() => group.name),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()
 	},
@@ -58,6 +61,10 @@ export const activity = pgTable(
 	},
 	(table) => [primaryKey({ columns: [table.activity, table.time] })]
 );
+
+export const group = pgTable('group', {
+	name: text('name').primaryKey()
+});
 
 export const subscriptionToProduct = pgTable(
 	'subscription_to_product',
