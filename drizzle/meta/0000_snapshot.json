@@ -1,5 +1,5 @@
 {
-  "id": "938ffea3-64e0-4fae-b2a6-2237be82498b",
+  "id": "3fa60974-7bf7-4999-81da-94cc2f209147",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -27,6 +27,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "managedBy": {
+          "name": "managedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INNOVAID'"
         }
       },
       "indexes": {},
@@ -102,6 +109,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "type": {
           "name": "type",
           "type": "subscription_type",
@@ -109,13 +122,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'home'"
-        },
-        "max_devices": {
-          "name": "max_devices",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 6
         },
         "created_at": {
           "name": "created_at",
@@ -136,13 +142,6 @@
           "type": "date",
           "primaryKey": false,
           "notNull": true
-        },
-        "auto_renew": {
-          "name": "auto_renew",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {
@@ -150,7 +149,7 @@
           "name": "subscription_user_id_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "customer_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -267,12 +266,6 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
-          "notNull": true
-        },
-        "customer_id": {
-          "name": "customer_id",
-          "type": "integer",
-          "primaryKey": false,
           "notNull": true
         },
         "managed_by": {
@@ -495,12 +488,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "impersonated_by": {
-          "name": "impersonated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -602,27 +589,8 @@
           "name": "role",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "default": "'moderator'"
-        },
-        "banned": {
-          "name": "banned",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "ban_reason": {
-          "name": "ban_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ban_expires": {
-          "name": "ban_expires",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'supporter'"
         },
         "group": {
           "name": "group",

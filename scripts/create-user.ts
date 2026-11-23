@@ -22,12 +22,12 @@ async function createUser() {
 
 	const email = args[0] || 'admin@local.test';
 	const name = args[1] || 'Admin User';
-	const role = (args[2] as 'owner' | 'admin' | 'moderator') || 'admin';
+	const role = (args[2] as 'owner' | 'admin' | 'supporter') || 'admin';
 	const group = args[3] || 'headquarters';
 	const password = args[4] || 'SecurePassword123!';
 
-	if (!['owner', 'admin', 'moderator'].includes(role)) {
-		console.error(`❌ Invalid role "${role}". Must be one of: owner, admin, moderator.`);
+	if (!['owner', 'admin', 'supporter'].includes(role)) {
+		console.error(`❌ Invalid role "${role}". Must be one of: owner, admin, supporter.`);
 		process.exit(1);
 	}
 
