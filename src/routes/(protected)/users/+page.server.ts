@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
-import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, getTableColumns, ilike, or, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -14,16 +14,31 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const sortParam = url.searchParams.get('sort');
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
-	const conditions = [];
 
+	const subscriptionCount = sql<number>`(
+		SELECT count(*)::int
+		FROM ${schema.subscription}
+		WHERE ${schema.subscription.userId} = ${schema.user.id}
+	)`;
+
+	const conditions = [];
 	if (staff.group !== 'INNOVAID') conditions.push(eq(schema.user.managedBy, staff.group));
+
 	const searchFilter = filter.trim();
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
 		conditions.push(
-			or(ilike(sql`${schema.user.id}::text`, pattern), ilike(schema.user.managedBy, pattern))
+			or(
+				ilike(sql`${schema.user.id}::text`, pattern),
+				ilike(schema.user.managedBy, pattern),
+				ilike(sql`${schema.user.createdAt}::text`, pattern),
+				ilike(sql`${schema.user.updatedAt}::text`, pattern),
+				ilike(sql`${subscriptionCount}::text`, pattern)
+			)
 		);
 	}
+
+	const where = conditions.length ? and(...conditions) : undefined;
 
 	const sortColumn =
 		(
@@ -31,22 +46,24 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				id: schema.user.id,
 				managedBy: schema.user.managedBy,
 				createdAt: schema.user.createdAt,
-				updatedAt: schema.user.updatedAt
+				updatedAt: schema.user.updatedAt,
+				subscriptions: subscriptionCount
 			} as const
-		)[sort as 'id' | 'managedBy' | 'createdAt' | 'updatedAt'] ?? schema.user.id;
-	const where = conditions.length ? and(...conditions) : undefined;
+		)[sort as 'id' | 'managedBy' | 'createdAt' | 'updatedAt' | 'subscriptions'] ?? schema.user.id;
+
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
-	const [users, [{ total }]] = await Promise.all([
-		db
-			.select()
-			.from(schema.user)
-			.where(where)
-			.orderBy(orderBy)
-			.limit(pageSize)
-			.offset((page - 1) * pageSize),
-		db.select({ total: count() }).from(schema.user).where(where)
-	]);
+	const users = await db
+		.select({
+			...getTableColumns(schema.user),
+			subscriptions: subscriptionCount
+		})
+		.from(schema.user)
+		.where(where)
+		.orderBy(orderBy)
+		.limit(pageSize)
+		.offset((page - 1) * pageSize);
+	const [{ total }] = await db.select({ total: count() }).from(schema.user).where(where);
 
 	return {
 		users,
