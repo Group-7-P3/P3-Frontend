@@ -21,7 +21,7 @@
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { tick } from 'svelte';
 	import DataTableButton from './data-table-button.svelte';
-	import { camelToTitleCase } from '#lib/utils.js';
+	import { camelToTitleCase, isTimestamp } from '#lib/utils.js';
 	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
 
@@ -120,7 +120,7 @@
 		// svelte-ignore state_referenced_locally
 		...columns.map((col) => {
 			const label = camelToTitleCase(col);
-			const isTimestamp = /At$|Date$|Time$/i.test(col);
+			const isTime = isTimestamp(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: col,
@@ -134,7 +134,7 @@
 						onclick
 					});
 				},
-				...(isTimestamp && {
+				...(isTime && {
 					cell: ({ getValue }) =>
 						renderComponent(DataTableDate, {
 							value: getValue()
@@ -256,7 +256,16 @@
 												onclick={async (e) => {
 													e.stopPropagation();
 													try {
-														await navigator.clipboard.writeText(String(cell.getValue()));
+														const value = String(cell.getValue());
+														const isTime = isTimestamp(cell.column.id);
+
+														await navigator.clipboard.writeText(
+															isTime
+																? new Intl.DateTimeFormat(undefined, {
+																		dateStyle: 'medium'
+																	}).format(new Date(value))
+																: value
+														);
 														toast.success('Successfully copied to clipboard.');
 													} catch {
 														toast.error('Failed to copy to clipboard! Check browser permissions.');
