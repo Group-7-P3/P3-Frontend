@@ -19,7 +19,6 @@
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
-	import { tick } from 'svelte';
 	import DataTableButton from './data-table-button.svelte';
 	import { camelToTitleCase } from '#lib/utils.js';
 	import DataTableOpenButton from './data-table-open-button.svelte';
@@ -79,9 +78,6 @@
 	});
 
 	async function updateQuery(updates: Record<string, string>) {
-		const refocusFilter = 'filter' in updates;
-		const selectionStart = filterInput?.selectionStart;
-		const selectionEnd = filterInput?.selectionEnd;
 		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
 		for (const [key, value] of Object.entries(updates)) {
 			if (value) params.set(key, value);
@@ -89,13 +85,7 @@
 			else params.delete(key);
 		}
 		const target = `${route}?${params}` as PaginatedRoute;
-		await goto(resolve(target));
-		if (!refocusFilter || !filterInput) return;
-		await tick();
-		filterInput.focus();
-		const start = Math.min(selectionStart ?? filterInput.value.length, filterInput.value.length);
-		const end = Math.min(selectionEnd ?? start, filterInput.value.length);
-		filterInput.setSelectionRange(start, end);
+		await goto(resolve(target), { reset: false });
 	}
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
