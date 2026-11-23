@@ -13,14 +13,14 @@
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
-	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'moderator' | undefined);
+	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'supporter' | undefined);
 	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
 
 	// Make open bindable
 	let { open = $bindable(false) }: { open: boolean } = $props();
 	let wasOpen = false;
 
-	// Store if staff should be admin, default is moderator
+	// Store if staff should be admin, default is supporter
 	let makeAdmin = $state(false);
 
 	// Keeps track of whether the form has been submitted and if the password has changed.
