@@ -4,7 +4,6 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from '../users/$types';
 import { stringCheck, stringCheckTrim } from '#lib/utils.ts';
 import { fail } from '@sveltejs/kit';
-
 import 'dotenv';
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -19,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
 	if (!staffUser) throw error(401, 'You must be signed in to view this page');
 
-	if (!staffUser.role || staffUser.role === 'moderator') {
+	if (!staffUser.role || staffUser.role === 'supporter') {
 		throw error(403, 'Only owners and admins can access the Staff page');
 	}
 
@@ -34,13 +33,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// Ensure INNOVAID admins don't see other INNOVAID admins.
 	if (staffUser.role === 'admin' && staffUser.group === 'INNOVAID') {
 		conditions.push(
-			inArray(schema.staff.role, ['moderator', 'admin']),
+			inArray(schema.staff.role, ['supporter', 'admin']),
 			or(ne(schema.staff.role, 'admin'), ne(schema.staff.group, 'INNOVAID'))
 		);
 	}
 
 	if (staffUser.group !== 'INNOVAID') {
-		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'moderator'));
+		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'supporter'));
 	}
 	const searchFilter = filter.trim();
 	if (searchFilter) {
@@ -116,7 +115,7 @@ if (!connectionString) {
 const client = postgres(connectionString);
 const dbd = drizzle(client);
 
-type Role = 'moderator' | 'admin';
+type Role = 'supporter' | 'admin';
 
 export const actions = {
 	createStaff: async ({ locals, request }) => {
@@ -138,11 +137,11 @@ export const actions = {
 		const name = stringCheckTrim(data.get('newStaffName'));
 		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
 		const email = emailRaw?.toLowerCase() ?? null;
-		const newStaffRole = data.get('newStaffRole') as Role | null;
+		const makeAdmin = data.get('makeAdmin');
 		let group = stringCheckTrim(data.get('newStaffGroup'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));
-		let role: Role = 'moderator';
+		let role: Role = 'supporter';
 
 		// Name checks
 		if (name === null) {
@@ -186,7 +185,7 @@ export const actions = {
 			errors.password = 'Password needs to fulfill 3 of the 4 rules';
 		}
 
-		if (locals.user.role === 'owner' && newStaffRole === 'admin') {
+		if (locals.user.role === 'owner' && makeAdmin === 'on') {
 			role = 'admin';
 		}
 
@@ -215,7 +214,7 @@ export const actions = {
 
 		return {
 			success: true,
-			message: `New staff member${name} created successfully.`
+			message: `User ${name} created successfully.`
 		};
 	}
 } satisfies Actions;

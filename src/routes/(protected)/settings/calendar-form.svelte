@@ -9,39 +9,22 @@
 
 	import { enhance, type SubmitFunction } from '$app/forms';
 
-	// Keeps track of whether the form has been submitted.
-	let calendarSubmitted = $state(false);
-
 	// Keeps track of the inputs in the form.
 	let newFirstDay = $state('');
 	let newDateFormat = $state('');
 
 	/**
-	 * Resets the calendar form.
-	 * Marks the input fields 'not touched'.
-	 */
-	function resetCalendarForm() {
-		calendarSubmitted = false;
-	}
-
-	/**
 	 * Runs when the calendar form is submitted.
 	 */
 	const handleCalendarSubmit: SubmitFunction = ({ cancel }) => {
-		calendarSubmitted = true;
-
 		if (!newFirstDay || !newDateFormat) {
 			cancel();
 			return;
 		}
 
 		// Actually apply the changes here
-
 		console.log('Selected first day:', newFirstDay);
-
 		console.log('Selected date format:', newDateFormat);
-
-		resetCalendarForm();
 	};
 </script>
 

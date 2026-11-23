@@ -109,7 +109,7 @@
 					</Tooltip.Root>
 				</Sidebar.MenuItem>
 
-				{#if $session.data?.user.role !== 'moderator'}
+				{#if $session.data?.user.role !== 'supporter'}
 					<!-- Staff Page Link -->
 					<Sidebar.MenuItem>
 						<Tooltip.Root>

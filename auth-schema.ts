@@ -12,7 +12,10 @@ export const staff = pgTable('staff', {
 		.defaultNow()
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
-	role: text('role', { enum: ['owner', 'admin', 'moderator'] }).default('moderator'),
+	role: text('role', { enum: ['owner', 'admin', 'supporter'] }).default('supporter'),
+	banned: boolean('banned').default(false),
+	banReason: text('ban_reason'),
+	banExpires: timestamp('ban_expires'),
 	group: text('group').notNull()
 });
 
