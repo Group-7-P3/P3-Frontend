@@ -1,7 +1,7 @@
 import { fail, type Actions } from '@sveltejs/kit';
 import { auth } from '#lib/server/auth.ts';
 
-import { isValidTimeZone } from '#lib/utils/timezone.ts';
+import { isValidTimeZone } from '#lib/utils/timezones.ts';
 
 export const actions: Actions = {
     verifyPassword: async ({ request }) => {

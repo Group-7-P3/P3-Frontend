@@ -10,7 +10,7 @@
 	import PopoverRangeCalendar from '#lib/components/ui/popover-range-calendar.svelte';
 	import { Button } from '#lib/components/ui/button/index.ts';
 	import type { DateRange } from 'bits-ui';
-	import { today, getLocalTimeZone, CalendarDate } from '@internationalized/date';
+	import { today, CalendarDate } from '@internationalized/date';
 	import type { PageData } from './$types';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import { snakeToTitleCase } from '#lib/utils.ts';
@@ -18,8 +18,9 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let start = $state(today(getLocalTimeZone()).set({ month: 1, day: 1 }));
-	let end = $state(today(getLocalTimeZone()));
+	let todayInZone = $derived(today(data.timeZone));
+	let start = $state(today(data.timeZone).set({ month: 1, day: 1 }));
+	let end = $state(today(data.timeZone));
 	let dateRange: DateRange | undefined = $derived({ start, end });
 	let rangeType: 'week' | 'month' | 'year' | 'ytd' | 'all-time' = $state('ytd');
 
@@ -226,7 +227,7 @@
 
 	const isNextDateInFuture = $derived.by(() => {
 		if (!end) return true;
-		const todayDate = today(getLocalTimeZone());
+		const todayDate = todayInZone;
 		switch (rangeType) {
 			case 'week':
 				return end.add({ weeks: 1 }).compare(todayDate) > 0;
@@ -345,7 +346,7 @@
 			variant={rangeType === 'week' ? 'default' : 'outline'}
 			onclick={() => {
 				rangeType = 'week';
-				setDate(today(getLocalTimeZone()).subtract({ weeks: 1 }), today(getLocalTimeZone()));
+				setDate(todayInZone.subtract({ weeks: 1 }), todayInZone);
 			}}
 		>
 			Week
@@ -354,7 +355,7 @@
 			variant={rangeType === 'month' ? 'default' : 'outline'}
 			onclick={() => {
 				rangeType = 'month';
-				setDate(today(getLocalTimeZone()).subtract({ months: 1 }), today(getLocalTimeZone()));
+				setDate(todayInZone.subtract({ months: 1 }), todayInZone);
 			}}
 		>
 			Month
@@ -363,7 +364,7 @@
 			variant={rangeType === 'year' ? 'default' : 'outline'}
 			onclick={() => {
 				rangeType = 'year';
-				setDate(today(getLocalTimeZone()).subtract({ years: 1 }), today(getLocalTimeZone()));
+				setDate(todayInZone.subtract({ years: 1 }), todayInZone);
 			}}
 		>
 			Year
@@ -372,7 +373,7 @@
 			variant={rangeType === 'ytd' ? 'default' : 'outline'}
 			onclick={() => {
 				rangeType = 'ytd';
-				setDate(today(getLocalTimeZone()).set({ month: 1, day: 1 }), today(getLocalTimeZone()));
+				setDate(todayInZone.set({ month: 1, day: 1 }), todayInZone);
 			}}
 		>
 			YTD
@@ -381,7 +382,7 @@
 			variant={rangeType === 'all-time' ? 'default' : 'outline'}
 			onclick={() => {
 				rangeType = 'all-time';
-				setDate(new CalendarDate(2026, 9, 2), today(getLocalTimeZone()));
+				setDate(new CalendarDate(2026, 9, 2), todayInZone);
 			}}
 		>
 			All Time

@@ -1,11 +1,11 @@
 import { db } from '#lib/server/db/index.ts';
 import * as schema from '$lib/server/db/schema';
 import { and, between, count, gte, lte, sum } from 'drizzle-orm';
-import { today, getLocalTimeZone, parseDate } from '@internationalized/date';
+import { today, parseDate } from '@internationalized/date';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ url }) => {
-	const timeZone = getLocalTimeZone();
+export const load: PageServerLoad = async ({ url, parent }) => {
+	const { timeZone } = await parent();
 	const currentDate = today(timeZone);
 
 	let startDateObj = currentDate.set({ day: 1, month: 1 });
@@ -76,5 +76,5 @@ export const load: PageServerLoad = async ({ url }) => {
 		.where(lte(schema.product.createdAt, endDate));
 	//#endregion
 
-	return { activities, totalActivities, subscriptions, users, products };
+	return { activities, totalActivities, subscriptions, users, products, timeZone };
 };
