@@ -157,13 +157,20 @@
 	{/if}
 {/snippet}
 
+<!-- Staff pop up dialog form-->
 <Dialog bind:open>
+	<!-- Define pop up behavior-->
 	<DialogContent
 		class="gap-2 sm:max-w-xl"
+		// Make it ignore clicks outside
 		interactOutsideBehavior="ignore"
+		// If pressing escape, don't close the windod but run this function instead
+		// It opens a confirmation dialog
 		onEscapeKeydown={handleWindowKeyDown}
+		// Remove their ShadCN 's own' closure button
 		showCloseButton={false}
 	>
+		<!-- Closure X in corner -->
 		<Button
 			variant="ghost"
 			class="absolute top-4 right-4"
@@ -175,6 +182,7 @@
 			<XIcon />
 			<span class="sr-only">Close</span>
 		</Button>
+
 		<DialogHeader>
 			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
@@ -188,9 +196,10 @@
 							<Field.Set>
 								<div class="flex gap-6">
 									<Field.Group class="basis-2/3">
-										<!-- Pop up box -->
+										<!-- Confirm closure pop up box -->
 										<AlertDialog.Root bind:open={dialogOpen}>
 											<AlertDialog.Content
+												// Remove default auto focus and make it focus the cancel button, if it exists.
 												onOpenAutoFocus={(e) => {
 													e.preventDefault();
 													cancelButton?.focus();
@@ -220,6 +229,7 @@
 												</AlertDialog.Footer>
 											</AlertDialog.Content>
 										</AlertDialog.Root>
+
 										<!-- Name field -->
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffName">Name</Field.Label>

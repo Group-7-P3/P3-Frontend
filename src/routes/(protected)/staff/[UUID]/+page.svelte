@@ -44,7 +44,7 @@ Group
 
 -->
 <div class="w-full space-y-6 text-left">
-	<!--Back to Users link-->
+	<!-- Back to staff page link -->
 	<Button variant="link">
 		<a href={resolve('/(protected)/staff')} class="text-sm text-muted-foreground hover:underline">
 			&larr; Back to Staff

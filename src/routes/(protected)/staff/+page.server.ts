@@ -31,12 +31,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
 	const conditions = [];
 
+	// Ensure INNOVAID admins don't see other INNOVAID admins.
 	if (staffUser.role === 'admin' && staffUser.group === 'INNOVAID') {
 		conditions.push(
 			inArray(schema.staff.role, ['moderator', 'admin']),
 			or(ne(schema.staff.role, 'admin'), ne(schema.staff.group, 'INNOVAID'))
 		);
 	}
+
 	if (staffUser.group !== 'INNOVAID') {
 		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'moderator'));
 	}
