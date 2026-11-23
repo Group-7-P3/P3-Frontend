@@ -40,8 +40,10 @@ async function main() {
 	await db.delete(schema.subscription);
 	await db.delete(schema.product);
 	await db.delete(schema.user);
+	await db.delete(schema.group);
 
 	// 1. Seed Groups
+	console.log('📦 Inserting dummy groups...');
 	const groupNames = ['INNOVAID', 'Norway', 'Italy'];
 	const groups = groupNames.map((g) => ({ name: g }));
 	await db.insert(schema.group).values(groups).returning();

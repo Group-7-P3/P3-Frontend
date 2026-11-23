@@ -1,9 +1,5 @@
 {
-<<<<<<< Updated upstream
-  "id": "3fa60974-7bf7-4999-81da-94cc2f209147",
-=======
   "id": "3fd5c5c9-f337-4cff-9ab2-c21cbf129aca",
->>>>>>> Stashed changes
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
