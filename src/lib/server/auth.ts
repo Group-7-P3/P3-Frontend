@@ -6,14 +6,15 @@ import { getRequestEvent } from '$app/server';
 import { db } from '#lib/server/db/index.ts';
 import { sendMail } from './email/sender.ts';
 import { createAuthMiddleware, APIError } from 'better-auth/api';
-
 import { and, eq } from 'drizzle-orm';
 import { staff } from '#lib/server/db/auth.schema.ts';
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
 	secret: BETTER_AUTH_SECRET,
-	database: drizzleAdapter(db, { provider: 'pg' }),
+	database: drizzleAdapter(db, {
+		provider: 'pg'
+	}),
 	emailAndPassword: { enabled: true },
 	plugins: [
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
