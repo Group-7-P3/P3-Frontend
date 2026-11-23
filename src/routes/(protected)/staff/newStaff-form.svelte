@@ -12,6 +12,8 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { toast } from 'svelte-sonner';
+	import GroupCombobox from './group-combobox.svelte';
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
@@ -127,6 +129,7 @@
 			resetStaffForm();
 			open = !open;
 			successMessage = (result.data?.message as string) ?? 'User created successfully.';
+			toast.success(successMessage);
 			errors = {};
 			await refreshAll();
 		}
@@ -167,7 +170,7 @@
 		// If pressing escape, don't close the windod but run this function instead
 		// It opens a confirmation dialog
 		onEscapeKeydown={handleWindowKeyDown}
-		// Remove their ShadCN 's own' closure button
+		// Remove  ShadCN's own closure button
 		showCloseButton={false}
 	>
 		<!-- Closure X in corner -->
@@ -315,6 +318,7 @@
 													placeholder="I.e. INNOVAID"
 												/>
 											</Field.Field>
+
 											<!-- Reports any errors back to the user -->
 											{#if errors.group}
 												<Field.Error>{errors.group}</Field.Error>
