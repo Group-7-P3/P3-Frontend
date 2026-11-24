@@ -28,24 +28,26 @@
 
 	const formattedDate = $derived(
 		isValid
-			? new Intl.DateTimeFormat(undefined, {
+			? new Intl.DateTimeFormat(page.data.dateFormat, {
 					timeZone: page.data.timeZone,
-					dateStyle: 'medium'
+					year: 'numeric',
+					month: page.data.dateFormat === 'en-CA' ? 'numeric' : 'short',
+					day: 'numeric',
+					hour12: false,
 				}).format(date)
 			: String(value)
 	);
 
 	const fullTimestamp = $derived(
 		isValid
-			? new Intl.DateTimeFormat(undefined, {
+			? new Intl.DateTimeFormat(page.data.dateFormat, {
 					timeZone: page.data.timeZone,
 					year: 'numeric',
-					month: 'short',
+					month: page.data.dateFormat === 'en-CA' ? 'numeric' : 'short',
 					day: 'numeric',
 					hour: 'numeric',
 					minute: 'numeric',
-					second: 'numeric',
-					timeZoneName: 'short'
+					hour12: false,
 				}).format(date)
 			: String(value)
 	);

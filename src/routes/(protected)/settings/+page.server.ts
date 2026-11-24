@@ -22,6 +22,7 @@ export const actions: Actions = {
         const data = await request.formData();
         const zone = String(data.get('timezone') ?? '');
         const day = String(data.get('firstday') ?? '');
+        const format = String(data.get('dateformat') ?? '');
 
         if (!isValidTimeZone(zone) || !(day === '0' || day === '1')) {
             return fail(400, { formInvalid: true});
@@ -29,6 +30,7 @@ export const actions: Actions = {
 
         cookies.set('timezone', zone, {path: '/', maxAge: 60*60*24*365}); //lasts 1 year
         cookies.set('firstday', day, {path: '/', maxAge: 60*60*24*365}); //lasts 1 year
+        cookies.set('dateformat', format, {path: '/', maxAge: 60*60*24*365}); //lasts 1 year
         return { success: true};
     }
 };
