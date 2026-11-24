@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { page } from '$app/state';
 
 	interface Props {
 		value: unknown;
@@ -15,9 +16,11 @@
 
 	const date = $derived(
 		new Date(
-			typeof dateInput === 'number' && dateInput.toString().length === 10
-				? dateInput * 1000
-				: dateInput
+			dateInput instanceof Date
+				? dateInput
+				: typeof dateInput === 'number' && dateInput.toString().length === 10
+					? dateInput * 1000
+					: dateInput
 		)
 	);
 
@@ -25,13 +28,17 @@
 
 	const formattedDate = $derived(
 		isValid
-			? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
+			? new Intl.DateTimeFormat(undefined, {
+					timeZone: page.data.timeZone,
+					dateStyle: 'medium'
+				}).format(date)
 			: String(value)
 	);
 
 	const fullTimestamp = $derived(
 		isValid
 			? new Intl.DateTimeFormat(undefined, {
+					timeZone: page.data.timeZone,
 					year: 'numeric',
 					month: 'short',
 					day: 'numeric',
