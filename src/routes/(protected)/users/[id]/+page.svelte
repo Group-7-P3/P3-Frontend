@@ -79,7 +79,7 @@
 <svelte:head>
 	<title>User {data.user.id}</title>
 </svelte:head>
-<!---->
+
 <div class="w-full space-y-6 text-left">
 	<!-- Back to Users link -->
 	<Button variant="link" class="px-0">

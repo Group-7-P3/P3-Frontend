@@ -33,7 +33,8 @@ export const session = pgTable(
 		userAgent: text('user_agent'),
 		userId: text('user_id')
 			.notNull()
-			.references(() => staff.id, { onDelete: 'cascade' })
+			.references(() => staff.id, { onDelete: 'cascade' }),
+		impersonatedBy: text('impersonated_by')
 	},
 	(table) => [index('session_userId_idx').on(table.userId)]
 );

@@ -18,12 +18,9 @@ export const user = pgTable(
 	'user',
 	{
 		id: serial('id').primaryKey(),
-		managedBy: text('managed_by')
-			.notNull()
-			.default('INNOVAID')
-			.references(() => group.name),
-		createdAt: timestamp('created_at').notNull().defaultNow(),
-		updatedAt: timestamp('updated_at').notNull().defaultNow()
+		managedBy: text('managed_by').notNull().default('INNOVAID').references(() => group.name),
+		createdAt: timestamp('created_at', {withTimezone: true}).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', {withTimezone: true}).notNull().defaultNow()
 	},
 	(table) => [index('user_managed_by_idx').on(table.managedBy)]
 );
@@ -37,8 +34,8 @@ export const subscription = pgTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		customerId: integer('customer_id').notNull(),
 		type: subscriptionType('type').notNull().default('home'),
-		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+		createdAt: timestamp('created_at', {withTimezone: true}).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', {withTimezone: true}).notNull().defaultNow(),
 		expiresAt: date('expires_at').notNull()
 	},
 	(table) => [index('subscription_user_id_idx').on(table.customerId)]
@@ -47,8 +44,8 @@ export const subscription = pgTable(
 export const product = pgTable('product', {
 	serialNumber: serial('serial_number').primaryKey(),
 	status: productStatus('status').notNull().default('inactive'),
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', {withTimezone: true}).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', {withTimezone: true}).notNull().defaultNow()
 });
 
 export const activity = pgTable(
