@@ -18,12 +18,6 @@
 	let { data, form }: { data: PageData; form: { error?: string; success?: boolean } | null } =
 		$props();
 
-	const statusOptionsDistributor = [
-		{ value: 'INNOVAID', label: 'INNOVAID' },
-		{ value: 'Italy', label: 'Italy' },
-		{ value: 'Norway', label: 'Norway' }
-	];
-
 	// Local form state initialized from data so editing doesn't mutate the left display card prematurely
 	let editUserId = $state('');
 	let editDistributor = $derived(data.user.managedBy ?? '');
@@ -124,6 +118,15 @@
 						<DataTableDate value={data.user.createdAt} />
 					</dd>
 				</div>
+
+				<Separator />
+
+				<div class="flex items-center justify-between">
+					<dt class="text-sm font-normal text-muted-foreground">Updated at:</dt>
+					<dd class="text-sm font-medium text-foreground">
+						<DataTableDate value={data.user.updatedAt} />
+					</dd>
+				</div>
 			</Card.Content>
 		</Card.Root>
 
@@ -178,9 +181,9 @@
 										<Select.Value placeholder="Select distributor" />
 									</Select.Trigger>
 									<Select.Content>
-										{#each statusOptionsDistributor as option (option.value)}
-											<Select.Item value={option.value} label={option.label}>
-												{option.label}
+										{#each data.distributors as distributors (distributors)}
+											<Select.Item value={distributors} label={distributors}>
+												{distributors}
 											</Select.Item>
 										{/each}
 									</Select.Content>

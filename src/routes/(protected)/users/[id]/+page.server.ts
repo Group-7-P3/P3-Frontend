@@ -1,8 +1,9 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
+import * as schema from '$lib/server/db/schema';
 import { user as userTable, subscription } from '$lib/server/db/schema';
 import { error, fail, redirect, type Actions } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const userId = Number(params.id);
@@ -19,7 +20,23 @@ export const load: PageServerLoad = async ({ params }) => {
 	// Fetch all subscriptions linked to the user
 	const subscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
 
-	return { user, subscriptions };
+	//Query all unique `group` names from the 'staff' table
+	const staffGroups = await db
+		.selectDistinct({ value: schema.staff.group })
+		.from(schema.staff)
+		.orderBy(asc(schema.staff.group));
+
+	//Map the `{ value: string }` query rows into a flat `string[]` array
+	// and filter out any empty values before passing to the Svelte page.
+	const distributors = staffGroups
+		.map((row) => row.value)
+		.filter((val): val is string => Boolean(val));
+
+	return {
+		user,
+		subscriptions,
+		distributors
+	};
 };
 
 export const actions: Actions = {
