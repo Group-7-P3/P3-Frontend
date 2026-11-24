@@ -4,11 +4,14 @@
 	import * as Command from '$lib/components/ui/command/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import type { PageData } from './$types';
 
-	const frameworks = ['Next.js', 'SvelteKit', 'Nuxt.js', 'Remix', 'Astro'];
+	let { data, value = $bindable('') }: { data: PageData; value: string } = $props();
+
+	const groups = $derived(data.groups);
+	const groupNames: string[] = $derived(groups.map((group) => group.name));
 
 	let open = $state(false);
-	let value = $state('');
 	let triggerRef = $state<HTMLButtonElement>(null!);
 
 	// We want to refocus the trigger button when the user selects
@@ -28,31 +31,31 @@
 			<Button
 				{...props}
 				variant="outline"
-				class="w-[200px] justify-between font-normal"
+				class="w-full justify-between font-normal"
 				role="combobox"
 				aria-expanded={open}
 			>
-				{value || 'Select a framework'}
+				{value || 'Select a dristributor group'}
 				<ChevronDownIcon class="text-muted-foreground" />
 			</Button>
 		{/snippet}
 	</Popover.Trigger>
-	<Popover.Content class="w-[200px] p-0">
+	<Popover.Content class="w-(--bits-popover-anchor-width) p-0">
 		<Command.Root>
-			<Command.Input placeholder="Search framework..." />
+			<Command.Input placeholder="Search distributors..." />
 			<Command.List>
-				<Command.Empty>No items found.</Command.Empty>
+				<Command.Empty>No groups found.</Command.Empty>
 				<Command.Group>
-					{#each frameworks as framework (framework)}
+					{#each groupNames as groups (groups)}
 						<Command.Item
-							value={framework}
-							data-checked={value === framework}
+							value={groups}
+							data-checked={value === groups}
 							onSelect={() => {
-								value = framework;
+								value = groups;
 								closeAndFocusTrigger();
 							}}
 						>
-							{framework}
+							{groups}
 						</Command.Item>
 					{/each}
 				</Command.Group>

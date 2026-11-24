@@ -14,33 +14,42 @@
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
 	import GroupCombobox from './group-combobox.svelte';
+	import type { PageData } from './$types';
+
+	let { data, open = $bindable(false) }: { data: PageData; open: boolean } = $props();
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
 	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'moderator' | undefined);
 	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
 
-	// Make open bindable
-	let { open = $bindable(false) }: { open: boolean } = $props();
+	// Variables binded to form openings
+	// Open is binded to main form
+
+	// Dialog open is binded to "are you sure?" dialog box.
 	let dialogOpen = $state(false);
+	// Was open is used to determine if the form needs to be reset.
 	let wasOpen = false;
 
 	// Store if staff should be admin, default is moderator
-	let newStaffRole = $state('moderator');
+	let newStaffRole = $state('supporter');
 
 	// Keeps track of whether the form has been submitted and if the password has changed.
 	let formSubmitted = $state(false);
 
 	// Keeps track of when form inputs have been touched.
+	let newStaffNameTouched = $state(false);
+	let newStaffEmailTouched = $state(false);
 	let newStaffPasswordTouched = $state(false);
 	let newRepeatStaffPasswordTouched = $state(false);
+	let newStaffDistibutorGroupTouched = $state(false);
 
 	// Keeps track of the inputs in the form.
 	let newStaffName = $state('');
 	let newStaffEmail = $state('');
 	let newStaffPassword = $state('');
 	let newRepeatStaffPassword = $state('');
-	let newStaffGroup = $state('');
+	let newStaffDistributor = $state('');
 
 	// Keeps track of whether the two main requirements have been met ('8 characters' and 'at least 3 of the following:').
 	const lengthOk = $derived(newStaffPassword.length >= 8);
@@ -86,18 +95,23 @@
 	//Resets the staff creation form.
 	//Empties the input fields, clears errors and success messages and marks the password fields as untouched.
 	function resetStaffForm() {
+		// Reset all inputs
 		newStaffName = '';
 		newStaffEmail = '';
 		newStaffPassword = '';
 		newRepeatStaffPassword = '';
 		newStaffRole = 'supporter';
-		newStaffGroup = '';
+		newStaffDistributor = '';
 		errors = {};
 		successMessage = '';
 		//group = '';
 
+		// Reset all touched inputs
+		newStaffNameTouched = false;
+		newStaffEmailTouched = false;
 		newStaffPasswordTouched = false;
 		newRepeatStaffPasswordTouched = false;
+		newStaffDistibutorGroupTouched = false;
 	}
 
 	// Form submission handler for creating a new staff member
@@ -135,9 +149,39 @@
 		}
 	}
 
-	function handleWindowKeyDown(event: KeyboardEvent) {
-		event.preventDefault();
-		dialogOpen = true;
+	function formTouched() {
+		if (
+			newStaffNameTouched === true ||
+			newStaffEmailTouched === true ||
+			newStaffPasswordTouched === true ||
+			newRepeatStaffPasswordTouched === true ||
+			newStaffDistibutorGroupTouched === true
+		) {
+			console.log(newStaffDistributor);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// Defines the cancelButton element, so it can be autofocused.
+	let cancelButton = $state<HTMLButtonElement | null>(null);
+
+	// Omit "are you sure?" dialog box, if form is not touched, and the escape key is pressed.
+	function handleCloseDialogEscape(event: KeyboardEvent) {
+		if (formTouched()) {
+			event.preventDefault();
+			dialogOpen = true;
+		}
+	}
+
+	// Omit "are you sure?" dialog box, if form is not touched, and form is closed using close button.
+	function handleCloseDialogClick() {
+		if (formTouched()) {
+			dialogOpen = true;
+		} else {
+			open = false;
+		}
 	}
 
 	// Resets the form when the dialog is closed.
@@ -147,7 +191,6 @@
 		}
 		wasOpen = open;
 	});
-	let cancelButton = $state<HTMLButtonElement | null>(null);
 </script>
 
 <!-- Snippet for the checkmark/x bullets on the requirement list -->
@@ -167,9 +210,9 @@
 		class="gap-2 sm:max-w-xl"
 		// Make it ignore clicks outside
 		interactOutsideBehavior="ignore"
-		// If pressing escape, don't close the windod but run this function instead
+		// If pressing escape, don't close the window but run this function instead
 		// It opens a confirmation dialog
-		onEscapeKeydown={handleWindowKeyDown}
+		onEscapeKeydown={handleCloseDialogEscape}
 		// Remove  ShadCN's own closure button
 		showCloseButton={false}
 	>
@@ -179,7 +222,7 @@
 			class="absolute top-4 right-4"
 			size="icon-sm"
 			onclick={() => {
-				dialogOpen = true;
+				handleCloseDialogClick();
 			}}
 		>
 			<XIcon />
@@ -242,6 +285,7 @@
 												bind:value={newStaffName}
 												type="text"
 												autocomplete="off"
+												oninput={() => (newStaffNameTouched = true)}
 												placeholder="e.g. John Smith"
 											/>
 											<!-- Error line below, fills in with error object from server, if any errors are present-->
@@ -257,6 +301,7 @@
 												name="newStaffEmail"
 												bind:value={newStaffEmail}
 												type="email"
+												oninput={() => (newStaffEmailTouched = true)}
 												autocomplete="off"
 												placeholder="example@mail.xyz"
 											/>
@@ -273,8 +318,8 @@
 												bind:value={newStaffPassword}
 												type="password"
 												autocomplete="off"
-												onblur={() => (newStaffPasswordTouched = true)}
-												// Set newStaffPasswordTouched to true when the user leaves the input field.
+												oninput={() => (newStaffPasswordTouched = true)}
+												// Set newStaffPasswordTouched to true when the user types in the field.
 												aria-invalid={newStaffPasswordError}
 												placeholder="New password"
 											/>
@@ -295,8 +340,8 @@
 												type="password"
 												autocomplete="off"
 												placeholder="Match new password"
-												onblur={() => (newRepeatStaffPasswordTouched = true)}
-												// Set newRepeatStaffPasswordTouched to true when the user leaves the input field.
+												oninput={() => (newRepeatStaffPasswordTouched = true)}
+												// Set newRepeatStaffPasswordTouched to true when the user types in the field.
 												aria-invalid={repeatStaffPasswordError}
 											/>
 											{#if repeatStaffPasswordError}
@@ -307,18 +352,22 @@
 										</Field.Field>
 										<!-- INNOVAID only, input group for new staff -->
 										{#if group === 'INNOVAID'}
+											<GroupCombobox {data} bind:value={newStaffDistributor} />
+											<input type="hidden" name="newStaffDistributor" value={newStaffDistributor} />
+											<!--
 											<Field.Field>
-												<Field.Label for="newStaffGroup">Distributor group</Field.Label>
+												<Field.Label for="newStaffDistributor">Distributor group</Field.Label>
 												<Input
-													id="newStaffGroup"
-													name="newStaffGroup"
-													bind:value={newStaffGroup}
+													id="newStaffDistributor"
+													name="newStaffDistributor"
+													bind:value={newStaffDistributor}
 													type="text"
 													autocomplete="off"
+													oninput={() => (newStaffDristibutorGroupTouched = true)}
 													placeholder="I.e. INNOVAID"
 												/>
 											</Field.Field>
-
+										-->
 											<!-- Reports any errors back to the user -->
 											{#if errors.group}
 												<Field.Error>{errors.group}</Field.Error>
@@ -334,9 +383,9 @@
 													class="flex flex-col gap-2"
 												>
 													<Field.Field orientation="horizontal">
-														<RadioGroup.Item value="moderator" id="newStaffRoleModerator" />
-														<Field.Label for="newStaffRoleModerator" class="font-normal"
-															>Moderator</Field.Label
+														<RadioGroup.Item value="supporter" id="newStaffRoleSupporter" />
+														<Field.Label for="newStaffRoleSupporter" class="font-normal"
+															>Supporter</Field.Label
 														>
 													</Field.Field>
 													<Field.Field orientation="horizontal">

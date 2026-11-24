@@ -84,6 +84,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		db.select({ total: count() }).from(schema.staff).where(where)
 	]);
 
+	const groups = await db.select().from(schema.group);
+
 	return {
 		staff,
 		total,
@@ -91,7 +93,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		pageSize,
 		filter,
 		sort,
-		direction
+		direction,
+		groups
 	};
 };
 
@@ -139,10 +142,11 @@ export const actions = {
 		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
 		const email = emailRaw?.toLowerCase() ?? null;
 		const newStaffRole = data.get('newStaffRole') as Role | null;
-		let group = stringCheckTrim(data.get('newStaffGroup'));
+		let group = stringCheckTrim(data.get('newStaffDistributor'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));
 		let role: Role = 'supporter';
+		console.log(group);
 
 		// Name checks
 		if (name === null) {

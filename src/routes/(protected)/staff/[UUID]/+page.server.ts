@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!staffUser) throw error(401, 'You must be signed in to view this page');
 
 	// Ensure only authorised users can access this page, through a blacklist.
-	if (!staffUser.role || staffUser.role === 'moderator') {
+	if (!staffUser.role || staffUser.role === 'supporter') {
 		throw error(403, 'Only owners and admins can access the Staff page');
 	}
 

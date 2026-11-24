@@ -40,4 +40,4 @@
 	}}
 />
 
-<NewStaffFormDialog bind:open />
+<NewStaffFormDialog {data} bind:open />
