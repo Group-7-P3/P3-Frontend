@@ -1,7 +1,7 @@
 import { db } from '#lib/server/db/index.ts';
 import * as schema from '$lib/server/db/schema';
 import { and, between, count, eq, exists, gte, lte, sql, sum } from 'drizzle-orm';
-import { today, getLocalTimeZone, parseDate } from '@internationalized/date';
+import { today, parseDate } from '@internationalized/date';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -74,13 +74,13 @@ function groupScope(group: string) {
 	};
 }
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	const staff = locals.user;
 	if (!staff) throw error(401, 'You must be signed in to view the dashboard');
 
 	const scope = groupScope(staff.group);
 
-	const timeZone = getLocalTimeZone();
+	const { timeZone } = await parent();
 	const currentDate = today(timeZone);
 
 	let startDateObj = currentDate.set({ day: 1, month: 1 });
@@ -171,5 +171,5 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		products: productStats
 	};
 
-	return { activities, subscriptions, users, products, stats };
+	return { activities, subscriptions, users, products, stats, timeZone };
 };
