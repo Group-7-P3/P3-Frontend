@@ -9,10 +9,12 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { resolve } from '$app/paths';
 	import { wordsToTitleCase } from '$lib/utils';
-	import { ExternalLink } from '@lucide/svelte';
+	import { ExternalLink, Copy } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { toast } from 'svelte-sonner';
+	import DataTableDate from '$lib/components/ui/data-table/data-table-date.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let product = $derived(data.product);
@@ -60,7 +62,23 @@
 				<div class="flex items-center justify-between border-b py-2 last:border-0">
 					<!-- Serial Number -->
 					<dt class="text-sm font-normal text-muted-foreground">Serial Number</dt>
-					<dd class="text-sm font-medium text-foreground">
+					<dd class="group flex items-center gap-1 text-sm font-medium text-foreground">
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+							onclick={async (e) => {
+								e.stopPropagation();
+								try {
+									await navigator.clipboard.writeText(String(product.serialNumber));
+									toast.success('Successfully copied to clipboard.');
+								} catch {
+									toast.error('Failed to copy to clipboard! Check browser permissions.');
+								}
+							}}
+						>
+							<Copy class="h-3 w-3" />
+						</Button>
 						{product.serialNumber}
 					</dd>
 				</div>
@@ -89,7 +107,7 @@
 				<div class="flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">Created At</dt>
 					<dd class="text-sm font-medium text-foreground">
-						{product.createdAt}
+						<DataTableDate value={product.createdAt} />
 					</dd>
 				</div>
 
@@ -97,7 +115,7 @@
 				<div class="flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">Updated At</dt>
 					<dd class="text-sm font-medium text-foreground">
-						{product.updatedAt}
+						<DataTableDate value={product.updatedAt} />
 					</dd>
 				</div>
 
@@ -229,7 +247,23 @@
 								<!-- License Key -->
 								<div class="flex items-center justify-between border-b py-2 last:border-0">
 									<dt class="text-sm font-normal text-muted-foreground">License Key</dt>
-									<dd class="font-mono text-sm font-medium text-foreground">
+									<dd class="group flex items-center gap-1 text-sm font-medium text-foreground">
+										<Button
+											variant="ghost"
+											size="icon-xs"
+											class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+											onclick={async (e) => {
+												e.stopPropagation();
+												try {
+													await navigator.clipboard.writeText(String(sub.licenseKey));
+													toast.success('Successfully copied to clipboard.');
+												} catch {
+													toast.error('Failed to copy to clipboard! Check browser permissions.');
+												}
+											}}
+										>
+											<Copy class="h-3 w-3" />
+										</Button>
 										{sub.licenseKey}
 										<Button
 											variant="outline"
