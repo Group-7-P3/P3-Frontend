@@ -219,7 +219,7 @@ export const actions = {
 
 		return {
 			success: true,
-			message: `New staff member${name} created successfully.`
+			message: `New staff member ${name} created successfully.`
 		};
 	}
 } satisfies Actions;
