@@ -21,7 +21,7 @@ async function reset() {
 		await sql`CREATE SCHEMA public;`;
 	} else {
 		console.log('🗑️ Resetting app data while preserving staff...');
-		await sql`TRUNCATE TABLE "subscription_to_product", "subscription", "user", "product" RESTART IDENTITY CASCADE;`;
+		await sql`TRUNCATE TABLE "subscription_to_product", "activity", "subscription", "user", "product" RESTART IDENTITY CASCADE;`;
 	}
 	console.log('✅ Database reset successfully!');
 	await sql.end();

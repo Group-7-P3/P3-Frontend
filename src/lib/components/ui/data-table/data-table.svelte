@@ -23,6 +23,18 @@
 	import { camelToTitleCase, isTimestamp } from '#lib/utils.js';
 	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
+	import { page as thisPage } from '$app/state';
+
+	type PaginatedBase =
+		| '/(protected)/[[demo=demo]]/users'
+		| '/(protected)/[[demo=demo]]/products'
+		| '/(protected)/[[demo=demo]]/subscriptions'
+		| '/(protected)/[[demo=demo]]/staff';
+	type PaginatedRoute =
+		| `/(protected)/[[demo=demo]]/users?${string}`
+		| `/(protected)/[[demo=demo]]/products?${string}`
+		| `/(protected)/[[demo=demo]]/subscriptions?${string}`
+		| `/(protected)/[[demo=demo]]/staff?${string}`;
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
@@ -36,13 +48,8 @@
 		filter: string;
 		sort: string;
 		direction: 'asc' | 'desc';
-		route: string;
+		route: PaginatedBase;
 	};
-	type PaginatedRoute =
-		| `/(protected)/users?${string}`
-		| `/(protected)/products?${string}`
-		| `/(protected)/subscriptions?${string}`
-		| `/(protected)/staff?${string}`;
 
 	let {
 		data,
@@ -85,7 +92,7 @@
 			else params.delete(key);
 		}
 		const target = `${route}?${params}` as PaginatedRoute;
-		await goto(resolve(target), { reset: false });
+		await goto(resolve(target, { demo: thisPage.data.demo }), { reset: false });
 	}
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();

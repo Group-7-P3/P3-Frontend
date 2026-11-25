@@ -3,15 +3,22 @@ import { building } from '$app/env';
 import { auth } from '#lib/server/auth.ts';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { redirect } from '@sveltejs/kit';
+import { db, demoDb } from './lib/server/db';
 
 const PUBLIC_ROUTES = ['/login'];
+
+const matchesRoute = (path: string, route: string) =>
+	path === route || path.startsWith(`${route}/`);
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname.replace(/\/$/, '') || '/';
 
-	const isPublicRoute =
-		PUBLIC_ROUTES.some((route) => path === route || path.startsWith(`${route}/`)) ||
-		path.startsWith('/api/auth');
+	const isDemo = matchesRoute(path, '/demo');
+	const isLoginRoute = PUBLIC_ROUTES.some((route) => matchesRoute(path, route));
+	const isPublicRoute = isLoginRoute || isDemo || path.startsWith('/api/auth');
+
+	event.locals.isDemo = isDemo;
+	event.locals.db = isDemo ? demoDb : db;
 
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
@@ -21,13 +28,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (!event.locals.session && !isPublicRoute)
-		throw redirect(303, `/login?redirectTo=${encodeURIComponent(event.url.pathname)}`);
+		redirect(303, `/login?redirectTo=${encodeURIComponent(event.url.pathname)}`);
 
-	if (
-		event.locals.session &&
-		PUBLIC_ROUTES.some((route) => path === route || path.startsWith(`${route}/`))
-	)
-		throw redirect(303, '/');
+	if (event.locals.session && isLoginRoute) redirect(303, '/');
 
 	return svelteKitHandler({ event, resolve, auth, building });
 };

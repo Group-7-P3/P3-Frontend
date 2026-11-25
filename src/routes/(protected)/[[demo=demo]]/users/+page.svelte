@@ -24,7 +24,9 @@
 	 * This very small function is just a link when clicking a row in the user table.
 	 */
 	async function handleRowClick(user: UserRecord) {
-		await goto(resolve('/(protected)/users/[id]', { id: String(user.id) }));
+		await goto(
+			resolve('/(protected)/[[demo=demo]]/users/[id]', { demo: 'demo', id: String(user.id) })
+		);
 	}
 </script>
 
@@ -41,6 +43,6 @@
 	filter={data.filter}
 	sort={data.sort}
 	direction={data.direction}
-	route="/(protected)/users"
+	route="/(protected)/[[demo=demo]]/users"
 	onRowClick={handleRowClick}
 />

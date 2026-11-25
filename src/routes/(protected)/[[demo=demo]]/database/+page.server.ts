@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from '../users/$types';
+import type { PageServerLoad } from './$types';
 
 import { fail, type Actions } from '@sveltejs/kit';
 import { auth } from '#lib/server/auth.ts';
@@ -20,9 +20,9 @@ export const actions: Actions = {
 				body: { password },
 				headers: request.headers
 			});
-			return { success: true};
+			return { success: true };
 		} catch {
-			return fail(400, { passwordIncorrect: true});
+			return fail(400, { passwordIncorrect: true });
 		}
 	}
 };

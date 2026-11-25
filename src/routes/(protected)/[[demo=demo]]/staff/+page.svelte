@@ -13,7 +13,9 @@
 	const columns = ['id', 'name', 'email', 'createdAt', 'updatedAt', 'role', 'group'];
 
 	function handleRowClick(row: (typeof data.staff)[number]) {
-		goto(resolve('/(protected)/staff/[UUID]', { UUID: String(row.id) }));
+		goto(
+			resolve('/(protected)/[[demo=demo]]/staff/[UUID]', { demo: data.demo, UUID: String(row.id) })
+		);
 	}
 </script>
 
@@ -30,7 +32,7 @@
 	filter={data.filter}
 	sort={data.sort}
 	direction={data.direction}
-	route="/(protected)/staff"
+	route="/(protected)/[[demo=demo]]/staff"
 	/*Defines what happens when the button at the start of the row is clicked
 	it redirects to a specific staff's subpage*/
 	onRowClick={handleRowClick}

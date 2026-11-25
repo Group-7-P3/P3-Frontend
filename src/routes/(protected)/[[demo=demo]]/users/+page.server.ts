@@ -1,4 +1,3 @@
-import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import { and, asc, count, desc, eq, getTableColumns, ilike, or, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
@@ -53,7 +52,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
-	const users = await db
+	const users = await locals.db
 		.select({
 			...getTableColumns(schema.user),
 			subscriptions: subscriptionCount
@@ -63,7 +62,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.orderBy(orderBy)
 		.limit(pageSize)
 		.offset((page - 1) * pageSize);
-	const [{ total }] = await db.select({ total: count() }).from(schema.user).where(where);
+	const [{ total }] = await locals.db.select({ total: count() }).from(schema.user).where(where);
 
 	return {
 		users,

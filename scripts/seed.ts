@@ -6,8 +6,13 @@ import postgres from 'postgres';
 import { faker } from '@faker-js/faker';
 import * as schema from '../src/lib/server/db/schema';
 
-const connectionString =
-	process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/local';
+const isDemo = process.env.DB_TARGET === 'demo';
+const connectionString = isDemo ? process.env.DEMO_DATABASE_URL : process.env.DATABASE_URL;
+
+if (!connectionString)
+	throw new Error(`${isDemo ? 'DEMO_DATABASE_URL' : 'DATABASE_URL'} is not set`);
+
+console.log(`Seeding ${isDemo ? 'DEMO' : 'LIVE'} database`);
 
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });

@@ -1,27 +1,29 @@
-import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import * as schema from '$lib/server/db/schema';
 import { user as userTable, subscription } from '$lib/server/db/schema';
 import { error, fail, redirect, type Actions } from '@sveltejs/kit';
 import { asc, eq } from 'drizzle-orm';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	const userId = Number(params.id);
 
 	if (isNaN(userId)) {
 		throw error(400, 'Invalid user ID');
 	}
 	// Fetch the user matching the route id
-	const [user] = await db.select().from(userTable).where(eq(userTable.id, userId));
+	const [user] = await locals.db.select().from(userTable).where(eq(userTable.id, userId));
 
 	if (!user) {
 		error(404, 'User not found');
 	}
 	// Fetch all subscriptions linked to the user
-	const subscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
+	const subscriptions = await locals.db
+		.select()
+		.from(subscription)
+		.where(eq(subscription.userId, userId));
 
 	//Query all unique `group` names from the 'staff' table
-	const staffGroups = await db
+	const staffGroups = await locals.db
 		.selectDistinct({ value: schema.staff.group })
 		.from(schema.staff)
 		.orderBy(asc(schema.staff.group));
@@ -40,7 +42,7 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, params }) => {
+	default: async ({ request, params, locals }) => {
 		const currentId = Number(params.id);
 		const formData = await request.formData();
 
@@ -53,7 +55,7 @@ export const actions: Actions = {
 		}
 
 		if (newId !== currentId) {
-			const [existing] = await db
+			const [existing] = await locals.db
 				.select({ id: userTable.id })
 				.from(userTable)
 				.where(eq(userTable.id, newId));
@@ -61,7 +63,7 @@ export const actions: Actions = {
 				return fail(400, { error: 'This User ID is already in use' });
 			}
 
-			await db.transaction(async (tx) => {
+			await locals.db.transaction(async (tx) => {
 				await tx.update(userTable).set({ id: newId, managedBy }).where(eq(userTable.id, currentId));
 				await tx
 					.update(subscription)
@@ -71,7 +73,7 @@ export const actions: Actions = {
 
 			redirect(303, `/users/${newId}`);
 		}
-		await db.update(userTable).set({ managedBy }).where(eq(userTable.id, currentId));
+		await locals.db.update(userTable).set({ managedBy }).where(eq(userTable.id, currentId));
 		return { succes: true };
 	}
 };

@@ -1,7 +1,6 @@
-import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from '../users/$types';
+import type { PageServerLoad, Actions } from './$types';
 import { stringCheck, stringCheckTrim } from '#lib/utils.ts';
 import { fail } from '@sveltejs/kit';
 
@@ -74,17 +73,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
 	const [staff, [{ total }]] = await Promise.all([
-		db
+		locals.db
 			.select()
 			.from(schema.staff)
 			.where(where)
 			.orderBy(orderBy)
 			.limit(pageSize)
 			.offset((page - 1) * pageSize),
-		db.select({ total: count() }).from(schema.staff).where(where)
+		locals.db.select({ total: count() }).from(schema.staff).where(where)
 	]);
 
-	const groups = await db.select().from(schema.group);
+	const groups = await locals.db.select().from(schema.group);
 
 	return {
 		staff,

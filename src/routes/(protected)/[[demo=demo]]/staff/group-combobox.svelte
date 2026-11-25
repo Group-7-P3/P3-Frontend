@@ -5,11 +5,10 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import type { PageData } from './$types';
-	import { Header } from '#lib/components/ui/sheet/index.ts';
 
 	let { data, value = $bindable('') }: { data: PageData; value: string } = $props();
 
-	const groups = $derived(data.groups);
+	const groups: { name: string }[] = $derived(data.groups);
 	const groupNames: string[] = $derived(groups.map((group) => group.name));
 
 	let open = $state(false);

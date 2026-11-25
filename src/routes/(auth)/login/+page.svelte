@@ -26,7 +26,7 @@
 					loading = true;
 				},
 				onSuccess: () => {
-					goto(resolve('/(protected)'));
+					goto(resolve('/(protected)/[[demo=demo]]', { demo: undefined }));
 				},
 				onError: (ctx: { error: { message: string } }) => {
 					errorMessage = ctx.error.message;
@@ -78,7 +78,9 @@
 
 				<!-- Forgot password -->
 				<Field.Field orientation="horizontal">
-					<Field.Label class="text-sm font-normal text-muted-foreground">Please contact your manager if you have forgotten your password.</Field.Label>
+					<Field.Label class="text-sm font-normal text-muted-foreground"
+						>Please contact your manager if you have forgotten your password.</Field.Label
+					>
 				</Field.Field>
 			</Field.Group>
 		</Card.Content>
