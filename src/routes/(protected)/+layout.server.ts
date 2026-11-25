@@ -3,8 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 import { isValidTimeZone } from '#lib/utils/timezones.ts';
-
-const DEFAULT_TIME_ZONE = "Europe/Copenhagen"
+import { DEFAULT_TIME_ZONE } from '#lib/utils/timezones.ts';
 
 export const load: LayoutServerLoad = async ({ locals, request, cookies }) => {
 	const session = await auth.api.getSession({
