@@ -5,6 +5,7 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import type { PageData } from './$types';
+	import { Header } from '#lib/components/ui/sheet/index.ts';
 
 	let { data, value = $bindable('') }: { data: PageData; value: string } = $props();
 
@@ -35,7 +36,7 @@
 				role="combobox"
 				aria-expanded={open}
 			>
-				{value || 'Select a dristributor group'}
+				{value || 'Select a distributor group'}
 				<ChevronDownIcon class="text-muted-foreground" />
 			</Button>
 		{/snippet}

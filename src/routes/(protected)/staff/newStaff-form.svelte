@@ -157,7 +157,6 @@
 			newRepeatStaffPasswordTouched === true ||
 			newStaffDistibutorGroupTouched === true
 		) {
-			console.log(newStaffDistributor);
 			return true;
 		} else {
 			return false;
@@ -331,7 +330,7 @@
 											{/if}
 										</Field.Field>
 										<!-- Repeat of previous structure-->
-										<Field.Field>
+										<Field.Field class="gap-1">
 											<Field.Label for="newRepeatStaffPassword">Repeat password</Field.Label>
 											<Input
 												id="newRepeatStaffPassword"
@@ -352,27 +351,21 @@
 										</Field.Field>
 										<!-- INNOVAID only, input group for new staff -->
 										{#if group === 'INNOVAID'}
-											<GroupCombobox {data} bind:value={newStaffDistributor} />
-											<input type="hidden" name="newStaffDistributor" value={newStaffDistributor} />
-											<!--
-											<Field.Field>
-												<Field.Label for="newStaffDistributor">Distributor group</Field.Label>
-												<Input
-													id="newStaffDistributor"
+											<Field.Field class="gap-1">
+												<Field.Label>Choose Distributor group</Field.Label>
+												<GroupCombobox {data} bind:value={newStaffDistributor} />
+												<input
+													type="hidden"
 													name="newStaffDistributor"
-													bind:value={newStaffDistributor}
-													type="text"
-													autocomplete="off"
-													oninput={() => (newStaffDristibutorGroupTouched = true)}
-													placeholder="I.e. INNOVAID"
+													value={newStaffDistributor}
 												/>
+												<!-- Reports any errors back to the user -->
+												{#if errors.group}
+													<Field.Error>{errors.group}</Field.Error>
+												{/if}
 											</Field.Field>
-										-->
-											<!-- Reports any errors back to the user -->
-											{#if errors.group}
-												<Field.Error>{errors.group}</Field.Error>
-											{/if}
 										{/if}
+
 										<!-- Owner only field, gives admin role to staff -->
 										{#if role === 'owner'}
 											<Field.Set class="w-full max-w-xs">

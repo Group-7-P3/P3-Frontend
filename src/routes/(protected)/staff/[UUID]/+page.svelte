@@ -21,28 +21,6 @@
 	<title>Staff ({staff.name})</title>
 </svelte:head>
 
-<!--
-Structure:
-
-Main:
-Name
-Email
-Role
-Group
-Created at
-
-
-Edit:
-When pressing edit, make it text input fields and make them changeable
-Make confirmation dialog, with red button, to show it is destructive.
-name,
-Email
-Role
-Group
-
-
-
--->
 <div class="w-full space-y-6 text-left">
 	<!-- Back to staff page link -->
 	<Button variant="link">
@@ -56,7 +34,7 @@ Group
 			<!-- Staff information -->
 			<Card.Root class="md:col-span-1">
 				<Card.Header>
-					<Card.Title>{wordsToTitleCase(staff.name)}</Card.Title>
+					<Card.Title>Information for: {wordsToTitleCase(staff.name)}</Card.Title>
 				</Card.Header>
 				<Card.Content class="space-y-0">
 					<!-- Email -->
