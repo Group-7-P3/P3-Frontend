@@ -7,6 +7,7 @@
 	import { cn } from 'cn';
 	import { scaleUtc } from 'd3-scale';
 	import Separator from '../separator/separator.svelte';
+	import { page } from '$app/state';
 
 	interface Props {
 		class?: string;
@@ -58,10 +59,10 @@
 			xAxis: {
 				format: (v: Date) =>
 					v instanceof Date
-						? v.toLocaleDateString(undefined, {
+						? v.toLocaleDateString(page.data.dateFormat, {
 								day: '2-digit',
-								month: 'short',
-								year: v.getFullYear() !== new Date().getFullYear() ? '2-digit' : undefined
+								month: page.data.dateFormat === 'en-CA' ? 'numeric' : 'short',
+								year: v.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
 							})
 						: v
 			}
@@ -89,10 +90,10 @@
 					<div class="grid gap-1 p-2">
 						<div class="text-xs font-semibold text-foreground">
 							{label instanceof Date
-								? label.toLocaleDateString(undefined, {
+								? label.toLocaleDateString(page.data.dateFormat, {
 										day: '2-digit',
-										month: 'long',
-										year: '2-digit'
+										month: page.data.dateFormat === 'en-CA' ? 'numeric' : 'short',
+										year: 'numeric'
 									})
 								: label}
 						</div>
