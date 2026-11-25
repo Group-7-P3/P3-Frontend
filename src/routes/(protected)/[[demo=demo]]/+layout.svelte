@@ -10,7 +10,7 @@
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import Navigation from '#lib/components/ui/navigation/navigation.svelte';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
 </script>
 
 <svelte:head>
@@ -26,6 +26,13 @@
 			<Header sidebar />
 			<main class="relative flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-6 p-6">
 				{@render children()}
+				{#if data.isDemo}
+					<div
+						class="pointer-events-none fixed top-10 right-10 z-50 w-64 translate-x-1/2 -translate-y-1/2 rotate-45 border-y border-red-500 bg-red-500/50 py-1.5 text-center font-bold tracking-wider text-white shadow-md"
+					>
+						<h2>DEMO</h2>
+					</div>
+				{/if}
 			</main>
 			<Footer />
 		</Sidebar.Inset>

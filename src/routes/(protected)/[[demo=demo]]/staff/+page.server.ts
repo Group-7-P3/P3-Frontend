@@ -83,7 +83,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		locals.db.select({ total: count() }).from(schema.staff).where(where)
 	]);
 
-	const groups = await db.select().from(schema.group);
+	const groups = await locals.db.select().from(schema.group);
 
 	return {
 		staff,

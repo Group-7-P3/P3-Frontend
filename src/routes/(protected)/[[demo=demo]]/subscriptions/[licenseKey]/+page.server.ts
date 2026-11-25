@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.where(eq(subscriptionToProduct.licenseKey, licenseKey));
 
 	//Query all unique `group` names from the 'staff' table
-	const staffGroups = await db
+	const staffGroups = await locals.db
 		.selectDistinct({ value: schema.staff.group })
 		.from(schema.staff)
 		.orderBy(asc(schema.staff.group));
@@ -56,13 +56,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		subscription: subscriptionRows[0],
 		products: subscriptionProducts,
 		user: userRows[0],
-		distributors: distributors,
+		distributors: distributors
 	};
 };
 
-
 export const actions: Actions = {
-	default: async ({ request, params }) => {
+	default: async ({ request, params, locals }) => {
 		const licenseKey = Number(params.licenseKey);
 
 		const formData = await request.formData();
@@ -74,7 +73,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Please enter a valid User ID' });
 		}
 
-		const [existing] = await db
+		const [existing] = await locals.db
 			.select({ id: userTable.id })
 			.from(userTable)
 			.where(eq(userTable.id, newId));
@@ -82,12 +81,12 @@ export const actions: Actions = {
 		if (!existing) {
 			return fail(400, { error: 'This User does not exist' });
 		}
-		
-		await db
+
+		await locals.db
 			.update(subscriptionTable)
 			.set({ userId: newId })
 			.where(eq(subscriptionTable.licenseKey, licenseKey));
-		
-			return { succes: true };
+
+		return { succes: true };
 	}
 };

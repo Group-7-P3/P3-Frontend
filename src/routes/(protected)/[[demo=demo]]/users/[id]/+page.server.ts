@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.where(eq(subscription.userId, userId));
 
 	//Query all unique `group` names from the 'staff' table
-	const staffGroups = await db
+	const staffGroups = await locals.db
 		.selectDistinct({ value: schema.staff.group })
 		.from(schema.staff)
 		.orderBy(asc(schema.staff.group));
