@@ -6,6 +6,7 @@
 	import { getLocalTimeZone, today } from '@internationalized/date';
 	import Button from './button/button.svelte';
 	import { ExternalLink } from '@lucide/svelte';
+	import { page } from '$app/state';
 
 	interface Props {
 		title: string;
@@ -41,7 +42,7 @@
 				<Tooltip.Content>
 					Today ({today(getLocalTimeZone())
 						.toDate(getLocalTimeZone())
-						.toLocaleDateString(undefined, {
+						.toLocaleDateString(page.data.dateFormat, {
 							month: '2-digit',
 							day: '2-digit'
 						})})
@@ -60,8 +61,8 @@
 					Last week ({today(getLocalTimeZone())
 						.subtract({ weeks: 1 })
 						.toDate(getLocalTimeZone())
-						.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })} -
-					{today(getLocalTimeZone()).toDate(getLocalTimeZone()).toLocaleDateString(undefined, {
+						.toLocaleDateString(page.data.dateFormat, { month: '2-digit', day: '2-digit' })} to 
+						{today(getLocalTimeZone()).toDate(getLocalTimeZone()).toLocaleDateString(page.data.dateFormat, {
 						month: '2-digit',
 						day: '2-digit'
 					})})
@@ -80,11 +81,11 @@
 					Last month ({today(getLocalTimeZone())
 						.subtract({ months: 1 })
 						.toDate(getLocalTimeZone())
-						.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })} - {today(
+						.toLocaleDateString(page.data.dateFormat, { month: '2-digit', day: '2-digit' })} to {today(
 						getLocalTimeZone()
 					)
 						.toDate(getLocalTimeZone())
-						.toLocaleDateString(undefined, {
+						.toLocaleDateString(page.data.dateFormat, {
 							month: '2-digit',
 							day: '2-digit'
 						})})
@@ -103,11 +104,11 @@
 					Last year ({today(getLocalTimeZone())
 						.subtract({ years: 1 })
 						.toDate(getLocalTimeZone())
-						.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit', year: '2-digit' })} -
-					{today(getLocalTimeZone()).toDate(getLocalTimeZone()).toLocaleDateString(undefined, {
+						.toLocaleDateString(page.data.dateFormat, { month: '2-digit', day: '2-digit', year: 'numeric' })} to 
+						{today(getLocalTimeZone()).toDate(getLocalTimeZone()).toLocaleDateString(page.data.dateFormat, {
 						month: '2-digit',
 						day: '2-digit',
-						year: '2-digit'
+						year: 'numeric'
 					})})
 				</Tooltip.Content>
 			</Tooltip.Root>

@@ -5,6 +5,7 @@
 	import { BarChart, type Accessor, type BarsProps, type SeriesData } from 'layerchart';
 	import type { Component } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
+	import { page } from '$app/state';
 
 	interface Props {
 		class?: string;
@@ -85,7 +86,7 @@
 			xAxis: {
 				format: (v: Date) =>
 					v instanceof Date
-						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
+						? v.toLocaleDateString(page.data.dateFormat, { day: '2-digit', month: page.data.dateFormat === 'en-CA' ? 'numeric' : 'short' })
 						: v
 			},
 			yAxis: {
@@ -97,7 +98,7 @@
 			<Chart.Tooltip
 				labelFormatter={(v: Date) =>
 					v instanceof Date
-						? v.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: '2-digit' })
+						? v.toLocaleDateString(page.data.dateFormat, { day: '2-digit', month: page.data.dateFormat === 'en-CA' ? 'numeric' : 'short', year: 'numeric' })
 						: v}
 				indicator="line"
 			/>
