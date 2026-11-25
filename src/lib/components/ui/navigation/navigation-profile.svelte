@@ -2,7 +2,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar/index.js';
-	import { LogOut, Cog, EllipsisVertical } from '@lucide/svelte';
+	import { LogOut, Cog, EllipsisVertical, RadioOff, Radio } from '@lucide/svelte';
 	import UnknownAvatar from '#lib/assets/profile-unknown.png';
 	import { stringToHex } from '#lib/utils.ts';
 	import { resolve } from '$app/paths';
@@ -66,12 +66,36 @@
 			<DropdownMenu.Separator />
 
 			<DropdownMenu.Group>
-				<a href={resolve('/(protected)/[[demo=demo]]/settings', { demo: page.data.demo })}>
-					<DropdownMenu.Item>
-						<Cog class="mr-2 size-4" />
-						Settings
-					</DropdownMenu.Item>
-				</a>
+				<DropdownMenu.Item
+					onSelect={() =>
+						goto(resolve('/(protected)/[[demo=demo]]/settings', { demo: page.data.demo }))}
+				>
+					<Cog class="mr-2 size-4" />
+					Settings
+				</DropdownMenu.Item>
+				{#if $session.data?.user?.role === 'owner'}
+					{#if page.data.isDemo}
+						<DropdownMenu.Item
+							onSelect={() =>
+								goto(resolve('/(protected)/[[demo=demo]]', { demo: undefined }), {
+									invalidateAll: true
+								})}
+						>
+							<Radio class="mr-2 size-4" />
+							Live
+						</DropdownMenu.Item>
+					{:else}
+						<DropdownMenu.Item
+							onSelect={() =>
+								goto(resolve('/(protected)/[[demo=demo]]', { demo: 'demo' }), {
+									invalidateAll: true
+								})}
+						>
+							<RadioOff class="mr-2 size-4" />
+							Demo
+						</DropdownMenu.Item>
+					{/if}
+				{/if}
 			</DropdownMenu.Group>
 
 			<DropdownMenu.Separator />
