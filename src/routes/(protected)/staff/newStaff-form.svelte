@@ -3,39 +3,53 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { authClient } from '$lib/client.ts';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import XIcon from '@lucide/svelte/icons/x';
 	import { deserialize } from '$app/forms';
 	import { refreshAll } from '$app/navigation';
 	import { groupRules } from '#lib/utils.ts';
+	import * as RadioGroup from '$lib/components/ui/radio-group';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { toast } from 'svelte-sonner';
+	import GroupCombobox from './group-combobox.svelte';
+	import type { PageData } from './$types';
+
+	let { data, open = $bindable(false) }: { data: PageData; open: boolean } = $props();
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
 	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'supporter' | undefined);
 	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
 
-	// Make open bindable
-	let { open = $bindable(false) }: { open: boolean } = $props();
+	// Variables binded to form openings
+	// Open is binded to main form
+
+	// Dialog open is binded to "are you sure?" dialog box.
+	let dialogOpen = $state(false);
+	// Was open is used to determine if the form needs to be reset.
 	let wasOpen = false;
 
 	// Store if staff should be admin, default is supporter
-	let makeAdmin = $state(false);
+	let newStaffRole = $state('supporter');
 
 	// Keeps track of whether the form has been submitted and if the password has changed.
 	let formSubmitted = $state(false);
 
 	// Keeps track of when form inputs have been touched.
+	let newStaffNameTouched = $state(false);
+	let newStaffEmailTouched = $state(false);
 	let newStaffPasswordTouched = $state(false);
 	let newRepeatStaffPasswordTouched = $state(false);
+	let newStaffDistibutorGroupTouched = $state(false);
 
 	// Keeps track of the inputs in the form.
 	let newStaffName = $state('');
 	let newStaffEmail = $state('');
 	let newStaffPassword = $state('');
 	let newRepeatStaffPassword = $state('');
-	let newStaffGroup = $state('');
+	let newStaffDistributor = $state('');
 
 	// Keeps track of whether the two main requirements have been met ('8 characters' and 'at least 3 of the following:').
 	const lengthOk = $derived(newStaffPassword.length >= 8);
@@ -81,18 +95,23 @@
 	//Resets the staff creation form.
 	//Empties the input fields, clears errors and success messages and marks the password fields as untouched.
 	function resetStaffForm() {
+		// Reset all inputs
 		newStaffName = '';
 		newStaffEmail = '';
 		newStaffPassword = '';
 		newRepeatStaffPassword = '';
-		makeAdmin = false;
-		newStaffGroup = '';
+		newStaffRole = 'supporter';
+		newStaffDistributor = '';
 		errors = {};
 		successMessage = '';
 		//group = '';
 
+		// Reset all touched inputs
+		newStaffNameTouched = false;
+		newStaffEmailTouched = false;
 		newStaffPasswordTouched = false;
 		newRepeatStaffPasswordTouched = false;
+		newStaffDistibutorGroupTouched = false;
 	}
 
 	// Form submission handler for creating a new staff member
@@ -122,9 +141,45 @@
 		// If the form submission was successful, resets the form, displays a success message and refreshes the staff list.
 		if (result.type === 'success') {
 			resetStaffForm();
+			open = !open;
 			successMessage = (result.data?.message as string) ?? 'User created successfully.';
+			toast.success(successMessage);
 			errors = {};
 			await refreshAll();
+		}
+	}
+
+	function formTouched() {
+		if (
+			newStaffNameTouched === true ||
+			newStaffEmailTouched === true ||
+			newStaffPasswordTouched === true ||
+			newRepeatStaffPasswordTouched === true ||
+			newStaffDistibutorGroupTouched === true
+		) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// Defines the cancelButton element, so it can be autofocused.
+	let cancelButton = $state<HTMLButtonElement | null>(null);
+
+	// Omit "are you sure?" dialog box, if form is not touched, and the escape key is pressed.
+	function handleCloseDialogEscape(event: KeyboardEvent) {
+		if (formTouched()) {
+			event.preventDefault();
+			dialogOpen = true;
+		}
+	}
+
+	// Omit "are you sure?" dialog box, if form is not touched, and form is closed using close button.
+	function handleCloseDialogClick() {
+		if (formTouched()) {
+			dialogOpen = true;
+		} else {
+			open = false;
 		}
 	}
 
@@ -147,8 +202,32 @@
 	{/if}
 {/snippet}
 
+<!-- Staff pop up dialog form-->
 <Dialog bind:open>
-	<DialogContent class="gap-2 sm:max-w-xl">
+	<!-- Define pop up behavior-->
+	<DialogContent
+		class="gap-2 sm:max-w-xl"
+		// Make it ignore clicks outside
+		interactOutsideBehavior="ignore"
+		// If pressing escape, don't close the window but run this function instead
+		// It opens a confirmation dialog
+		onEscapeKeydown={handleCloseDialogEscape}
+		// Remove  ShadCN's own closure button
+		showCloseButton={false}
+	>
+		<!-- Closure X in corner -->
+		<Button
+			variant="ghost"
+			class="absolute top-4 right-4"
+			size="icon-sm"
+			onclick={() => {
+				handleCloseDialogClick();
+			}}
+		>
+			<XIcon />
+			<span class="sr-only">Close</span>
+		</Button>
+
 		<DialogHeader>
 			<DialogTitle class="text-center text-2xl">Create a new staff member</DialogTitle>
 		</DialogHeader>
@@ -162,6 +241,40 @@
 							<Field.Set>
 								<div class="flex gap-6">
 									<Field.Group class="basis-2/3">
+										<!-- Confirm closure pop up box -->
+										<AlertDialog.Root bind:open={dialogOpen}>
+											<AlertDialog.Content
+												// Remove default auto focus and make it focus the cancel button, if it exists.
+												onOpenAutoFocus={(e) => {
+													e.preventDefault();
+													cancelButton?.focus();
+												}}
+											>
+												<AlertDialog.Header>
+													<AlertDialog.Title>Proceed?</AlertDialog.Title>
+													<AlertDialog.Description>
+														Are you sure you want to close the form? <br /> All unsaved changes will be
+														lost.
+													</AlertDialog.Description>
+												</AlertDialog.Header>
+												<AlertDialog.Footer>
+													<AlertDialog.Cancel type="button" bind:ref={cancelButton}
+														>Cancel</AlertDialog.Cancel
+													>
+													<AlertDialog.Action
+														class={buttonVariants({ variant: 'destructive' })}
+														type="button"
+														onclick={() => {
+															dialogOpen = false;
+															open = false;
+														}}
+													>
+														Continue
+													</AlertDialog.Action>
+												</AlertDialog.Footer>
+											</AlertDialog.Content>
+										</AlertDialog.Root>
+
 										<!-- Name field -->
 										<Field.Field class="gap-1">
 											<Field.Label for="newStaffName">Name</Field.Label>
@@ -171,6 +284,7 @@
 												bind:value={newStaffName}
 												type="text"
 												autocomplete="off"
+												oninput={() => (newStaffNameTouched = true)}
 												placeholder="e.g. John Smith"
 											/>
 											<!-- Error line below, fills in with error object from server, if any errors are present-->
@@ -186,6 +300,7 @@
 												name="newStaffEmail"
 												bind:value={newStaffEmail}
 												type="email"
+												oninput={() => (newStaffEmailTouched = true)}
 												autocomplete="off"
 												placeholder="example@mail.xyz"
 											/>
@@ -202,8 +317,8 @@
 												bind:value={newStaffPassword}
 												type="password"
 												autocomplete="off"
-												onblur={() => (newStaffPasswordTouched = true)}
-												// Set newStaffPasswordTouched to true when the user leaves the input field.
+												oninput={() => (newStaffPasswordTouched = true)}
+												// Set newStaffPasswordTouched to true when the user types in the field.
 												aria-invalid={newStaffPasswordError}
 												placeholder="New password"
 											/>
@@ -215,7 +330,7 @@
 											{/if}
 										</Field.Field>
 										<!-- Repeat of previous structure-->
-										<Field.Field>
+										<Field.Field class="gap-1">
 											<Field.Label for="newRepeatStaffPassword">Repeat password</Field.Label>
 											<Input
 												id="newRepeatStaffPassword"
@@ -224,8 +339,8 @@
 												type="password"
 												autocomplete="off"
 												placeholder="Match new password"
-												onblur={() => (newRepeatStaffPasswordTouched = true)}
-												// Set newRepeatStaffPasswordTouched to true when the user leaves the input field.
+												oninput={() => (newRepeatStaffPasswordTouched = true)}
+												// Set newRepeatStaffPasswordTouched to true when the user types in the field.
 												aria-invalid={repeatStaffPasswordError}
 											/>
 											{#if repeatStaffPasswordError}
@@ -236,30 +351,44 @@
 										</Field.Field>
 										<!-- INNOVAID only, input group for new staff -->
 										{#if group === 'INNOVAID'}
-											<Field.Field>
-												<Field.Label for="newStaffGroup">Group for the new staff</Field.Label>
-												<Input
-													id="newStaffGroup"
-													name="newStaffGroup"
-													bind:value={newStaffGroup}
-													type="text"
-													autocomplete="off"
-													placeholder="Denmark"
+											<Field.Field class="gap-1">
+												<Field.Label>Choose Distributor group</Field.Label>
+												<GroupCombobox {data} bind:value={newStaffDistributor} />
+												<input
+													type="hidden"
+													name="newStaffDistributor"
+													value={newStaffDistributor}
 												/>
+												<!-- Reports any errors back to the user -->
+												{#if errors.group}
+													<Field.Error>{errors.group}</Field.Error>
+												{/if}
 											</Field.Field>
-											<!-- Reports any errors back to the user -->
-											{#if errors.group}
-												<Field.Error>{errors.group}</Field.Error>
-											{/if}
 										{/if}
+
 										<!-- Owner only field, gives admin role to staff -->
 										{#if role === 'owner'}
-											<Field.Field orientation="horizontal" class="justify-start gap-1">
-												<Field.Label for="makeAdmin" class="w-auto flex-none"
-													>Make admin?</Field.Label
+											<Field.Set class="w-full max-w-xs">
+												<Field.Legend variant="label">Role</Field.Legend>
+												<RadioGroup.Root
+													bind:value={newStaffRole}
+													name="newStaffRole"
+													class="flex flex-col gap-2"
 												>
-												<Checkbox id="makeAdmin" name="makeAdmin" bind:checked={makeAdmin} />
-											</Field.Field>
+													<Field.Field orientation="horizontal">
+														<RadioGroup.Item value="supporter" id="newStaffRoleSupporter" />
+														<Field.Label for="newStaffRoleSupporter" class="font-normal"
+															>Supporter</Field.Label
+														>
+													</Field.Field>
+													<Field.Field orientation="horizontal">
+														<RadioGroup.Item value="admin" id="newStaffRoleAdmin" />
+														<Field.Label for="newStaffRoleAdmin" class="font-normal"
+															>Admin</Field.Label
+														>
+													</Field.Field>
+												</RadioGroup.Root>
+											</Field.Set>
 										{/if}
 										<!-- Reports general errors at bottom, i.e. if something goes wrong in actually creating the user -->
 										{#if errors.general}
