@@ -13,11 +13,11 @@ import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
 import { groupRules } from '#lib/utils.ts';
-import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
-	if (!staffUser) throw error(401, 'You must be signed in to view products');
+	if (!staffUser) throw error(401, 'You must be signed in to view this page');
 
 	if (!staffUser.role || staffUser.role === 'supporter') {
 		throw error(403, 'Only owners and admins can access the Staff page');
@@ -30,6 +30,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const sort = sortParam && sortParam !== 'none' ? sortParam : '';
 	const direction: 'asc' | 'desc' = url.searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
 	const conditions = [];
+
+	// Ensure INNOVAID admins don't see other INNOVAID admins.
+	if (staffUser.role === 'admin' && staffUser.group === 'INNOVAID') {
+		conditions.push(
+			inArray(schema.staff.role, ['supporter', 'admin']),
+			or(ne(schema.staff.role, 'admin'), ne(schema.staff.group, 'INNOVAID'))
+		);
+	}
+
 	if (staffUser.group !== 'INNOVAID') {
 		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'supporter'));
 	}
@@ -75,6 +84,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		db.select({ total: count() }).from(schema.staff).where(where)
 	]);
 
+	const groups = await db.select().from(schema.group);
+
 	return {
 		staff,
 		total,
@@ -82,7 +93,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		pageSize,
 		filter,
 		sort,
-		direction
+		direction,
+		groups
 	};
 };
 
@@ -129,11 +141,12 @@ export const actions = {
 		const name = stringCheckTrim(data.get('newStaffName'));
 		const emailRaw = stringCheckTrim(data.get('newStaffEmail'));
 		const email = emailRaw?.toLowerCase() ?? null;
-		const makeAdmin = data.get('makeAdmin');
-		let group = stringCheckTrim(data.get('newStaffGroup'));
+		const newStaffRole = data.get('newStaffRole') as Role | null;
+		let group = stringCheckTrim(data.get('newStaffDistributor'));
 		const password = stringCheck(data.get('newStaffPassword'));
 		const repeatPassword = stringCheck(data.get('repeatPassword'));
 		let role: Role = 'supporter';
+		console.log(group);
 
 		// Name checks
 		if (name === null) {
@@ -177,7 +190,7 @@ export const actions = {
 			errors.password = 'Password needs to fulfill 3 of the 4 rules';
 		}
 
-		if (locals.user.role === 'owner' && makeAdmin === 'on') {
+		if (locals.user.role === 'owner' && newStaffRole === 'admin') {
 			role = 'admin';
 		}
 
@@ -206,7 +219,7 @@ export const actions = {
 
 		return {
 			success: true,
-			message: `User ${name} created successfully.`
+			message: `New staff member ${name} created successfully.`
 		};
 	}
 } satisfies Actions;

@@ -4,25 +4,21 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { resolve } from '$app/paths';
 	import { wordsToTitleCase } from '#lib/utils.ts';
+	import { Copy, ExternalLink } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
+
+	import { enhance } from '$app/forms';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { enhance } from '$app/forms';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { goto } from '$app/navigation';
-	import { ExternalLink } from '@lucide/svelte';
 	import DataTableDate from '$lib/components/ui/data-table/data-table-date.svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import Badge from '#lib/components/ui/badge/badge.svelte';
+	import { toast } from 'svelte-sonner';
 
 	let { data, form }: { data: PageData; form: { error?: string; success?: boolean } | null } =
 		$props();
-
-	const statusOptionsDistributor = [
-		{ value: 'INNOVAID', label: 'INNOVAID' },
-		{ value: 'Italy', label: 'Italy' },
-		{ value: 'Norway', label: 'Norway' }
-	];
 
 	// Local form state initialized from data so editing doesn't mutate the left display card prematurely
 	let editUserId = $state('');
@@ -31,7 +27,6 @@
 
 	let formElement = $state<HTMLFormElement | null>(null);
 	let confirmDialogOpen = $state(false);
-	let clearDialogOpen = $state(false);
 	let userIdError = $derived(clientError ?? form?.error ?? null);
 
 	// Validates the userId by checking is the new userId is a nonnegative number
@@ -63,7 +58,6 @@
 	function clearForm() {
 		editUserId = '';
 		editDistributor = data.user.managedBy ?? '';
-		clearDialogOpen = false;
 		clientError = null;
 	}
 
@@ -93,35 +87,71 @@
 		<Card.Root class="md:col-span-2">
 			<Card.Header>
 				<Card.Title>
-					Information for User {data.user.id}
+					User: {data.user.id}
 				</Card.Title>
 			</Card.Header>
-			<Separator />
-			<Card.Content class="flex flex-col gap-4">
+			<Card.Content class="space-y-2">
 				<!-- Row 1: User ID -->
-				<div class="flex items-center justify-between">
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
-					<dd class="font-mono text-sm font-medium text-foreground">
+					<dd class="flex items-center gap-2 font-mono text-sm font-medium text-foreground">
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+							onclick={async (e) => {
+								e.stopPropagation();
+								try {
+									await navigator.clipboard.writeText(String(data.user.id));
+									toast.success('Successfully copied to clipboard.');
+								} catch {
+									toast.error('Failed to copy to clipboard! Check browser permissions.');
+								}
+							}}
+						>
+							<Copy class="h-3 w-3" />
+						</Button>
 						{data.user.id}
 					</dd>
 				</div>
 
-				<Separator />
-
 				<!-- Row 2: Distributor -->
-				<div class="flex items-center justify-between">
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">Distributor</dt>
-					<dd class="text-sm font-medium text-foreground">
+					<dd class="flex items-center gap-2 text-sm font-medium text-foreground">
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+							onclick={async (e) => {
+								e.stopPropagation();
+								try {
+									await navigator.clipboard.writeText(String(data.user.managedBy));
+									toast.success('Successfully copied to clipboard.');
+								} catch {
+									toast.error('Failed to copy to clipboard! Check browser permissions.');
+								}
+							}}
+						>
+							<Copy class="h-3 w-3" />
+						</Button>
 						{data.user.managedBy}
 					</dd>
 				</div>
 
-				<Separator />
-
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">Created at:</dt>
-					<dd class="text-sm font-medium text-foreground">
+				<!-- Row 3: Created at -->
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
+					<dt class="text-sm font-normal text-muted-foreground">Created at</dt>
+					<dd class="flex items-center gap-2 text-sm font-medium text-foreground">
 						<DataTableDate value={data.user.createdAt} />
+					</dd>
+				</div>
+
+				<!-- Row 4: Updated at -->
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
+					<dt class="text-sm font-normal text-muted-foreground">Updated at</dt>
+					<dd class="flex items-center gap-2 text-sm font-medium text-foreground">
+						<DataTableDate value={data.user.updatedAt} />
 					</dd>
 				</div>
 			</Card.Content>
@@ -132,7 +162,6 @@
 			<Card.Header>
 				<Card.Title>Edit User</Card.Title>
 			</Card.Header>
-			<Separator />
 			<Card.Content>
 				<form
 					bind:this={formElement}
@@ -178,9 +207,9 @@
 										<Select.Value placeholder="Select distributor" />
 									</Select.Trigger>
 									<Select.Content>
-										{#each statusOptionsDistributor as option (option.value)}
-											<Select.Item value={option.value} label={option.label}>
-												{option.label}
+										{#each data.distributors as distributors (distributors)}
+											<Select.Item value={distributors} label={distributors}>
+												{distributors}
 											</Select.Item>
 										{/each}
 									</Select.Content>
@@ -192,9 +221,6 @@
 			</Card.Content>
 			<Card.Footer class="flex items-center gap-2">
 				<Button type="button" variant="outline" onclick={openConfirmDialog}>Confirm Edits</Button>
-				<Button type="button" variant="destructive" onclick={() => (clearDialogOpen = true)}>
-					Clear
-				</Button>
 			</Card.Footer>
 		</Card.Root>
 	</div>
@@ -216,8 +242,24 @@
 									<div class="flex items-center justify-between">
 										<dt class="text-sm font-normal text-muted-foreground">License Key</dt>
 										<dd
-											class="inline-flex items-center gap-2 font-mono text-sm font-medium text-foreground"
+											class="group inline-flex items-center gap-2 font-mono text-sm font-medium text-foreground"
 										>
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+												onclick={async (e) => {
+													e.stopPropagation();
+													try {
+														await navigator.clipboard.writeText(String(sub.licenseKey));
+														toast.success('Successfully copied to clipboard.');
+													} catch {
+														toast.error('Failed to copy to clipboard! Check browser permissions.');
+													}
+												}}
+											>
+												<Copy class="h-3 w-3" />
+											</Button>
 											<span>{sub.licenseKey}</span>
 											<!-- Button to go to subscription -->
 											<Button
@@ -241,7 +283,27 @@
 									<!-- Type -->
 									<div class="flex items-center justify-between">
 										<dt class="text-sm font-normal text-muted-foreground">Subscription Type</dt>
-										<dd class="text-sm font-medium text-foreground">
+										<dd class="group text-sm font-medium text-foreground">
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+												onclick={async (e) => {
+													e.stopPropagation();
+													try {
+														await navigator.clipboard.writeText(
+															new Intl.DateTimeFormat(undefined, {
+																dateStyle: 'medium'
+															}).format(new Date(data.user.updatedAt))
+														);
+														toast.success('Successfully copied to clipboard.');
+													} catch {
+														toast.error('Failed to copy to clipboard! Check browser permissions.');
+													}
+												}}
+											>
+												<Copy class="h-3 w-3" />
+											</Button>
 											{wordsToTitleCase(sub.type)}
 										</dd>
 									</div>
@@ -278,23 +340,7 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action variant="destructive" type="button" onclick={submitEdits}
-				>Confirm changes</AlertDialog.Action
-			>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>
-
-<!-- Clear Edits Dialog -->
-<AlertDialog.Root bind:open={clearDialogOpen}>
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>Clear unsaved changes?</AlertDialog.Title>
-			<AlertDialog.Description>This will reset changes to the user.</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action variant="destructive" type="button" onclick={clearForm}
+			<AlertDialog.Action variant="outline" type="button" onclick={submitEdits}
 				>Confirm changes</AlertDialog.Action
 			>
 		</AlertDialog.Footer>

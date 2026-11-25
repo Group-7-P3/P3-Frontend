@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { RangeCalendar } from '$lib/components/ui/range-calendar/index.js';
 	import type { DateRange, RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
+	import { page } from '$app/state';
 
 	interface Props {
 		value?: DateRange;
@@ -20,14 +21,18 @@
 <Popover.Root bind:open={rangeOpen}>
 	<Popover.Trigger>
 		{#snippet child({ props })}
-			<Button {...props} variant="outline" class="w-48 justify-between font-normal">
-				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString(undefined, {
+			<Button {...props} variant="outline" class="w-54 justify-between font-normal">
+				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString(page.data.dateFormat, {
 					day: '2-digit',
 					month: '2-digit',
-					year: '2-digit'
-				})}-{value.end
+					year: 'numeric'
+				})} to {value.end
 					?.toDate(getLocalTimeZone())
-					.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })}
+					.toLocaleDateString(page.data.dateFormat, {
+						day: '2-digit',
+						month: '2-digit',
+						year: 'numeric'
+						})}
 				<ChevronDownIcon />
 			</Button>
 		{/snippet}
@@ -37,7 +42,7 @@
 			bind:value
 			captionLayout="dropdown"
 			maxValue={today(getLocalTimeZone())}
-			weekStartsOn={1}
+			weekStartsOn={Number(page.data.firstDay) as 0 | 1}
 			{years}
 		/>
 	</Popover.Content>
