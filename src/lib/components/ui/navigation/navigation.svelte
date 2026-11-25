@@ -8,6 +8,7 @@
 	import ThemeSwitcher from '../theme-switcher.svelte';
 	import { authClient } from '#lib/client.ts';
 
+	const base = $derived(page.data.base ?? '');
 	const session = authClient.useSession();
 	const sidebar = Sidebar.useSidebar();
 </script>
@@ -25,7 +26,7 @@
 								<div {...tooltipProps}>
 									<Sidebar.MenuButton isActive={page.url.pathname === '/'}>
 										{#snippet child({ props })}
-											<a href={resolve('/(protected)')} {...props}>
+											<a href={resolve(base)} {...props}>
 												<House />
 												<span>Dashboard</span>
 											</a>
@@ -48,7 +49,7 @@
 								<div {...tooltipProps}>
 									<Sidebar.MenuButton isActive={page.url.pathname === '/users'}>
 										{#snippet child({ props })}
-											<a href={resolve('/(protected)/users')} {...props}>
+											<a href={resolve(`${base}/users`)} {...props}>
 												<Users />
 												<span>Users</span>
 											</a>
@@ -71,7 +72,7 @@
 								<div {...tooltipProps}>
 									<Sidebar.MenuButton isActive={page.url.pathname === '/subscriptions'}>
 										{#snippet child({ props })}
-											<a href={resolve('/(protected)/subscriptions')} {...props}>
+											<a href={resolve(`${base}/subscriptions`)} {...props}>
 												<CreditCard />
 												<span>Subscriptions</span>
 											</a>
@@ -94,7 +95,7 @@
 								<div {...tooltipProps}>
 									<Sidebar.MenuButton isActive={page.url.pathname === '/products'}>
 										{#snippet child({ props })}
-											<a href={resolve('/(protected)/products')} {...props}>
+											<a href={resolve(`${base}/products`)} {...props}>
 												<Package />
 												<span>Products</span>
 											</a>
@@ -118,7 +119,7 @@
 									<div {...tooltipProps}>
 										<Sidebar.MenuButton isActive={page.url.pathname === '/staff'}>
 											{#snippet child({ props })}
-												<a href={resolve('/(protected)/staff')} {...props}>
+												<a href={resolve(`${base}/staff`)} {...props}>
 													<ShieldUser />
 													<span>Staff</span>
 												</a>
@@ -143,7 +144,7 @@
 									<div {...tooltipProps}>
 										<Sidebar.MenuButton isActive={page.url.pathname === '/database'}>
 											{#snippet child({ props })}
-												<a href={resolve('/(protected)/database')} {...props}>
+												<a href={resolve(`${base}/database`)} {...props}>
 													<Database />
 													<span>Database</span>
 												</a>

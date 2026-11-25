@@ -1,4 +1,3 @@
-import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import {
 	subscription as subscriptionTable,
@@ -9,14 +8,14 @@ import { error, fail, type Actions } from '@sveltejs/kit';
 import { asc, eq } from 'drizzle-orm';
 import * as schema from '$lib/server/db/schema';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	const licenseKey = Number(params.licenseKey);
 
 	if (isNaN(licenseKey)) {
 		throw error(400, 'Invalid license key');
 	}
 
-	const subscriptionRows = await db
+	const subscriptionRows = await locals.db
 		.select()
 		.from(subscriptionTable)
 		.where(eq(subscriptionTable.licenseKey, licenseKey))
@@ -26,7 +25,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		error(404, 'Subscription not found');
 	}
 
-	const userRows = await db
+	const userRows = await locals.db
 		.select()
 		.from(userTable)
 		.where(eq(userTable.id, subscriptionRows[0].userId))
@@ -36,7 +35,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		error(404, 'User not found');
 	}
 
-	const subscriptionProducts = await db
+	const subscriptionProducts = await locals.db
 		.select()
 		.from(subscriptionToProduct)
 		.where(eq(subscriptionToProduct.licenseKey, licenseKey));

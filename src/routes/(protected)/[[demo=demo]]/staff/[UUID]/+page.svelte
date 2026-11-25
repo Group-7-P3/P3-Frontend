@@ -24,7 +24,10 @@
 <div class="w-full space-y-6 text-left">
 	<!-- Back to staff page link -->
 	<Button variant="link">
-		<a href={resolve('/(protected)/staff')} class="text-sm text-muted-foreground hover:underline">
+		<a
+			href={resolve('/(protected)/[[demo=demo]]/staff', { demo: data.demo })}
+			class="text-sm text-muted-foreground hover:underline"
+		>
 			&larr; Back to Staff
 		</a>
 	</Button>

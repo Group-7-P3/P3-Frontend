@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../layout.css';
+	import '../../layout.css';
 	import favicon from '#lib/assets/favicon.png';
 	import type { LayoutProps } from './$types';
 	import Header from '#lib/components/ui/header.svelte';

@@ -8,6 +8,7 @@
 	import { resolve } from '$app/paths';
 	import { authClient } from '#lib/client.ts';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 
 	const session = authClient.useSession();
 
@@ -65,7 +66,7 @@
 			<DropdownMenu.Separator />
 
 			<DropdownMenu.Group>
-				<a href={resolve('/(protected)/settings')}>
+				<a href={resolve('/(protected)/[[demo=demo]]/settings', { demo: page.data.demo })}>
 					<DropdownMenu.Item>
 						<Cog class="mr-2 size-4" />
 						Settings

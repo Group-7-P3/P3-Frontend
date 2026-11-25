@@ -30,7 +30,10 @@
 
 	function handleRowClick(row: (typeof data.subscriptions)[number]) {
 		goto(
-			resolve('/(protected)/subscriptions/[licenseKey]', { licenseKey: String(row.licenseKey) })
+			resolve('/(protected)/[[demo=demo]]/subscriptions/[licenseKey]', {
+				demo: data.demo,
+				licenseKey: String(row.licenseKey)
+			})
 		);
 	}
 </script>
@@ -48,6 +51,6 @@
 	filter={data.filter}
 	sort={data.sort}
 	direction={data.direction}
-	route="/(protected)/subscriptions"
+	route="/(protected)/[[demo=demo]]/subscriptions"
 	onRowClick={handleRowClick}
 />

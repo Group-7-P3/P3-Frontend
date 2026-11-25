@@ -1,4 +1,3 @@
-import { db } from '#lib/server/db/index.ts';
 import * as schema from '$lib/server/db/schema';
 import { and, between, count, eq, exists, gte, lte, sql, sum } from 'drizzle-orm';
 import { today, parseDate } from '@internationalized/date';
@@ -27,54 +26,57 @@ function periodCounts(createdAtCol: TimestampColumn, cutoffs: PeriodCutoffs) {
 	};
 }
 
-/**
- * Builds the group scoping filters.
- */
-function groupScope(group: string) {
-	const isAll = group === 'INNOVAID';
-
-	return {
-		// Users managed by the group
-		user: isAll ? undefined : eq(schema.user.managedBy, group),
-
-		// Subscriptions owned by a user the group manages
-		subscription: isAll
-			? undefined
-			: exists(
-					db
-						.select({ one: sql`1` })
-						.from(schema.user)
-						.where(
-							and(eq(schema.user.id, schema.subscription.userId), eq(schema.user.managedBy, group))
-						)
-				),
-
-		// Products attached (via a subscription) to a user the group manages
-		product: isAll
-			? undefined
-			: exists(
-					db
-						.select({ one: sql`1` })
-						.from(schema.subscriptionToProduct)
-						.innerJoin(
-							schema.subscription,
-							eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
-						)
-						.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
-						.where(
-							and(
-								eq(schema.subscriptionToProduct.serialNumber, schema.product.serialNumber),
-								eq(schema.user.managedBy, group)
-							)
-						)
-				),
-
-		// Activities managed by the group
-		activity: isAll ? undefined : eq(schema.activity.managedBy, group)
-	};
-}
-
 export const load: PageServerLoad = async ({ locals, url, parent }) => {
+	/**
+	 * Builds the group scoping filters.
+	 */
+	function groupScope(group: string) {
+		const isAll = group === 'INNOVAID';
+
+		return {
+			// Users managed by the group
+			user: isAll ? undefined : eq(schema.user.managedBy, group),
+
+			// Subscriptions owned by a user the group manages
+			subscription: isAll
+				? undefined
+				: exists(
+						locals.db
+							.select({ one: sql`1` })
+							.from(schema.user)
+							.where(
+								and(
+									eq(schema.user.id, schema.subscription.userId),
+									eq(schema.user.managedBy, group)
+								)
+							)
+					),
+
+			// Products attached (via a subscription) to a user the group manages
+			product: isAll
+				? undefined
+				: exists(
+						locals.db
+							.select({ one: sql`1` })
+							.from(schema.subscriptionToProduct)
+							.innerJoin(
+								schema.subscription,
+								eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
+							)
+							.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+							.where(
+								and(
+									eq(schema.subscriptionToProduct.serialNumber, schema.product.serialNumber),
+									eq(schema.user.managedBy, group)
+								)
+							)
+					),
+
+			// Activities managed by the group
+			activity: isAll ? undefined : eq(schema.activity.managedBy, group)
+		};
+	}
+
 	const staff = locals.user;
 	if (!staff) throw error(401, 'You must be signed in to view the dashboard');
 
@@ -123,7 +125,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		[subscriptionStats],
 		[productStats]
 	] = await Promise.all([
-		db
+		locals.db
 			.select({
 				activity: schema.activity.activity,
 				totalUses: count(),
@@ -132,7 +134,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 			.from(schema.activity)
 			.where(and(between(schema.activity.time, startDate, endDate), scope.activity))
 			.groupBy(schema.activity.activity),
-		db
+		locals.db
 			.select({
 				type: schema.subscription.type,
 				createdAt: schema.subscription.createdAt,
@@ -146,20 +148,23 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 					scope.subscription
 				)
 			),
-		db
+		locals.db
 			.select({ createdAt: schema.user.createdAt })
 			.from(schema.user)
 			.where(and(lte(schema.user.createdAt, endDate), scope.user)),
-		db
+		locals.db
 			.select({ sn: schema.product.serialNumber, createdAt: schema.product.createdAt })
 			.from(schema.product)
 			.where(and(lte(schema.product.createdAt, endDate), scope.product)),
-		db.select(periodCounts(schema.user.createdAt, cutoffs)).from(schema.user).where(scope.user),
-		db
+		locals.db
+			.select(periodCounts(schema.user.createdAt, cutoffs))
+			.from(schema.user)
+			.where(scope.user),
+		locals.db
 			.select(periodCounts(schema.subscription.createdAt, cutoffs))
 			.from(schema.subscription)
 			.where(scope.subscription),
-		db
+		locals.db
 			.select(periodCounts(schema.product.createdAt, cutoffs))
 			.from(schema.product)
 			.where(scope.product)

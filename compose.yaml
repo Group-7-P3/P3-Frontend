@@ -10,5 +10,19 @@ services:
       POSTGRES_DB: local
     volumes:
       - pgdata:/var/lib/postgresql
+
+  demo-db:
+    image: postgres
+    restart: always
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: demo
+    volumes:
+      - pgdata-demo:/var/lib/postgresql
+
 volumes:
   pgdata:
+  pgdata-demo:
