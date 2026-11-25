@@ -13,7 +13,7 @@
 	let calendarSaved = $state(false);
 
 	// Keeps track of the inputs in the form.
-	let selectedDateFormat = $state('');
+	let selectedDateFormat = $state(page.data.dateFormat);
 	let selectedFirstDay = $state(page.data.firstDay);
 
 	let selectedTimeZone = $state(page.data.timeZone);
@@ -25,13 +25,8 @@
 	/**
 	 * Runs when the calendar form is submitted.
 	 */
-	const handleCalendarSubmit: SubmitFunction = ({ cancel }) => {
+	const handleCalendarSubmit: SubmitFunction = () => {
 		calendarSaved = false;
-
-		if (!selectedTimeZone) {
-			cancel();
-			return;
-		}
 
 		// The form's 'action="?/saveCalendar"' does the actual changes
 
@@ -50,19 +45,19 @@
 				<!-- Date format -->
 				<Field.Field>
 					<Field.Label for="dateFormat">Date format</Field.Label>
-					<RadioGroup.Root name="dateFormat" bind:value={selectedDateFormat}>
+					<RadioGroup.Root name="dateformat" bind:value={selectedDateFormat}>
 						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="DMY" id="DMY" />
+							<RadioGroup.Item value="en-GB" id="DMY" />
 							<Label for="DMY" class="font-normal">Day-Month-Year</Label>
 						</div>
 
 						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="MDY" id="MDY" />
+							<RadioGroup.Item value="en-US" id="MDY" />
 							<Label for="MDY" class="font-normal">Month-Day-Year</Label>
 						</div>
 
 						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="YMD" id="YMD" />
+							<RadioGroup.Item value="en-CA" id="YMD" />
 							<Label for="YMD" class="font-normal">Year-Month-Day</Label>
 						</div>
 					</RadioGroup.Root>

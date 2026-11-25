@@ -21,5 +21,8 @@ export const load: LayoutServerLoad = async ({ locals, request, cookies }) => {
 	const cookieFD = cookies.get('firstday');
 	const firstDay = cookieFD && (cookieFD === '1' || cookieFD === '0') ? cookieFD : '1';
 
-	return { session, timeZone, firstDay };
+	const cookieDF = cookies.get('dateformat');
+	const dateFormat = cookieDF && (cookieDF === 'en-US' || cookieDF === 'en-GB' || cookieDF === 'en-CA') ? cookieDF : 'en-GB';
+
+	return { session, timeZone, firstDay, dateFormat };
 };
