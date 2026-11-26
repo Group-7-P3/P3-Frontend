@@ -1,16 +1,15 @@
-import type { PageServerLoad, Actions } from './$types';
-import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const [product] = await db
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const [product] = await locals.db
 		.select()
 		.from(schema.product)
 		.where(eq(schema.product.serialNumber, Number(params.serialNumber)));
 
-	const subscriptions = await db
+	const subscriptions = await locals.db
 		.select({
 			licenseKey: schema.subscription.licenseKey,
 			type: schema.subscription.type
@@ -30,19 +29,19 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, params }) => {
+	default: async ({ request, params, locals }) => {
 		const formData = await request.formData();
 		const status = formData.get('status') as 'active' | 'inactive' | 'deactivated';
 		const targetScope = formData.get('targetScope') as string;
 		const newLicenseKey = formData.get('newLicenseKey') as string | null;
 
-		await db
+		await locals.db
 			.update(schema.product)
 			.set({ status })
 			.where(eq(schema.product.serialNumber, Number(params.serialNumber)));
 
 		if (targetScope && targetScope !== 'all' && newLicenseKey && newLicenseKey !== targetScope) {
-			await db
+			await locals.db
 				.update(schema.subscriptionToProduct)
 				.set({ licenseKey: Number(newLicenseKey) })
 				.where(

@@ -21,7 +21,18 @@ export const load: LayoutServerLoad = async ({ locals, request, cookies }) => {
 	const firstDay = cookieFD && (cookieFD === '1' || cookieFD === '0') ? cookieFD : '1';
 
 	const cookieDF = cookies.get('dateformat');
-	const dateFormat = cookieDF && (cookieDF === 'en-US' || cookieDF === 'en-GB' || cookieDF === 'en-CA') ? cookieDF : 'en-GB';
+	const dateFormat =
+		cookieDF && (cookieDF === 'en-US' || cookieDF === 'en-GB' || cookieDF === 'en-CA')
+			? cookieDF
+			: 'en-GB';
 
-	return { session, timeZone, firstDay, dateFormat };
+	return {
+		session,
+		timeZone,
+		firstDay,
+		dateFormat,
+		isDemo: locals.isDemo,
+		demo: locals.isDemo ? ('demo' as const) : undefined,
+		base: locals.isDemo ? '/demo' : ''
+	};
 };

@@ -20,7 +20,10 @@
 
 	function handleRowClick(row: (typeof data.products)[number]) {
 		goto(
-			resolve('/(protected)/products/[serialNumber]', { serialNumber: String(row.serialNumber) })
+			resolve('/(protected)/[[demo=demo]]/products/[serialNumber]', {
+				demo: data.demo,
+				serialNumber: String(row.serialNumber)
+			})
 		);
 	}
 </script>
@@ -38,6 +41,6 @@
 	filter={data.filter}
 	sort={data.sort}
 	direction={data.direction}
-	route="/(protected)/products"
+	route="/(protected)/[[demo=demo]]/products"
 	onRowClick={handleRowClick}
 />

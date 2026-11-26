@@ -1,8 +1,7 @@
-import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import { error } from 'console';
 import { eq, or, ilike, sql, and, desc, asc, getTableColumns, countDistinct } from 'drizzle-orm';
-import type { PageServerLoad } from '../$types';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staff = locals.user;
@@ -49,7 +48,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
 
 	const [products, [{ total }]] = await Promise.all([
-		db
+		locals.db
 			.selectDistinct({
 				...getTableColumns(schema.product),
 				managedBy: schema.user.managedBy
@@ -68,7 +67,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.orderBy(orderBy)
 			.limit(pageSize)
 			.offset((page - 1) * pageSize),
-		db
+		locals.db
 			.select({ total: countDistinct(schema.product.serialNumber) })
 			.from(schema.product)
 			.innerJoin(

@@ -10,7 +10,8 @@
 	import { enhance } from '$app/forms';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import DataTableDate from '#lib/components/ui/data-table/data-table-date.svelte';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import DataTableDate from '$lib/components/ui/data-table/data-table-date.svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import Badge from '#lib/components/ui/badge/badge.svelte';
@@ -21,6 +22,7 @@
 
 	// Local form state initialized from data so editing doesn't mutate the left display card prematurely
 	let editUserId = $state('');
+	let editDistributor = $derived(data.user.managedBy ?? '');
 	let clientError = $state<string | null>(null);
 
 	let formElement = $state<HTMLFormElement | null>(null);
@@ -55,6 +57,7 @@
 	// Clears the userId dialog box and the distributor dropdown
 	function clearForm() {
 		editUserId = '';
+		editDistributor = data.user.managedBy ?? '';
 		clientError = null;
 	}
 
@@ -63,21 +66,22 @@
 		confirmDialogOpen = false;
 		formElement?.requestSubmit();
 		editUserId = '';
+		editDistributor = data.user.managedBy ?? '';
 	}
 </script>
 
 <svelte:head>
-	<title>Subscription ({data.subscription.licenseKey})</title>
+	<title>User {data.user.id}</title>
 </svelte:head>
 
 <div class="w-full space-y-6 text-left">
-	<!-- Back to Subscriptions link -->
+	<!-- Back to Users link -->
 	<Button variant="link" class="px-0">
 		<a
-			href={resolve('/(protected)/subscriptions')}
+			href={resolve('/(protected)/[[demo=demo]]/users', { demo: data.demo })}
 			class="text-sm text-muted-foreground hover:underline"
 		>
-			&larr; Back to Subscriptions
+			&larr; Back to Users
 		</a>
 	</Button>
 
@@ -86,66 +90,14 @@
 		<Card.Root class="md:col-span-2">
 			<Card.Header>
 				<Card.Title>
-					Subscription: {data.subscription.licenseKey}
+					User: {data.user.id}
 				</Card.Title>
 			</Card.Header>
 			<Card.Content class="space-y-2">
-				<!-- License key -->
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">License key</dt>
-					<dd class="group font-mono text-sm font-medium text-foreground">
-						<Button
-							variant="ghost"
-							size="icon-xs"
-							class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-							onclick={async (e) => {
-								e.stopPropagation();
-								try {
-									await navigator.clipboard.writeText(String(data.subscription.licenseKey));
-									toast.success('Successfully copied to clipboard.');
-								} catch {
-									toast.error('Failed to copy to clipboard! Check browser permissions.');
-								}
-							}}
-						>
-							<Copy class="h-3 w-3" />
-						</Button>
-						{data.subscription.licenseKey}
-					</dd>
-				</div>
-
-				<Separator />
-
-				<!-- Customer ID -->
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">Customer ID</dt>
-					<dd class="group font-mono text-sm font-medium text-foreground">
-						<Button
-							variant="ghost"
-							size="icon-xs"
-							class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-							onclick={async (e) => {
-								e.stopPropagation();
-								try {
-									await navigator.clipboard.writeText(String(data.subscription.customerId));
-									toast.success('Successfully copied to clipboard.');
-								} catch {
-									toast.error('Failed to copy to clipboard! Check browser permissions.');
-								}
-							}}
-						>
-							<Copy class="h-3 w-3" />
-						</Button>
-						{data.subscription.customerId}
-					</dd>
-				</div>
-
-				<Separator />
-
-				<!-- User ID -->
-				<div class="flex items-center justify-between">
+				<!-- Row 1: User ID -->
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
-					<dd class="group font-mono text-sm font-medium text-foreground">
+					<dd class="flex items-center gap-2 font-mono text-sm font-medium text-foreground">
 						<Button
 							variant="ghost"
 							size="icon-xs"
@@ -153,7 +105,7 @@
 							onclick={async (e) => {
 								e.stopPropagation();
 								try {
-									await navigator.clipboard.writeText(String(data.subscription.userId));
+									await navigator.clipboard.writeText(String(data.user.id));
 									toast.success('Successfully copied to clipboard.');
 								} catch {
 									toast.error('Failed to copy to clipboard! Check browser permissions.');
@@ -162,69 +114,14 @@
 						>
 							<Copy class="h-3 w-3" />
 						</Button>
-						{data.subscription.userId}
-						<Button
-							variant="outline"
-							size="icon-xs"
-							onclick={() => {
-								goto(
-									resolve('/(protected)/users/[id]', {
-										id: String(data.subscription.userId)
-									})
-								);
-							}}
-						>
-							<ExternalLink />
-						</Button>
+						{data.user.id}
 					</dd>
 				</div>
 
-				<Separator />
-
-				<!-- Type -->
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">Type</dt>
-					<dd class="font-mono text-sm font-medium text-foreground">
-						{wordsToTitleCase(data.subscription.type)}
-					</dd>
-				</div>
-
-				<Separator />
-
-				<!-- Created at -->
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">Created at:</dt>
-					<dd class="text-sm font-medium text-foreground">
-						<DataTableDate value={data.subscription.createdAt} />
-					</dd>
-				</div>
-
-				<Separator />
-
-				<!-- Updated at -->
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">Updated at:</dt>
-					<dd class="text-sm font-medium text-foreground">
-						<DataTableDate value={data.subscription.updatedAt} />
-					</dd>
-				</div>
-
-				<Separator />
-
-				<!-- Expires at -->
-				<div class="flex items-center justify-between">
-					<dt class="text-sm font-normal text-muted-foreground">Expires at:</dt>
-					<dd class="text-sm font-medium text-foreground">
-						<DataTableDate value={data.subscription.expiresAt} />
-					</dd>
-				</div>
-
-				<Separator />
-
-				<!-- Distributor -->
-				<div class="flex items-center justify-between">
+				<!-- Row 2: Distributor -->
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
 					<dt class="text-sm font-normal text-muted-foreground">Distributor</dt>
-					<dd class="group text-sm font-medium text-foreground">
+					<dd class="flex items-center gap-2 text-sm font-medium text-foreground">
 						<Button
 							variant="ghost"
 							size="icon-xs"
@@ -244,13 +141,29 @@
 						{data.user.managedBy}
 					</dd>
 				</div>
+
+				<!-- Row 3: Created at -->
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
+					<dt class="text-sm font-normal text-muted-foreground">Created at</dt>
+					<dd class="flex items-center gap-2 text-sm font-medium text-foreground">
+						<DataTableDate value={data.user.createdAt} />
+					</dd>
+				</div>
+
+				<!-- Row 4: Updated at -->
+				<div class="group flex items-center justify-between border-b py-2 last:border-0">
+					<dt class="text-sm font-normal text-muted-foreground">Updated at</dt>
+					<dd class="flex items-center gap-2 text-sm font-medium text-foreground">
+						<DataTableDate value={data.user.updatedAt} />
+					</dd>
+				</div>
 			</Card.Content>
 		</Card.Root>
 
 		<!-- Right Box: Edit Form -->
 		<Card.Root class="md:col-span-3">
 			<Card.Header>
-				<Card.Title>Edit Subscription</Card.Title>
+				<Card.Title>Edit User</Card.Title>
 			</Card.Header>
 			<Card.Content>
 				<form
@@ -263,7 +176,7 @@
 						}}
 				>
 					<dl class="grid gap-4">
-						<!-- User ID -->
+						<!-- Row 1: User ID ) -->
 						<div class="flex items-center justify-between gap-4">
 							<dt class="text-sm font-normal text-muted-foreground">User ID</dt>
 							<dd class="w-56">
@@ -285,6 +198,27 @@
 								</Field.Field>
 							</dd>
 						</div>
+
+						<Separator />
+
+						<!-- Row 2: Distributor -->
+						<div class="flex items-center justify-between gap-4">
+							<dt class="text-sm font-normal text-muted-foreground">Distributor</dt>
+							<dd class="w-56">
+								<Select.Root type="single" name="managedBy" bind:value={editDistributor}>
+									<Select.Trigger class="w-full">
+										<Select.Value placeholder="Select distributor" />
+									</Select.Trigger>
+									<Select.Content>
+										{#each data.distributors as distributors (distributors)}
+											<Select.Item value={distributors} label={distributors}>
+												{distributors}
+											</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+							</dd>
+						</div>
 					</dl>
 				</form>
 			</Card.Content>
@@ -296,20 +230,20 @@
 	<!-- Bottom: Full Width Box -->
 	<Card.Root class="md:col-span-5">
 		<Card.Header>
-			<Card.Title>Products</Card.Title>
+			<Card.Title>Active Subscriptions</Card.Title>
 		</Card.Header>
 
 		<Card.Content>
-			{#if data.products && data.products.length > 0}
+			{#if data.subscriptions && data.subscriptions.length > 0}
 				<div class="grid grid-cols-[repeat(3,minmax(275px,1fr))] gap-4">
-					{#each data.products as product, i (product.serialNumber)}
+					{#each data.subscriptions as sub, i (sub.licenseKey)}
 						<Card.Root class="relative flex-1 overflow-visible rounded-sm">
 							<Badge class="absolute -top-2 -left-2 w-5">{i + 1}</Badge>
 							<Card.Content>
 								<dl class="grid gap-2">
-									<!-- Serial Number -->
+									<!-- License Key -->
 									<div class="flex items-center justify-between">
-										<dt class="text-sm font-normal text-muted-foreground">Serial Number</dt>
+										<dt class="text-sm font-normal text-muted-foreground">License Key</dt>
 										<dd
 											class="group inline-flex items-center gap-2 font-mono text-sm font-medium text-foreground"
 										>
@@ -320,7 +254,7 @@
 												onclick={async (e) => {
 													e.stopPropagation();
 													try {
-														await navigator.clipboard.writeText(String(product.licenseKey));
+														await navigator.clipboard.writeText(String(sub.licenseKey));
 														toast.success('Successfully copied to clipboard.');
 													} catch {
 														toast.error('Failed to copy to clipboard! Check browser permissions.');
@@ -329,21 +263,62 @@
 											>
 												<Copy class="h-3 w-3" />
 											</Button>
-											<span>{product.licenseKey}</span>
-											<!-- Button to go to product -->
+											<span>{sub.licenseKey}</span>
+											<!-- Button to go to subscription -->
 											<Button
 												variant="outline"
 												size="icon-xs"
 												onclick={() => {
 													goto(
-														resolve('/(protected)/products/[serialNumber]', {
-															serialNumber: String(product.serialNumber)
+														resolve('/(protected)/[[demo=demo]]/subscriptions/[licenseKey]', {
+															demo: data.demo,
+															licenseKey: String(sub.licenseKey)
 														})
 													);
 												}}
 											>
 												<ExternalLink />
 											</Button>
+										</dd>
+									</div>
+
+									<Separator />
+
+									<!-- Type -->
+									<div class="flex items-center justify-between">
+										<dt class="text-sm font-normal text-muted-foreground">Subscription Type</dt>
+										<dd class="group text-sm font-medium text-foreground">
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												class="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+												onclick={async (e) => {
+													e.stopPropagation();
+													try {
+														await navigator.clipboard.writeText(
+															new Intl.DateTimeFormat(undefined, {
+																dateStyle: 'medium'
+															}).format(new Date(data.user.updatedAt))
+														);
+														toast.success('Successfully copied to clipboard.');
+													} catch {
+														toast.error('Failed to copy to clipboard! Check browser permissions.');
+													}
+												}}
+											>
+												<Copy class="h-3 w-3" />
+											</Button>
+											{wordsToTitleCase(sub.type)}
+										</dd>
+									</div>
+
+									<Separator />
+
+									<!-- Expires -->
+									<div class="flex items-center justify-between">
+										<dt class="text-sm font-normal text-muted-foreground">Expires</dt>
+										<dd class="text-sm font-medium text-foreground">
+											<DataTableDate value={sub.expiresAt} />
 										</dd>
 									</div>
 								</dl>
@@ -369,7 +344,7 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action variant="destructive" type="button" onclick={submitEdits}
+			<AlertDialog.Action variant="outline" type="button" onclick={submitEdits}
 				>Confirm changes</AlertDialog.Action
 			>
 		</AlertDialog.Footer>

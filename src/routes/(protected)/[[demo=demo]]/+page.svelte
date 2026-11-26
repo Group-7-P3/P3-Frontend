@@ -20,7 +20,9 @@
 	let { data }: { data: PageData } = $props();
 
 	let todayInZone = $derived(today(data.timeZone));
+	// svelte-ignore state_referenced_locally
 	let start = $state(today(data.timeZone).set({ month: 1, day: 1 }));
+	// svelte-ignore state_referenced_locally
 	let end = $state(today(data.timeZone));
 	// svelte-ignore state_referenced_locally
 	let calendarValue: DateRange = $state({ start, end });
@@ -310,7 +312,7 @@
 <div class="m-0 flex w-full max-w-7xl gap-6">
 	<StatCard
 		title="Users"
-		href={resolve('/(protected)/users')}
+		href={resolve('/(protected)/[[demo=demo]]/users', { demo: data.demo })}
 		day={data.stats.users.day}
 		week={data.stats.users.week}
 		month={data.stats.users.month}
@@ -319,7 +321,7 @@
 	/>
 	<StatCard
 		title="Subscriptions"
-		href={resolve('/(protected)/subscriptions')}
+		href={resolve('/(protected)/[[demo=demo]]/subscriptions', { demo: data.demo })}
 		day={data.stats.subscriptions.day}
 		week={data.stats.subscriptions.week}
 		month={data.stats.subscriptions.month}
@@ -328,7 +330,7 @@
 	/>
 	<StatCard
 		title="Products"
-		href={resolve('/(protected)/products')}
+		href={resolve('/(protected)/[[demo=demo]]/products', { demo: data.demo })}
 		day={data.stats.products.day}
 		week={data.stats.products.week}
 		month={data.stats.products.month}

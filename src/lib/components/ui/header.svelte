@@ -4,6 +4,7 @@
 	import logo from '#lib/assets/logo.png';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 
 	interface Props {
 		sidebar?: boolean;
@@ -32,7 +33,7 @@
 		<span></span>
 	{/if}
 	<h2 class="absolute top-1/2 left-1/2 -translate-1/2">{title}</h2>
-	<a href={resolve('/(protected)')} class="relative">
+	<a href={resolve('/(protected)/[[demo=demo]]', { demo: page.data.demo })} class="relative">
 		<img alt="INNOVAID" src={logo} class="h-4" />
 
 		<!-- To Make the clickable area larger -->

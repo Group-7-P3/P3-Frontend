@@ -1,4 +1,3 @@
-import { db } from '$lib/server/db';
 import { sql } from 'drizzle-orm';
 import type { RequestHandler } from '@sveltejs/kit';
 
@@ -49,7 +48,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		const startedAt = performance.now();
 		let rowsRead: number | undefined;
 		if (isReadOnlyQuery(body.query)) {
-			const explainResult = (await db.execute(
+			const explainResult = (await locals.db.execute(
 				sql.raw(`EXPLAIN (ANALYZE, FORMAT JSON) ${body.query}`)
 			)) as Array<Record<string, unknown>>;
 			const plan = explainResult[0]?.['QUERY PLAN'];
@@ -58,7 +57,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				: undefined;
 			if (rootPlan) rowsRead = countRowsRead(rootPlan);
 		}
-		const result = await db.execute(sql.raw(body.query));
+		const result = await locals.db.execute(sql.raw(body.query));
 		const executionTimeMs = Math.round((performance.now() - startedAt) * 100) / 100;
 		return jsonResponse(
 			{

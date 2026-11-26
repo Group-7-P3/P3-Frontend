@@ -45,7 +45,7 @@
 <div class="container mx-auto space-y-6 p-6">
 	<Button variant="link">
 		<a
-			href={resolve('/(protected)/products')}
+			href={resolve('/(protected)/[[demo=demo]]/products', { demo: data.demo })}
 			class="text-sm text-muted-foreground hover:underline"
 		>
 			&larr; Back to products
@@ -270,7 +270,8 @@
 											size="icon-xs"
 											onclick={() => {
 												goto(
-													resolve('/(protected)/subscriptions/[licenseKey]', {
+													resolve('/(protected)/[[demo=demo]]/subscriptions/[licenseKey]', {
+														demo: data.demo,
 														licenseKey: String(sub.licenseKey)
 													})
 												);
