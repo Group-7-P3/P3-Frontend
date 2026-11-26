@@ -14,7 +14,7 @@
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
-	import { ChevronDown, Copy, Plus } from '@lucide/svelte';
+	import { ChevronDown, Copy, Plus, Funnel } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
@@ -175,20 +175,23 @@
 
 <div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
-		<Input
-			bind:ref={filterInput}
-			placeholder="Filter columns..."
-			value={filter}
-			oninput={(e) => {
-				updateFilter(e.currentTarget.value);
-				updateFilter(e.currentTarget.value);
-			}}
-			class="max-w-sm"
-		/>
 		<div class="flex items-center gap-2">
+			<Input
+				bind:ref={filterInput}
+				placeholder="Filter columns..."
+				value={filter}
+				oninput={(e) => {
+					updateFilter(e.currentTarget.value);
+					updateFilter(e.currentTarget.value);
+				}}
+				class="max-w-sm"
+			/>
+			<Button class="w-fit" variant="secondary"><Funnel /></Button>
 			{#if onAddClick}
-				<Button size="icon" onclick={onAddClick}><Plus /></Button>
+				<Button class="w-fit" onclick={onAddClick}><Plus /> Create Staff</Button>
 			{/if}
+		</div>
+		<div class="flex items-center gap-2">
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
@@ -279,9 +282,9 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={columns.length + 1} class="h-24 text-center"
-							>No results.</Table.Cell
-						>
+						<Table.Cell colspan={columns.length + 1} class="h-24 text-center">
+							No results.
+						</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
