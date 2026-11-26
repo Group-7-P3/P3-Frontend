@@ -14,7 +14,7 @@
 	import Button from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
-	import { ChevronDown, Copy, Plus } from '@lucide/svelte';
+	import { ChevronDown, Copy, Plus, Funnel } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
@@ -23,6 +23,18 @@
 	import { camelToTitleCase, isTimestamp } from '#lib/utils.js';
 	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
+	import { page as thisPage } from '$app/state';
+
+	type PaginatedBase =
+		| '/(protected)/[[demo=demo]]/users'
+		| '/(protected)/[[demo=demo]]/products'
+		| '/(protected)/[[demo=demo]]/subscriptions'
+		| '/(protected)/[[demo=demo]]/staff';
+	type PaginatedRoute =
+		| `/(protected)/[[demo=demo]]/users?${string}`
+		| `/(protected)/[[demo=demo]]/products?${string}`
+		| `/(protected)/[[demo=demo]]/subscriptions?${string}`
+		| `/(protected)/[[demo=demo]]/staff?${string}`;
 
 	type DataTableProps<TData extends RowData> = {
 		class?: string;
@@ -36,13 +48,8 @@
 		filter: string;
 		sort: string;
 		direction: 'asc' | 'desc';
-		route: string;
+		route: PaginatedBase;
 	};
-	type PaginatedRoute =
-		| `/(protected)/users?${string}`
-		| `/(protected)/products?${string}`
-		| `/(protected)/subscriptions?${string}`
-		| `/(protected)/staff?${string}`;
 
 	let {
 		data,
@@ -85,7 +92,7 @@
 			else params.delete(key);
 		}
 		const target = `${route}?${params}` as PaginatedRoute;
-		await goto(resolve(target), { reset: false });
+		await goto(resolve(target, { demo: thisPage.data.demo }), { reset: false });
 	}
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
@@ -168,20 +175,23 @@
 
 <div class={cn('w-fit max-w-full', className)}>
 	<div class="flex items-center justify-between py-4">
-		<Input
-			bind:ref={filterInput}
-			placeholder="Filter columns..."
-			value={filter}
-			oninput={(e) => {
-				updateFilter(e.currentTarget.value);
-				updateFilter(e.currentTarget.value);
-			}}
-			class="max-w-sm"
-		/>
 		<div class="flex items-center gap-2">
+			<Input
+				bind:ref={filterInput}
+				placeholder="Filter columns..."
+				value={filter}
+				oninput={(e) => {
+					updateFilter(e.currentTarget.value);
+					updateFilter(e.currentTarget.value);
+				}}
+				class="max-w-sm"
+			/>
+			<Button class="w-fit" variant="secondary"><Funnel /></Button>
 			{#if onAddClick}
-				<Button size="icon" onclick={onAddClick}><Plus /></Button>
+				<Button class="w-fit" onclick={onAddClick}><Plus /> Create Staff</Button>
 			{/if}
+		</div>
+		<div class="flex items-center gap-2">
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
@@ -272,9 +282,9 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={columns.length + 1} class="h-24 text-center"
-							>No results.</Table.Cell
-						>
+						<Table.Cell colspan={columns.length + 1} class="h-24 text-center">
+							No results.
+						</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
