@@ -24,8 +24,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			or(
 				ilike(sql`${schema.product.serialNumber}::text`, pattern),
 				ilike(sql`${schema.product.status}::text`, pattern),
-				ilike(sql`${schema.product.createdAt}::text`, pattern),
-				ilike(sql`${schema.product.updatedAt}::text`, pattern),
+				// ilike(sql`${schema.product.createdAt}::text`, pattern),
+				// ilike(sql`${schema.product.updatedAt}::text`, pattern),
 				ilike(schema.user.managedBy, pattern)
 			)
 		);

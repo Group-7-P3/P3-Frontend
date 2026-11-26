@@ -25,9 +25,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				ilike(sql`${schema.subscription.licenseKey}::text`, pattern),
 				ilike(sql`${schema.subscription.customerId}::text`, pattern),
 				ilike(sql`${schema.subscription.type}::text`, pattern),
-				ilike(sql`${schema.subscription.createdAt}::text`, pattern),
-				ilike(sql`${schema.subscription.updatedAt}::text`, pattern),
-				ilike(sql`${schema.subscription.expiresAt}::text`, pattern),
+				// ilike(sql`${schema.subscription.createdAt}::text`, pattern),
+				// ilike(sql`${schema.subscription.updatedAt}::text`, pattern),
+				// ilike(sql`${schema.subscription.expiresAt}::text`, pattern),
 				ilike(schema.user.managedBy, pattern)
 			)
 		);

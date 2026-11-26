@@ -45,4 +45,19 @@
 	direction={data.direction}
 	route="/(protected)/[[demo=demo]]/users"
 	onRowClick={handleRowClick}
+	title="Users"
+	filters={[
+		{ key: 'createdAt', label: 'Created At', type: 'date-range' },
+		{ key: 'updatedAt', label: 'Updated At', type: 'date-range' },
+		{
+			key: 'managedBy',
+			label: 'Managed By',
+			type: 'select',
+			options: [
+				{ value: 'innovaid', label: 'INNOVAID' },
+				{ value: 'norway', label: 'Norway' },
+				{ value: 'italy', label: 'Italy' }
+			]
+		}
+	]}
 />

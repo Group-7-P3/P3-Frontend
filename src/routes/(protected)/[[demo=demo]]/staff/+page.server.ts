@@ -12,7 +12,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
 import { groupRules } from '#lib/utils.ts';
-import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, ne, or } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
@@ -49,8 +49,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				ilike(schema.staff.id, pattern),
 				ilike(schema.staff.name, pattern),
 				ilike(schema.staff.email, pattern),
-				ilike(sql`${schema.staff.createdAt}::text`, pattern),
-				ilike(sql`${schema.staff.updatedAt}::text`, pattern),
+				// ilike(sql`${schema.staff.createdAt}::text`, pattern),
+				// ilike(sql`${schema.staff.updatedAt}::text`, pattern),
 				ilike(schema.staff.role, pattern),
 				ilike(schema.staff.group, pattern)
 			)

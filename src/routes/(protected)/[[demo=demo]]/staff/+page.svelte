@@ -40,6 +40,31 @@
 	onAddClick={() => {
 		open = !open;
 	}}
+	title="Staff"
+	filters={[
+		{ key: 'createdAt', label: 'Created At', type: 'date-range' },
+		{ key: 'updatedAt', label: 'Updated At', type: 'date-range' },
+		{
+			key: 'role',
+			label: 'Role',
+			type: 'select',
+			options: [
+				{ value: 'supporter', label: 'Supporter' },
+				{ value: 'admin', label: 'Admin' },
+				{ value: 'owner', label: 'Owner' }
+			]
+		},
+		{
+			key: 'group',
+			label: 'Group',
+			type: 'select',
+			options: [
+				{ value: 'innovaid', label: 'INNOVAID' },
+				{ value: 'norway', label: 'Norway' },
+				{ value: 'italy', label: 'Italy' }
+			]
+		}
+	]}
 />
 
 <NewStaffFormDialog {data} bind:open />

@@ -1,4 +1,7 @@
 <script lang="ts" generics="TData extends RowData">
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Field from '$lib/components/ui/field/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		type RowData,
 		createColumnHelper,
@@ -11,7 +14,7 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { toast } from 'svelte-sonner';
 	import { features, type DataTableFeatures } from './data-table-features.js';
-	import Button from '../button/button.svelte';
+	import Button, { buttonVariants } from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
 	import { ChevronDown, Copy, Plus, Funnel } from '@lucide/svelte';
@@ -24,6 +27,8 @@
 	import DataTableOpenButton from './data-table-open-button.svelte';
 	import DataTableDate from './data-table-date.svelte';
 	import { page as thisPage } from '$app/state';
+	import PopoverRangeCalendar from '../popover-range-calendar.svelte';
+	import { parseDate } from '@internationalized/date';
 
 	type PaginatedBase =
 		| '/(protected)/[[demo=demo]]/users'
@@ -35,8 +40,15 @@
 		| `/(protected)/[[demo=demo]]/products?${string}`
 		| `/(protected)/[[demo=demo]]/subscriptions?${string}`
 		| `/(protected)/[[demo=demo]]/staff?${string}`;
+	type DataTableFilters = {
+		key: string;
+		label: string;
+		type: 'date-range' | 'select';
+		options?: { label: string; value: string }[];
+	}[];
 
 	type DataTableProps<TData extends RowData> = {
+		title?: string;
 		class?: string;
 		columns: string[];
 		data: TData[];
@@ -49,9 +61,11 @@
 		sort: string;
 		direction: 'asc' | 'desc';
 		route: PaginatedBase;
+		filters?: DataTableFilters;
 	};
 
 	let {
+		title,
 		data,
 		columns,
 		class: className,
@@ -63,16 +77,22 @@
 		filter,
 		sort,
 		direction,
-		route
+		route,
+		filters
 	}: DataTableProps<TData> = $props();
 
 	let isMounted = $derived(true);
+	let filtersOpen = $state(false);
+	let draft = $state<Record<string, string>>({});
 	let filterInput = $state<HTMLInputElement | null>(null);
 	// svelte-ignore state_referenced_locally
 	let selectedPageSize = $state(String(pageSize));
 	let filterTimer: ReturnType<typeof setTimeout> | undefined;
 	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
 	let showLoading = $state(false);
+
+	const paramKeys = (f: NonNullable<typeof filters>[number]) =>
+		f.type === 'date-range' ? [`${f.key}From`, `${f.key}To`] : [f.key];
 
 	$effect(() => {
 		if (navigating.to === null) {
@@ -83,6 +103,22 @@
 		const timer = setTimeout(() => (showLoading = true), 100);
 		return () => clearTimeout(timer);
 	});
+
+	function loadDraft() {
+		const next: Record<string, string> = {};
+		for (const f of filters ?? [])
+			for (const k of paramKeys(f)) next[k] = currentPage.url.searchParams.get(k) ?? '';
+		draft = next;
+	}
+
+	function saveFilters() {
+		updateQuery({ ...draft, page: '1' });
+	}
+
+	function resetFilters() {
+		draft = Object.fromEntries(Object.keys(draft).map((k) => [k, '']));
+		updateQuery({ ...draft, page: '1' });
+	}
 
 	async function updateQuery(updates: Record<string, string>) {
 		const params = new SvelteURLSearchParams(currentPage.url.searchParams.toString());
@@ -113,7 +149,6 @@
 			enableSorting: false,
 			enableHiding: false
 		}),
-		// eslint-disable-next-line svelte/no-unused-svelte-ignore
 		// svelte-ignore state_referenced_locally
 		...columns.map((col) => {
 			const label = camelToTitleCase(col);
@@ -174,7 +209,7 @@
 </script>
 
 <div class={cn('w-fit max-w-full', className)}>
-	<div class="flex items-center justify-between py-4">
+	<div class="flex items-center justify-between gap-2 py-4">
 		<div class="flex items-center gap-2">
 			<Input
 				bind:ref={filterInput}
@@ -186,7 +221,78 @@
 				}}
 				class="max-w-sm"
 			/>
-			<Button class="w-fit" variant="secondary"><Funnel /></Button>
+			{#if filters && filters.length > 0}
+				<Dialog.Root bind:open={filtersOpen} onOpenChange={(open) => open && loadDraft()}>
+					<Dialog.Trigger
+						type="button"
+						class={buttonVariants({ variant: 'outline', size: 'icon' })}
+					>
+						<Funnel />
+					</Dialog.Trigger>
+					<Dialog.Content class="sm:max-w-sm">
+						<Dialog.Header>
+							<Dialog.Title>
+								{title ? `${title} Filters` : 'Filters'}
+							</Dialog.Title>
+							<Dialog.Description>
+								Select filters for the {title?.toLowerCase()} table.
+							</Dialog.Description>
+						</Dialog.Header>
+						<Field.Group>
+							{#each filters as f (f.key)}
+								<Field.Field orientation="horizontal" class="justify-between">
+									<Label>{f.label}</Label>
+									{#if f.type === 'date-range'}
+										<PopoverRangeCalendar
+											value={{
+												start: draft[`${f.key}From`] ? parseDate(draft[`${f.key}From`]) : undefined,
+												end: draft[`${f.key}To`] ? parseDate(draft[`${f.key}To`]) : undefined
+											}}
+											onValueChange={(v) => {
+												draft[`${f.key}From`] = v.start?.toString() ?? '';
+												draft[`${f.key}To`] = v.end?.toString() ?? '';
+											}}
+										/>
+									{:else}
+										<Select.Root
+											type="single"
+											items={f.options}
+											value={draft[f.key] ?? ''}
+											onValueChange={(v) => (draft[f.key] = v)}
+										>
+											<Select.Trigger class="w-full max-w-48">
+												<Select.Value placeholder={`Select a ${f.label.toLowerCase()}`} />
+											</Select.Trigger>
+											<Select.Content>
+												<Select.Group>
+													{#each f.options as option (option.value)}
+														<Select.Item value={option.value} label={option.label}>
+															{option.label}
+														</Select.Item>
+													{/each}
+												</Select.Group>
+											</Select.Content>
+										</Select.Root>
+									{/if}
+								</Field.Field>
+							{/each}
+						</Field.Group>
+						<Dialog.Footer>
+							<Dialog.Close type="button" class={buttonVariants()} onclick={saveFilters}>
+								Save
+							</Dialog.Close>
+							<Dialog.Close
+								type="button"
+								class={buttonVariants({ variant: 'destructive' })}
+								onclick={resetFilters}
+							>
+								Reset
+							</Dialog.Close>
+						</Dialog.Footer>
+					</Dialog.Content>
+				</Dialog.Root>
+			{/if}
+
 			{#if onAddClick}
 				<Button class="w-fit" onclick={onAddClick}><Plus /> Create Staff</Button>
 			{/if}

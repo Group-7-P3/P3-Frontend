@@ -53,4 +53,31 @@
 	direction={data.direction}
 	route="/(protected)/[[demo=demo]]/subscriptions"
 	onRowClick={handleRowClick}
+	title="Subscriptions"
+	filters={[
+		{ key: 'createdAt', label: 'Created At', type: 'date-range' },
+		{ key: 'updatedAt', label: 'Updated At', type: 'date-range' },
+		{ key: 'expiresAt', label: 'Expires At', type: 'date-range' },
+		{
+			key: 'type',
+			label: 'Type',
+			type: 'select',
+			options: [
+				{ value: 'home', label: 'Home' },
+				{ value: 'home+', label: 'Home+' },
+				{ value: 'pro', label: 'Pro' },
+				{ value: 'pro+', label: 'Pro+' }
+			]
+		},
+		{
+			key: 'managedBy',
+			label: 'Managed By',
+			type: 'select',
+			options: [
+				{ value: 'innovaid', label: 'INNOVAID' },
+				{ value: 'norway', label: 'Norway' },
+				{ value: 'italy', label: 'Italy' }
+			]
+		}
+	]}
 />
