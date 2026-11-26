@@ -54,18 +54,14 @@
 			options: [
 				{ value: 'active', label: 'Active' },
 				{ value: 'inactive', label: 'Inactive' },
-				{ value: 'archived', label: 'Archived' }
+				{ value: 'deactivated', label: 'Deactivated' }
 			]
 		},
 		{
 			key: 'managedBy',
 			label: 'Managed By',
 			type: 'select',
-			options: [
-				{ value: 'innovaid', label: 'INNOVAID' },
-				{ value: 'norway', label: 'Norway' },
-				{ value: 'italy', label: 'Italy' }
-			]
+			options: data.groups.map((g) => ({ value: g.name, label: g.name }))
 		}
 	]}
 />

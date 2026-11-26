@@ -106,3 +106,12 @@ export function snakeToTitleCase(str: string) {
 export function isTimestamp(value: string): boolean {
 	return /At$|Date$|Time$/i.test(value);
 }
+
+/**
+ * Turns a YYYY-MM-DD param into the start or end of that day, or undefined if invalid.
+ */
+export function dayBound(value: string | null, endOfDay: boolean) {
+	if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+	const date = new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00'}`);
+	return isNaN(date.getTime()) ? undefined : date;
+}

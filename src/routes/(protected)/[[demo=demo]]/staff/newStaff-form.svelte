@@ -15,12 +15,13 @@
 	import { toast } from 'svelte-sonner';
 	import GroupCombobox from './group-combobox.svelte';
 	import type { PageData } from './$types';
+	import type { Role } from '#lib/types.ts';
 
 	let { data, open = $bindable(false) }: { data: PageData; open: boolean } = $props();
 
 	// Get user role for UI Elements
 	const session = authClient.useSession();
-	const role = $derived($session.data?.user?.role as 'owner' | 'admin' | 'supporter' | undefined);
+	const role = $derived($session.data?.user?.role as Role | undefined);
 	const group = $derived($session.data?.user?.group as 'INNOVAID' | undefined);
 
 	// Variables binded to form openings
@@ -42,7 +43,7 @@
 	let newStaffEmailTouched = $state(false);
 	let newStaffPasswordTouched = $state(false);
 	let newRepeatStaffPasswordTouched = $state(false);
-	let newStaffDistibutorGroupTouched = $state(false);
+	let newStaffDistributorGroupTouched = $state(false);
 
 	// Keeps track of the inputs in the form.
 	let newStaffName = $state('');
@@ -111,7 +112,7 @@
 		newStaffEmailTouched = false;
 		newStaffPasswordTouched = false;
 		newRepeatStaffPasswordTouched = false;
-		newStaffDistibutorGroupTouched = false;
+		newStaffDistributorGroupTouched = false;
 	}
 
 	// Form submission handler for creating a new staff member
@@ -155,7 +156,7 @@
 			newStaffEmailTouched === true ||
 			newStaffPasswordTouched === true ||
 			newRepeatStaffPasswordTouched === true ||
-			newStaffDistibutorGroupTouched === true
+			newStaffDistributorGroupTouched === true
 		) {
 			return true;
 		} else {
@@ -258,9 +259,9 @@
 													</AlertDialog.Description>
 												</AlertDialog.Header>
 												<AlertDialog.Footer>
-													<AlertDialog.Cancel type="button" bind:ref={cancelButton}
-														>Cancel</AlertDialog.Cancel
-													>
+													<AlertDialog.Cancel type="button" bind:ref={cancelButton}>
+														Cancel
+													</AlertDialog.Cancel>
 													<AlertDialog.Action
 														class={buttonVariants({ variant: 'destructive' })}
 														type="button"
@@ -377,15 +378,15 @@
 												>
 													<Field.Field orientation="horizontal">
 														<RadioGroup.Item value="supporter" id="newStaffRoleSupporter" />
-														<Field.Label for="newStaffRoleSupporter" class="font-normal"
-															>Supporter</Field.Label
-														>
+														<Field.Label for="newStaffRoleSupporter" class="font-normal">
+															Supporter
+														</Field.Label>
 													</Field.Field>
 													<Field.Field orientation="horizontal">
 														<RadioGroup.Item value="admin" id="newStaffRoleAdmin" />
-														<Field.Label for="newStaffRoleAdmin" class="font-normal"
-															>Admin</Field.Label
-														>
+														<Field.Label for="newStaffRoleAdmin" class="font-normal">
+															Admin
+														</Field.Label>
 													</Field.Field>
 												</RadioGroup.Root>
 											</Field.Set>

@@ -58,11 +58,7 @@
 			key: 'group',
 			label: 'Group',
 			type: 'select',
-			options: [
-				{ value: 'innovaid', label: 'INNOVAID' },
-				{ value: 'norway', label: 'Norway' },
-				{ value: 'italy', label: 'Italy' }
-			]
+			options: data.groups.map((g) => ({ value: g.name, label: g.name }))
 		}
 	]}
 />

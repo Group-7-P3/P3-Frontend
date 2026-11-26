@@ -1,18 +1,15 @@
 import * as schema from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { stringCheck, stringCheckTrim } from '#lib/utils.ts';
+import { dayBound, stringCheck, stringCheckTrim } from '#lib/utils.ts';
 import { fail } from '@sveltejs/kit';
 
-import 'dotenv';
-import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
 import { staff, account } from '$lib/server/db/auth.schema.ts';
 import { groupRules } from '#lib/utils.ts';
-import { and, asc, count, desc, eq, ilike, inArray, ne, or } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, ne, or, gte, lte } from 'drizzle-orm';
+import type { Role } from '#lib/types.ts';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staffUser = locals.user;
@@ -22,6 +19,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		throw error(403, 'Only owners and admins can access the Staff page');
 	}
 
+	const params = url.searchParams;
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 10);
 	const filter = url.searchParams.get('filter') ?? '';
@@ -41,6 +39,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (staffUser.group !== 'INNOVAID') {
 		conditions.push(eq(schema.staff.group, staffUser.group), eq(schema.staff.role, 'supporter'));
 	}
+
+	const groups = await locals.db.select().from(schema.group);
+
+	// Text search
 	const searchFilter = filter.trim();
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
@@ -56,6 +58,24 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			)
 		);
 	}
+
+	// Static filters
+	const role = schema.staff.role.enumValues.find((s) => s === params.get('role'));
+	if (role) conditions.push(eq(schema.staff.role, role));
+
+	const groupFilter = groups.find((g) => g.name === params.get('group'));
+	if (groupFilter) conditions.push(eq(schema.staff.group, groupFilter.name));
+
+	for (const [column, key] of [
+		[schema.staff.createdAt, 'createdAt'],
+		[schema.staff.updatedAt, 'updatedAt']
+	] as const) {
+		const from = dayBound(params.get(`${key}From`), false);
+		const to = dayBound(params.get(`${key}To`), true);
+		if (from) conditions.push(gte(column, from));
+		if (to) conditions.push(lte(column, to));
+	}
+
 	const where = conditions.length ? and(...conditions) : undefined;
 	const sortColumn =
 		(
@@ -83,8 +103,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		locals.db.select({ total: count() }).from(schema.staff).where(where)
 	]);
 
-	const groups = await locals.db.select().from(schema.group);
-
 	return {
 		staff,
 		total,
@@ -97,31 +115,77 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	};
 };
 
-// Custom error code for user creation
-type userCreationErrorCode = 'mail' | 'drizzle' | 'auth';
-
-class userCreationError extends Error {
-	code: userCreationErrorCode;
-
-	constructor(code: userCreationErrorCode, message: string, cause?: unknown) {
-		super(message, { cause });
-		this.name = 'userCreationErrorCode';
-		this.code = code;
-	}
-}
-
-// Sets up and ensures db connection
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-	throw new Error('DATABASE_URL is not set. Check your .env file.');
-}
-const client = postgres(connectionString);
-const dbd = drizzle(client);
-
-type Role = 'supporter' | 'admin';
-
 export const actions = {
 	createStaff: async ({ locals, request }) => {
+		type UserCreationErrorCode = 'mail' | 'drizzle' | 'auth';
+
+		class UserCreationError extends Error {
+			code: UserCreationErrorCode;
+
+			constructor(code: UserCreationErrorCode, message: string, cause?: unknown) {
+				super(message, { cause });
+				this.name = 'userCreationErrorCode';
+				this.code = code;
+			}
+		}
+
+		async function createUser(
+			email: string,
+			name: string,
+			role: Role,
+			group: string,
+			password: string
+		) {
+			// Checks if the email already has a user
+			let existingUser;
+			try {
+				existingUser = await locals.db.select().from(staff).where(eq(staff.email, email));
+			} catch (error) {
+				throw new UserCreationError('drizzle', `Could not check if user exists.`, error);
+			}
+
+			if (existingUser.length > 0) {
+				throw new UserCreationError('mail', `User with email ${email} already exists.`);
+			}
+
+			let hashedPassword;
+			try {
+				hashedPassword = await hashPassword(password);
+			} catch (error) {
+				throw new UserCreationError('auth', 'Could not hash password.', error);
+			}
+
+			const userId = randomUUID();
+
+			// Writes to the db, wrapped to ensure both actions succeed or fail together
+			// Runs transaction through tx package, if either fails, dbd.transaction fails
+			// and doesn't commit anything to the db
+			try {
+				await locals.db.transaction(async (tx) => {
+					await tx.insert(staff).values({
+						id: userId,
+						name,
+						email,
+						emailVerified: true,
+						role,
+						group
+					});
+
+					await tx.insert(account).values({
+						id: randomUUID(),
+						userId,
+						accountId: userId, // Must match userId for Better Auth credential login
+						providerId: 'credential',
+						password: hashedPassword,
+						createdAt: new Date(),
+						updatedAt: new Date()
+					});
+				});
+			} catch (error) {
+				throw new UserCreationError('drizzle', `Could not save the new user.`, error);
+			}
+		}
+
 		if (!locals.user) {
 			return fail(401, {
 				errors: { general: 'You must be signed in to create a new staff member.' }
@@ -206,7 +270,7 @@ export const actions = {
 		try {
 			await createUser(email, name, role, group, password);
 		} catch (error) {
-			if (error instanceof userCreationError) {
+			if (error instanceof UserCreationError) {
 				if (error.code === 'mail') {
 					errors.email = `User with ${email} already exists`;
 					return fail(400, { errors });
@@ -222,60 +286,3 @@ export const actions = {
 		};
 	}
 } satisfies Actions;
-
-async function createUser(
-	email: string,
-	name: string,
-	role: Role,
-	group: string,
-	password: string
-) {
-	// Checks if the email already has a user
-	let existingUser;
-	try {
-		existingUser = await dbd.select().from(staff).where(eq(staff.email, email));
-	} catch (error) {
-		throw new userCreationError('drizzle', `Could not check if user exists.`, error);
-	}
-
-	if (existingUser.length > 0) {
-		throw new userCreationError('mail', `User with email ${email} already exists.`);
-	}
-
-	let hashedPassword;
-	try {
-		hashedPassword = await hashPassword(password);
-	} catch (error) {
-		throw new userCreationError('auth', 'Could not hash password.', error);
-	}
-
-	const userId = randomUUID();
-
-	// Writes to the db, wrapped to ensure both actions succeed or fail together
-	// Runs transaction through tx package, if either fails, dbd.transaction fails
-	// and doesn't commit anything to the db
-	try {
-		await dbd.transaction(async (tx) => {
-			await tx.insert(staff).values({
-				id: userId,
-				name,
-				email,
-				emailVerified: true,
-				role,
-				group
-			});
-
-			await tx.insert(account).values({
-				id: randomUUID(),
-				userId,
-				accountId: userId, // Must match userId for Better Auth credential login
-				providerId: 'credential',
-				password: hashedPassword,
-				createdAt: new Date(),
-				updatedAt: new Date()
-			});
-		});
-	} catch (error) {
-		throw new userCreationError('drizzle', `Could not save the new user.`, error);
-	}
-}

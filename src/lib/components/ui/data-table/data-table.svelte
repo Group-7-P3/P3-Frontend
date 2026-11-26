@@ -84,6 +84,11 @@
 	let isMounted = $derived(true);
 	let filtersOpen = $state(false);
 	let draft = $state<Record<string, string>>({});
+	const activeFilterCount = $derived(
+		(filters ?? []).filter((f) => paramKeys(f).some((k) => currentPage.url.searchParams.get(k)))
+			.length
+	);
+	const hasActiveFilters = $derived(activeFilterCount > 0);
 	let filterInput = $state<HTMLInputElement | null>(null);
 	// svelte-ignore state_referenced_locally
 	let selectedPageSize = $state(String(pageSize));
@@ -225,7 +230,10 @@
 				<Dialog.Root bind:open={filtersOpen} onOpenChange={(open) => open && loadDraft()}>
 					<Dialog.Trigger
 						type="button"
-						class={buttonVariants({ variant: 'outline', size: 'icon' })}
+						class={cn(
+							buttonVariants({ variant: 'secondary', size: 'icon' }),
+							hasActiveFilters ? 'border-2 border-secondary-foreground' : ''
+						)}
 					>
 						<Funnel />
 					</Dialog.Trigger>
