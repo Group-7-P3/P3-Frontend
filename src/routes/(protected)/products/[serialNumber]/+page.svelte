@@ -210,7 +210,7 @@
 							<AlertDialog.Header>
 								<AlertDialog.Title>Are you sure?</AlertDialog.Title>
 								<AlertDialog.Description>
-									This action will change the product
+									This action will be permament, are you sure?
 								</AlertDialog.Description>
 							</AlertDialog.Header>
 							<AlertDialog.Footer>
