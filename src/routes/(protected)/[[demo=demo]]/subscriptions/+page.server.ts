@@ -1,12 +1,14 @@
 import * as schema from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { and, asc, count, desc, eq, getTableColumns, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, getTableColumns, ilike, or, sql, gte, lte } from 'drizzle-orm';
+import { dayBound } from '#lib/utils.ts';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const staff = locals.user;
 	if (!staff) throw error(401, 'You must be signed in to view subscriptions');
 
+	const params = url.searchParams;
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 	const pageSize = Math.max(1, Number(url.searchParams.get('size')) || 10);
 	const filter = url.searchParams.get('filter') ?? '';
@@ -17,6 +19,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const conditions = [];
 	if (staff.group !== 'INNOVAID') conditions.push(eq(schema.user.managedBy, staff.group));
 
+	const groups = await locals.db.select().from(schema.group);
+
+	// Text search
 	const searchFilter = filter.trim();
 	if (searchFilter) {
 		const pattern = `%${searchFilter}%`;
@@ -25,12 +30,30 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				ilike(sql`${schema.subscription.licenseKey}::text`, pattern),
 				ilike(sql`${schema.subscription.customerId}::text`, pattern),
 				ilike(sql`${schema.subscription.type}::text`, pattern),
-				ilike(sql`${schema.subscription.createdAt}::text`, pattern),
-				ilike(sql`${schema.subscription.updatedAt}::text`, pattern),
-				ilike(sql`${schema.subscription.expiresAt}::text`, pattern),
+				// ilike(sql`${schema.subscription.createdAt}::text`, pattern),
+				// ilike(sql`${schema.subscription.updatedAt}::text`, pattern),
+				// ilike(sql`${schema.subscription.expiresAt}::text`, pattern),
 				ilike(schema.user.managedBy, pattern)
 			)
 		);
+	}
+
+	// Static filters
+	const type = schema.subscription.type.enumValues.find((s) => s === params.get('type'));
+	if (type) conditions.push(eq(schema.subscription.type, type));
+
+	const managedByFilter = groups.find((g) => g.name === params.get('managedBy'));
+	if (managedByFilter) conditions.push(eq(schema.user.managedBy, managedByFilter.name));
+
+	for (const [column, key] of [
+		[schema.subscription.createdAt, 'createdAt'],
+		[schema.subscription.updatedAt, 'updatedAt'],
+		[schema.subscription.expiresAt, 'expiresAt']
+	] as const) {
+		const from = dayBound(params.get(`${key}From`), false);
+		const to = dayBound(params.get(`${key}To`), true);
+		if (from) conditions.push(gte(column, from));
+		if (to) conditions.push(lte(column, to));
 	}
 
 	const where = conditions.length ? and(...conditions) : undefined;
@@ -83,6 +106,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		pageSize,
 		filter,
 		sort,
-		direction
+		direction,
+		groups
 	};
 };

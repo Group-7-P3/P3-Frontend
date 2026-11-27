@@ -43,4 +43,25 @@
 	direction={data.direction}
 	route="/(protected)/[[demo=demo]]/products"
 	onRowClick={handleRowClick}
+	title="Products"
+	filters={[
+		{ key: 'createdAt', label: 'Created At', type: 'date-range' },
+		{ key: 'updatedAt', label: 'Updated At', type: 'date-range' },
+		{
+			key: 'status',
+			label: 'Status',
+			type: 'select',
+			options: [
+				{ value: 'active', label: 'Active' },
+				{ value: 'inactive', label: 'Inactive' },
+				{ value: 'deactivated', label: 'Deactivated' }
+			]
+		},
+		{
+			key: 'managedBy',
+			label: 'Managed By',
+			type: 'select',
+			options: data.groups.map((g) => ({ value: g.name, label: g.name }))
+		}
+	]}
 />

@@ -40,6 +40,27 @@
 	onAddClick={() => {
 		open = !open;
 	}}
+	title="Staff"
+	filters={[
+		{ key: 'createdAt', label: 'Created At', type: 'date-range' },
+		{ key: 'updatedAt', label: 'Updated At', type: 'date-range' },
+		{
+			key: 'role',
+			label: 'Role',
+			type: 'select',
+			options: [
+				{ value: 'supporter', label: 'Supporter' },
+				{ value: 'admin', label: 'Admin' },
+				{ value: 'owner', label: 'Owner' }
+			]
+		},
+		{
+			key: 'group',
+			label: 'Group',
+			type: 'select',
+			options: data.groups.map((g) => ({ value: g.name, label: g.name }))
+		}
+	]}
 />
 
 <NewStaffFormDialog {data} bind:open />
