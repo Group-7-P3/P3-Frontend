@@ -4,6 +4,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Field from '$lib/components/ui/field/index.js';
+	import * as XLSX from 'xlsx';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Check, Code, Copy, Play, Redo2, Table2, Undo2 } from '@lucide/svelte';
 	import { tick } from 'svelte';
@@ -11,6 +12,11 @@
 	import { Download } from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { enhance, type SubmitFunction } from '$app/forms';
+  import { resolve } from '$app/paths';
+	import type { PageData } from './$types';
+	import { DEFAULT_TIME_ZONE } from '#lib/utils/timezones.ts';
+
+	let { data }: { data: PageData } = $props();
 
 	type TableSchema = {
 		name: string;
@@ -941,11 +947,14 @@ ORDER BY s.expires_at ASC;`;
 		queryExecutionTimeMs = 0;
 
 		try {
-			const response = await fetch('/database', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ query })
-			});
+			const response = await fetch(
+				resolve('/(protected)/[[demo=demo]]/database', { demo: data.demo }),
+				{
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ query })
+				}
+			);
 			const payload: {
 				rows?: QueryRow[];
 				rowCount?: number;
@@ -983,20 +992,58 @@ ORDER BY s.expires_at ASC;`;
 		return queryRows.length ? Object.keys(queryRows[0]) : [];
 	}
 
+	const DATE_COLUMNS = new Set(['created_at', 'updated_at', 'expires_at']);
+
 	/**
-	 * Converts JSON to csv
-	*/
-	function jsonToCsv(data: QueryRow[]): string {
-		if (data.length === 0) {
-			return "";
+	 * Formats dates so it is ready for Excel export
+	 * @param key The column name of the current cell
+	 * @param value The value of the current cell
+	 */
+	function formatForExcel(key: string, value: unknown): unknown {
+		if (value == null) return value;
+
+		if (DATE_COLUMNS.has(key) && value != null) {
+			return new Intl.DateTimeFormat('en-CA', {
+				timeZone: DEFAULT_TIME_ZONE,
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				...(key !== 'expires_at' && {hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit',
+				hour12: false,
+				timeZoneName: 'short',
+			}),
+			}).format(new Date(String(value)));
 		}
 
-		const headers = Object.keys(data[0]);
-		const rows = data.map(obj =>
-			headers.map(header => obj[header] ?? "").join(",")
+		return value;
+	}
+
+	/**
+	 * Converts JSON to XLSX
+	 * @param data The data rows to be exported
+	 */
+	function downloadExcel(data: QueryRow[]) {
+		console.log('download clicked');
+    	console.log(data);
+
+		const rows = data.map((row) =>
+			Object.fromEntries(
+				Object.entries(row).map(([key, value]) => [key, formatForExcel(key, value)])
+			)
 		);
 
-		return [headers.join(","), ...rows].join("\n");
+		console.log(rows);
+
+		const worksheet = XLSX.utils.json_to_sheet(rows);
+
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, 'Query Results');
+
+		console.log('about to write file');
+
+		XLSX.writeFile(workbook, 'query-results.xlsx');
 	}
 	// Keeps track of the inputted password.
 	let password = $state('');
@@ -1208,34 +1255,25 @@ ORDER BY s.expires_at ASC;`;
 						<div class="flex gap-2">
 							<span
 								class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
-								>Completed</span
 							>
+								Completed
+							</span>
 							{#if queryRows.length !== 0}
-							<Button
-								variant="outline"
-								size="icon-xs"
-								onclick={async() => {
-									const csvData = jsonToCsv(queryRows);
-									const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
-									const url = URL.createObjectURL(blob);
-
-									const link = document.createElement('a');
-									link.href = url;
-									link.download = 'query-results';
-									link.click();
-
-									setTimeout(() => URL.revokeObjectURL(url), 1000);
-								}}
-							>
-								<Download />
-							</Button>
+								<Button
+									variant="outline"
+									size="icon-xs"
+									onclick={() => downloadExcel(queryRows)}
+								>
+									<Download />
+								</Button>
 							{/if}
 						</div>
 					{:else if queryStatus === 'error'}
 						<span
 							class="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive"
-							>Failed</span
 						>
+							Failed
+						</span>
 					{/if}
 				</Card.Header>
 
@@ -1324,8 +1362,8 @@ ORDER BY s.expires_at ASC;`;
 		<Dialog.Header>
 			<Dialog.Title>Dangerous Query!</Dialog.Title>
 			<Dialog.Description>
-				This action cannot be undone. This will permanently {querySeverity} the database.
-				Enter your password to continue.
+				This action cannot be undone. This will permanently {querySeverity} the database. Enter your password
+				to continue.
 			</Dialog.Description>
 		</Dialog.Header>
 
