@@ -38,7 +38,7 @@ async function main() {
 		'🌱 Starting database seeding (Copenhagen timezone, strictly past year up to today)...'
 	);
 
-	// 0. Clear existing data (in reverse order of dependencies)
+	// Clear existing data (in reverse order of dependencies)
 	console.log('🧹 Cleaning existing data...');
 	await db.delete(schema.activity);
 	await db.delete(schema.subscriptionToProduct);
@@ -46,26 +46,58 @@ async function main() {
 	await db.delete(schema.product);
 	await db.delete(schema.user);
 	await db.delete(schema.group);
+	await db.delete(schema.productType);
 
-	// 1. Seed Groups
-	console.log('📦 Inserting dummy groups...');
+	// Seed Groups
+	console.log('👥 Inserting dummy groups...');
 	const groupNames = ['INNOVAID', 'Norway', 'Italy'];
 	const groups = groupNames.map((g) => ({ name: g }));
 	await db.insert(schema.group).values(groups).returning();
+	console.log(`✅ Successfully seeded ${groups.length} groups.`);
 
-	// 2. Seed Products
+	// Seed Product Types
+	console.log('🆎 Inserting dummy product types...');
+	const productTypes = [
+		{ id: 20, type: 'pad_pro' },
+		{ id: 21, type: 'pad_home' }
+	];
+	await db.insert(schema.productType).values(productTypes).returning();
+	console.log(`✅ Successfully seeded ${productTypes.length} product types.`);
+
+	const usedSerials = new Set();
+	const generateUniqueSerial = () => {
+		let serial;
+		do {
+			const pad = (num: number, size = 2) => String(num).padStart(size, '0');
+			const year = faker.number.int({ min: 20, max: 26 });
+			const week = pad(faker.number.int({ min: 1, max: 52 }));
+			const type = faker.helpers.arrayElement([20, 21]);
+			const make = pad(faker.number.int({ min: 1, max: 999 }), 3);
+
+			serial = Number(`${year}${week}${type}${make}`);
+		} while (usedSerials.has(serial));
+
+		usedSerials.add(serial);
+		return serial;
+	};
+
+	// Seed Products
 	console.log('📦 Inserting dummy products...');
-	const dummyProducts = Array.from({ length: 100 }).map(() => ({
-		serialNumber: faker.number.int({ min: 10000, max: 99999 }),
-		status: faker.helpers.arrayElement(['inactive', 'active', 'archived'] as const),
-		createdAt: randomCopenhagenPast(),
-		updatedAt: randomCopenhagenPast()
-	}));
+	const dummyProducts = Array.from({ length: 100 }).map(() => {
+		const serialNumber = generateUniqueSerial();
+
+		return {
+			serialNumber,
+			status: faker.helpers.arrayElement(['inactive', 'active', 'archived'] as const),
+			createdAt: randomCopenhagenPast(),
+			updatedAt: randomCopenhagenPast()
+		};
+	});
 
 	const insertedProducts = await db.insert(schema.product).values(dummyProducts).returning();
 	console.log(`✅ Successfully seeded ${insertedProducts.length} products.`);
 
-	// 3. Seed Users
+	// Seed Users
 	console.log('👤 Inserting dummy users...');
 	const dummyUsers = Array.from({ length: 100 }).map(() => ({
 		managedBy: faker.helpers.arrayElement(['INNOVAID', 'Italy', 'Norway'] as const),
@@ -76,7 +108,7 @@ async function main() {
 	const insertedUsers = await db.insert(schema.user).values(dummyUsers).returning();
 	console.log(`✅ Successfully seeded ${insertedUsers.length} users.`);
 
-	// 4. Seed Subscriptions
+	// Seed Subscriptions
 	console.log('💳 Inserting dummy subscriptions...');
 	const dummySubscriptions = insertedUsers.flatMap((user) => {
 		const subCount = faker.number.int({ min: 1, max: 3 });
@@ -107,7 +139,7 @@ async function main() {
 
 	console.log(`✅ Successfully seeded ${insertedSubscriptions.length} subscriptions.`);
 
-	// 5. Seed Subscription-Product assignments
+	// Seed Subscription-Product assignments
 	console.log('🔗 Linking products to subscriptions...');
 	const subscriptionProductLinks = insertedProducts.map((product) => ({
 		serialNumber: product.serialNumber,
@@ -121,7 +153,7 @@ async function main() {
 
 	console.log(`✅ Successfully seeded ${insertedLinks.length} subscription-product assignments.`);
 
-	// 6. Seed Activities
+	// Seed Activities
 	console.log('📊 Inserting dummy activities...');
 
 	const activityNames = [

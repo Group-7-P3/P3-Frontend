@@ -45,7 +45,7 @@ export const subscription = pgTable(
 );
 
 export const product = pgTable('product', {
-	serialNumber: serial('serial_number').primaryKey(),
+	serialNumber: integer('serial_number').primaryKey(),
 	status: productStatus('status').notNull().default('inactive'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

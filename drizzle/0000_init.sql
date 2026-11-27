@@ -13,10 +13,15 @@ CREATE TABLE "group" (
 );
 --> statement-breakpoint
 CREATE TABLE "product" (
-	"serial_number" serial PRIMARY KEY NOT NULL,
+	"serial_number" integer PRIMARY KEY NOT NULL,
 	"status" "product_status" DEFAULT 'inactive' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "product_type" (
+	"id" integer PRIMARY KEY NOT NULL,
+	"type" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscription" (
