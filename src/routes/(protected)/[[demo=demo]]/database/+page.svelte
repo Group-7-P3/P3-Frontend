@@ -12,7 +12,11 @@
 	import { Download } from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { enhance, type SubmitFunction } from '$app/forms';
+  import { resolve } from '$app/paths';
+	import type { PageData } from './$types';
 	import { DEFAULT_TIME_ZONE } from '#lib/utils/timezones.ts';
+
+	let { data }: { data: PageData } = $props();
 
 	type TableSchema = {
 		name: string;
@@ -943,11 +947,14 @@ ORDER BY s.expires_at ASC;`;
 		queryExecutionTimeMs = 0;
 
 		try {
-			const response = await fetch('/database', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ query })
-			});
+			const response = await fetch(
+				resolve('/(protected)/[[demo=demo]]/database', { demo: data.demo }),
+				{
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ query })
+				}
+			);
 			const payload: {
 				rows?: QueryRow[];
 				rowCount?: number;
@@ -1248,8 +1255,9 @@ ORDER BY s.expires_at ASC;`;
 						<div class="flex gap-2">
 							<span
 								class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
-								>Completed</span
 							>
+								Completed
+							</span>
 							{#if queryRows.length !== 0}
 								<Button
 									variant="outline"
@@ -1263,8 +1271,9 @@ ORDER BY s.expires_at ASC;`;
 					{:else if queryStatus === 'error'}
 						<span
 							class="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive"
-							>Failed</span
 						>
+							Failed
+						</span>
 					{/if}
 				</Card.Header>
 
