@@ -1,3 +1,6 @@
+import * as schema from '$lib/server/db/schema';
+import { severityByType, type LogType } from './types';
+
 export { cn } from 'cn';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,4 +118,18 @@ export function dayBound(value: string | null, endOfDay: boolean) {
 	if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
 	const date = new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00'}`);
 	return isNaN(date.getTime()) ? undefined : date;
+}
+
+export async function createLog(
+	db: typeof import('#lib/server/db/index.ts').db,
+	by: string,
+	group: string,
+	type: LogType
+) {
+	await db.insert(schema.log).values({
+		by,
+		group,
+		type,
+		severity: severityByType[type]
+	});
 }

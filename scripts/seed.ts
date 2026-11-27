@@ -5,7 +5,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { faker } from '@faker-js/faker';
 import * as schema from '../src/lib/server/db/schema';
-import type { Role, Severity, Log } from '../src/lib/types';
+import { type Role, type LogType, severityByType } from '../src/lib/types';
 
 const isDemo = process.env.DB_TARGET === 'demo';
 const connectionString = isDemo ? process.env.DEMO_DATABASE_URL : process.env.DATABASE_URL;
@@ -188,21 +188,7 @@ async function main() {
 		{ name: 'Marco Support', role: 'supporter', group: 'Italy' }
 	];
 
-	const severityByType: Record<Log, Severity> = {
-		create_user: 'minor',
-		update_user: 'minor',
-		create_product: 'minor',
-		update_product: 'medium',
-		create_subscription: 'medium',
-		update_subscription: 'medium',
-		update_staff: 'medium',
-		create_staff: 'major',
-		changed_email: 'major',
-		changed_password: 'major',
-		ran_query: 'major',
-		delete_staff: 'critical'
-	};
-	const actions = Object.keys(severityByType) as Log[];
+	const actions = Object.keys(severityByType) as LogType[];
 
 	function generateLog() {
 		const actor = faker.helpers.arrayElement(staff);
