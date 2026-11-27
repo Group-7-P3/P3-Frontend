@@ -1,24 +1,30 @@
 <script lang="ts">
 	import DataTable from '#lib/components/ui/data-table/data-table.svelte';
-	import { wordsToTitleCase } from '#lib/utils.ts';
+	import { snakeToTitleCase } from '#lib/utils.ts';
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
 	let { data }: { data: PageData } = $props();
-	const columns = ['serialNumber', 'status', 'createdAt', 'updatedAt', 'managedBy'];
+	const columns = ['serialNumber', 'type', 'status', 'createdAt', 'updatedAt', 'managedBy'];
+
+	type ProductRow = Omit<(typeof data.products)[number], 'status' | 'type'> & {
+		status: string;
+		type: string | null;
+	};
 
 	/*
 	 * formattedProducts changes data.products to uppercase
 	 */
-	const formattedProducts = $derived(
-		data.products.map((pro) => ({
-			...pro,
-			status: wordsToTitleCase(pro.status)
+	const formattedProducts: ProductRow[] = $derived(
+		data.products.map((p) => ({
+			...p,
+			status: snakeToTitleCase(p.status),
+			type: p.type ? snakeToTitleCase(p.type) : null
 		}))
 	);
 
-	function handleRowClick(row: (typeof data.products)[number]) {
+	function handleRowClick(row: ProductRow) {
 		goto(
 			resolve('/(protected)/[[demo=demo]]/products/[serialNumber]', {
 				demo: data.demo,
@@ -56,6 +62,12 @@
 				{ value: 'inactive', label: 'Inactive' },
 				{ value: 'archived', label: 'Archived' }
 			]
+		},
+		{
+			key: 'type',
+			label: 'Type',
+			type: 'select',
+			options: data.productTypes.map((pt) => ({ value: pt.type, label: snakeToTitleCase(pt.type) }))
 		},
 		{
 			key: 'managedBy',

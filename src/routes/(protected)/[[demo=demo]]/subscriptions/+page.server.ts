@@ -58,12 +58,19 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const where = conditions.length ? and(...conditions) : undefined;
 
+	const devicesCount = sql<number>`(
+  SELECT count(*)::int
+  FROM ${schema.subscriptionToProduct}
+  WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
+)`;
+
 	const sortColumn =
 		(
 			{
 				licenseKey: schema.subscription.licenseKey,
 				customerId: schema.subscription.customerId,
 				type: schema.subscription.type,
+				devices: devicesCount, // new
 				createdAt: schema.subscription.createdAt,
 				updatedAt: schema.subscription.updatedAt,
 				expiresAt: schema.subscription.expiresAt,
@@ -71,7 +78,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			} as const
 		)[
 			sort as
-				'licenseKey' | 'customerId' | 'type' | 'createdAt' | 'updatedAt' | 'expiresAt' | 'managedBy'
+				| 'licenseKey'
+				| 'customerId'
+				| 'type'
+				| 'devices'
+				| 'createdAt'
+				| 'updatedAt'
+				| 'expiresAt'
+				| 'managedBy'
 		] ?? schema.subscription.licenseKey;
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
@@ -79,11 +93,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const subscriptions = await locals.db
 		.select({
 			...getTableColumns(schema.subscription),
-			devices: sql<number>`(
-			SELECT count(*)::int 
-			FROM ${schema.subscriptionToProduct} 
-			WHERE ${schema.subscriptionToProduct.licenseKey} = ${schema.subscription.licenseKey}
-		)`,
+			devices: devicesCount,
 			managedBy: schema.user.managedBy
 		})
 		.from(schema.subscription)

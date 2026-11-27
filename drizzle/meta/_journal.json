@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1795771311958,
+      "when": 1795774115028,
       "tag": "0000_init",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1795771344954,
+      "when": 1795774124461,
       "tag": "0001_staff-group-fk",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1795771871526,
-      "tag": "0002_product-type",
       "breakpoints": true
     }
   ]
