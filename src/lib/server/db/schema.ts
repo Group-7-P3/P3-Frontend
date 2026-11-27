@@ -12,7 +12,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 export const subscriptionType = pgEnum('subscription_type', ['home', 'home+', 'pro', 'pro+']);
-export const productStatus = pgEnum('product_status', ['inactive', 'active', 'deactivated']);
+export const productStatus = pgEnum('product_status', ['inactive', 'active', 'archived']);
 
 export const user = pgTable(
 	'user',
@@ -64,6 +64,11 @@ export const activity = pgTable(
 
 export const group = pgTable('group', {
 	name: text('name').primaryKey()
+});
+
+export const productType = pgTable('product_type', {
+	id: integer('id').primaryKey(),
+	type: text('type').notNull()
 });
 
 export const subscriptionToProduct = pgTable(

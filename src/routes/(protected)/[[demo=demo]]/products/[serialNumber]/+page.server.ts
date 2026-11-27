@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 export const actions: Actions = {
 	default: async ({ request, params, locals }) => {
 		const formData = await request.formData();
-		const status = formData.get('status') as 'active' | 'inactive' | 'deactivated';
+		const status = formData.get('status') as 'active' | 'inactive' | 'archived';
 		const targetScope = formData.get('targetScope') as string;
 		const newLicenseKey = formData.get('newLicenseKey') as string | null;
 

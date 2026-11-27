@@ -5,15 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1795438614160,
-      "tag": "0000_amusing_bucky",
+      "when": 1795771311958,
+      "tag": "0000_init",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1795438618894,
-      "tag": "0001_staff_group_fk",
+      "when": 1795771344954,
+      "tag": "0001_staff-group-fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795771871526,
+      "tag": "0002_product-type",
       "breakpoints": true
     }
   ]

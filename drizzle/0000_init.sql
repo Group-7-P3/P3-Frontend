@@ -1,4 +1,4 @@
-CREATE TYPE "public"."product_status" AS ENUM('inactive', 'active', 'deactivated');--> statement-breakpoint
+CREATE TYPE "public"."product_status" AS ENUM('inactive', 'active', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."subscription_type" AS ENUM('home', 'home+', 'pro', 'pro+');--> statement-breakpoint
 CREATE TABLE "activity" (
 	"activity" text NOT NULL,
@@ -15,8 +15,8 @@ CREATE TABLE "group" (
 CREATE TABLE "product" (
 	"serial_number" serial PRIMARY KEY NOT NULL,
 	"status" "product_status" DEFAULT 'inactive' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscription" (
@@ -24,8 +24,8 @@ CREATE TABLE "subscription" (
 	"user_id" integer NOT NULL,
 	"customer_id" integer NOT NULL,
 	"type" "subscription_type" DEFAULT 'home' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"expires_at" date NOT NULL
 );
 --> statement-breakpoint
@@ -38,8 +38,8 @@ CREATE TABLE "subscription_to_product" (
 CREATE TABLE "user" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"managed_by" text DEFAULT 'INNOVAID' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "account" (
@@ -50,20 +50,20 @@ CREATE TABLE "account" (
 	"access_token" text,
 	"refresh_token" text,
 	"id_token" text,
-	"access_token_expires_at" timestamp,
-	"refresh_token_expires_at" timestamp,
+	"access_token_expires_at" timestamp with time zone,
+	"refresh_token_expires_at" timestamp with time zone,
 	"scope" text,
 	"password" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "session" (
 	"id" text PRIMARY KEY NOT NULL,
-	"expires_at" timestamp NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
 	"token" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
 	"ip_address" text,
 	"user_agent" text,
 	"user_id" text NOT NULL,
@@ -76,8 +76,8 @@ CREATE TABLE "staff" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"role" text DEFAULT 'supporter' NOT NULL,
 	"group" text NOT NULL,
 	CONSTRAINT "staff_email_unique" UNIQUE("email")
@@ -87,9 +87,9 @@ CREATE TABLE "verification" (
 	"id" text PRIMARY KEY NOT NULL,
 	"identifier" text NOT NULL,
 	"value" text NOT NULL,
-	"expires_at" timestamp NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "subscription" ADD CONSTRAINT "subscription_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
