@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { RequestHandler } from '@sveltejs/kit';
+import { createLog } from '#lib/server-utils.ts';
 
 function jsonResponse(data: unknown, status: number) {
 	return new Response(JSON.stringify(data), {
@@ -59,6 +60,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		}
 		const result = await locals.db.execute(sql.raw(body.query));
 		const executionTimeMs = Math.round((performance.now() - startedAt) * 100) / 100;
+
+		await createLog(locals.db, locals.user.id, locals.user.group, 'ran_query');
+
 		return jsonResponse(
 			{
 				rows: result as unknown[],
