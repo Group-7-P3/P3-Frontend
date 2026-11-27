@@ -2,6 +2,8 @@ export function isValidTimeZone(zone: string): boolean {
     return timeZoneOptions.some((option) => option.value === zone);
 }
 
+export const DEFAULT_TIME_ZONE = "Europe/Copenhagen"
+
 export const timeZoneOptions = [
   { value: 'UTC', label: 'UTC (UTC+0 all year)' },
 
