@@ -2,6 +2,7 @@
 	import type { ComponentProps } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { ArrowUpDown, ArrowUp, ArrowDown } from '@lucide/svelte';
+	import { cn } from 'cn';
 
 	interface Props extends ComponentProps<typeof Button> {
 		label: string;
@@ -11,7 +12,7 @@
 	let { label, sorted = false, variant = 'ghost', ...restProps }: Props = $props();
 </script>
 
-<Button {variant} {...restProps} class="-mx-3">
+<Button {variant} {...restProps} class={cn(sorted ? 'bg-secondary' : '', '-mx-3')}>
 	{label}
 	{#if sorted === 'asc'}
 		<ArrowUp class="ms-2 size-4" />

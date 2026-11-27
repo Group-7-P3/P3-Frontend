@@ -34,12 +34,14 @@
 		| '/(protected)/[[demo=demo]]/users'
 		| '/(protected)/[[demo=demo]]/products'
 		| '/(protected)/[[demo=demo]]/subscriptions'
-		| '/(protected)/[[demo=demo]]/staff';
+		| '/(protected)/[[demo=demo]]/staff'
+		| '/(protected)/[[demo=demo]]/logs';
 	type PaginatedRoute =
 		| `/(protected)/[[demo=demo]]/users?${string}`
 		| `/(protected)/[[demo=demo]]/products?${string}`
 		| `/(protected)/[[demo=demo]]/subscriptions?${string}`
-		| `/(protected)/[[demo=demo]]/staff?${string}`;
+		| `/(protected)/[[demo=demo]]/staff?${string}`
+		| `/(protected)/[[demo=demo]]/logs?${string}`;
 	type DataTableFilters = {
 		key: string;
 		label: string;
@@ -140,29 +142,35 @@
 
 	const columnHelper = createColumnHelper<DataTableFeatures, TData>();
 	const cols = columnHelper.columns([
-		columnHelper.display({
-			id: 'open',
-			meta: {
-				class: 'mr-4 pr-4',
-				className: 'mr-4 pr-4'
-			},
-			cell: ({ row }) =>
-				renderComponent(DataTableOpenButton, {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					row: row as any,
-					onClick: onRowClick as (row: RowData) => void,
-					'aria-label': 'Select row'
-				}),
-			enableSorting: false,
-			enableHiding: false
-		}),
 		// svelte-ignore state_referenced_locally
-		...columns.map((col) => {
+		...(onRowClick
+			? [
+					columnHelper.display({
+						id: 'open',
+						meta: {
+							class: 'mr-4 pr-4',
+							className: 'mr-4 pr-4'
+						},
+						cell: ({ row }) =>
+							renderComponent(DataTableOpenButton, {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								row: row as any,
+								onClick: onRowClick as (row: RowData) => void,
+								'aria-label': 'Select row'
+							}),
+						enableSorting: false,
+						enableHiding: false
+					})
+				]
+			: []),
+		// svelte-ignore state_referenced_locally
+		...columns.map((col, i) => {
 			const label = camelToTitleCase(col);
 			const isTime = isTimestamp(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: col,
+				enableHiding: i > 0,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
 					const onclick = column.getToggleSortingHandler();
@@ -215,8 +223,8 @@
 	}
 </script>
 
-<div class={cn('w-fit max-w-full', className)}>
-	<div class="flex items-center justify-between gap-2 py-4">
+<div class={cn('grid w-fit max-w-full gap-2', className)}>
+	<div class="flex items-center justify-between gap-2">
 		<div class="flex items-center gap-2">
 			<Input
 				bind:ref={filterInput}
@@ -426,7 +434,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex items-center justify-center space-x-2 py-4">
+	<div class="flex items-center justify-center space-x-2">
 		<div class="flex items-center gap-1">
 			<Button
 				variant="outline"

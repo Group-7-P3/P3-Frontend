@@ -1,6 +1,6 @@
 {
-  "id": "9c9817bd-ce43-4e7a-826e-1fca0522d176",
-  "prevId": "b5edd5b7-50ff-41f9-affe-4a150ec394a0",
+  "id": "436e3201-12ce-4ce1-9fea-5526ad5455ff",
+  "prevId": "5aeff60b-a6da-4eaa-be49-0a95f2f9d37c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -71,13 +71,66 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.log": {
+      "name": "log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "by": {
+          "name": "by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group": {
+          "name": "group",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "severity": {
+          "name": "severity",
+          "type": "severity_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'minor'"
+        },
+        "type": {
+          "name": "type",
+          "type": "log_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.product": {
       "name": "product",
       "schema": "",
       "columns": {
         "serial_number": {
           "name": "serial_number",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true
         },
@@ -742,6 +795,24 @@
     }
   },
   "enums": {
+    "public.log_type": {
+      "name": "log_type",
+      "schema": "public",
+      "values": [
+        "create_user",
+        "update_user",
+        "create_product",
+        "update_product",
+        "create_staff",
+        "update_staff",
+        "delete_staff",
+        "create_subscription",
+        "update_subscription",
+        "ran_query",
+        "changed_password",
+        "changed_email"
+      ]
+    },
     "public.product_status": {
       "name": "product_status",
       "schema": "public",
@@ -749,6 +820,16 @@
         "inactive",
         "active",
         "archived"
+      ]
+    },
+    "public.severity_type": {
+      "name": "severity_type",
+      "schema": "public",
+      "values": [
+        "minor",
+        "medium",
+        "major",
+        "critical"
       ]
     },
     "public.subscription_type": {

@@ -1,6 +1,6 @@
 {
-  "id": "b5edd5b7-50ff-41f9-affe-4a150ec394a0",
-  "prevId": "45191f7a-f9c3-4456-96f5-9a010b71ade1",
+  "id": "5aeff60b-a6da-4eaa-be49-0a95f2f9d37c",
+  "prevId": "96eca8e5-8a24-493d-bd05-59d62997ff75",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -77,7 +77,7 @@
       "columns": {
         "serial_number": {
           "name": "serial_number",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true
         },
@@ -102,6 +102,31 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product_type": {
+      "name": "product_type",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},

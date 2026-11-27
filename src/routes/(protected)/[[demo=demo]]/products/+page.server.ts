@@ -31,6 +31,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const conditions = [];
 
 	const groups = await locals.db.select().from(schema.group);
+	const productTypes = await locals.db.select().from(schema.productType);
 
 	// Group scoping applies to real staff only; the public demo shows everything
 	if (!locals.isDemo && staff && staff.group !== 'INNOVAID')
@@ -44,6 +45,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			or(
 				ilike(sql`${schema.product.serialNumber}::text`, pattern),
 				ilike(sql`${schema.product.status}::text`, pattern),
+				ilike(schema.productType.type, pattern),
 				ilike(schema.user.managedBy, pattern)
 			)
 		);
@@ -55,6 +57,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const managedBy = groups.find((g) => g.name === params.get('managedBy'));
 	if (managedBy) conditions.push(eq(schema.user.managedBy, managedBy.name));
+
+	const productType = productTypes.find((pt) => pt.type === params.get('type'));
+	if (productType) conditions.push(eq(schema.productType.type, productType.type));
 
 	for (const [column, key] of [
 		[schema.product.createdAt, 'createdAt'],
@@ -73,20 +78,27 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			{
 				serialNumber: schema.product.serialNumber,
 				status: schema.product.status,
+				type: schema.productType.type,
 				createdAt: schema.product.createdAt,
 				updatedAt: schema.product.updatedAt,
 				managedBy: schema.user.managedBy
 			} as const
-		)[sort as 'serialNumber' | 'status' | 'createdAt' | 'updatedAt' | 'managedBy'] ??
+		)[sort as 'serialNumber' | 'status' | 'type' | 'createdAt' | 'updatedAt' | 'managedBy'] ??
 		schema.product.serialNumber;
 
 	const orderBy = direction === 'desc' ? desc(sortColumn) : asc(sortColumn);
+
+	const productTypeJoin = eq(
+		sql`(${schema.product.serialNumber} / 1000) % 100`,
+		schema.productType.id
+	);
 
 	const [products, [{ total }]] = await Promise.all([
 		locals.db
 			.selectDistinct({
 				...getTableColumns(schema.product),
-				managedBy: schema.user.managedBy
+				managedBy: schema.user.managedBy,
+				type: schema.productType.type
 			})
 			.from(schema.product)
 			.innerJoin(
@@ -98,6 +110,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
 			)
 			.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+			.leftJoin(schema.productType, productTypeJoin) // Changed to leftJoin
 			.where(where)
 			.orderBy(orderBy)
 			.limit(pageSize)
@@ -114,6 +127,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				eq(schema.subscriptionToProduct.licenseKey, schema.subscription.licenseKey)
 			)
 			.innerJoin(schema.user, eq(schema.subscription.userId, schema.user.id))
+			.leftJoin(schema.productType, productTypeJoin) // Keep joins identical
 			.where(where)
 	]);
 
@@ -125,6 +139,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		filter,
 		sort,
 		direction,
-		groups
+		groups,
+		productTypes
 	};
 };

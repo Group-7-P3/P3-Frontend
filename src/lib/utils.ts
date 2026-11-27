@@ -99,7 +99,8 @@ export const groupRules = [
 	}
 ];
 
-export function snakeToTitleCase(str: string) {
+export function snakeToTitleCase(str: string | null) {
+	if (!str) return '';
 	return str.replace(/^_*(.)|_+(.)/g, (_, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
 }
 
