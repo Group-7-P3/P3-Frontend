@@ -10,30 +10,33 @@
 	interface Props {
 		value?: DateRange;
 		years?: RangeCalendarPrimitive.YearSelectProps['years'];
+		onValueChange?: (value: DateRange) => void;
 	}
 
 	const start = today(getLocalTimeZone()).subtract({ months: 1 });
 	const end = today(getLocalTimeZone());
-	let { value = $bindable({ start, end }), years }: Props = $props();
+	let { value = $bindable({ start, end }), years, onValueChange }: Props = $props();
 	let rangeOpen = $state(false);
 </script>
 
 <Popover.Root bind:open={rangeOpen}>
 	<Popover.Trigger>
 		{#snippet child({ props })}
-			<Button {...props} variant="outline" class="w-54 justify-between font-normal">
-				{value.start?.toDate(getLocalTimeZone()).toLocaleDateString(page.data.dateFormat, {
-					day: '2-digit',
-					month: '2-digit',
-					year: 'numeric'
-				})} to {value.end
-					?.toDate(getLocalTimeZone())
-					.toLocaleDateString(page.data.dateFormat, {
+			<Button {...props} variant="outline" class="justify-between font-normal">
+				{#if value.start && value.end}
+					{value.start?.toDate(getLocalTimeZone()).toLocaleDateString(page.data.dateFormat, {
 						day: '2-digit',
 						month: '2-digit',
 						year: 'numeric'
-						})}
-				<ChevronDownIcon />
+					})} to {value.end?.toDate(getLocalTimeZone()).toLocaleDateString(page.data.dateFormat, {
+						day: '2-digit',
+						month: '2-digit',
+						year: 'numeric'
+					})}
+				{:else}
+					<span class="text-muted-foreground">Not set</span>
+				{/if}
+				<ChevronDownIcon class="text-muted-foreground" />
 			</Button>
 		{/snippet}
 	</Popover.Trigger>
@@ -43,6 +46,7 @@
 			captionLayout="dropdown"
 			maxValue={today(getLocalTimeZone())}
 			weekStartsOn={Number(page.data.firstDay) as 0 | 1}
+			{onValueChange}
 			{years}
 		/>
 	</Popover.Content>
