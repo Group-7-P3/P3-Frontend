@@ -22,9 +22,9 @@
 	let dialogOpen = $state(false);
 
 	const statusOptions = [
-		{ value: 'active', label: 'active' },
-		{ value: 'inactive', label: 'inactive' },
-		{ value: 'deactivated', label: 'deactivated' }
+		{ value: 'active', label: 'Active' },
+		{ value: 'inactive', label: 'Inactive' },
+		{ value: 'archived', label: 'Archived' }
 	];
 
 	let selectedScope = $state('all subscriptions');

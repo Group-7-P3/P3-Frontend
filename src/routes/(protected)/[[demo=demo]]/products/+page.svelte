@@ -54,7 +54,7 @@
 			options: [
 				{ value: 'active', label: 'Active' },
 				{ value: 'inactive', label: 'Inactive' },
-				{ value: 'deactivated', label: 'Deactivated' }
+				{ value: 'archived', label: 'Archived' }
 			]
 		},
 		{
