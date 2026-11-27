@@ -223,8 +223,8 @@
 	}
 </script>
 
-<div class={cn('w-fit max-w-full', className)}>
-	<div class="flex items-center justify-between gap-2 py-4">
+<div class={cn('grid w-fit max-w-full gap-2', className)}>
+	<div class="flex items-center justify-between gap-2">
 		<div class="flex items-center gap-2">
 			<Input
 				bind:ref={filterInput}
@@ -434,7 +434,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex items-center justify-center space-x-2 py-4">
+	<div class="flex items-center justify-center space-x-2">
 		<div class="flex items-center gap-1">
 			<Button
 				variant="outline"
