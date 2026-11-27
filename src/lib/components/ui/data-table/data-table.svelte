@@ -17,7 +17,7 @@
 	import Button, { buttonVariants } from '../button/button.svelte';
 	import { cn } from 'cn';
 	import { Input } from '../input/index.js';
-	import { ChevronDown, Copy, Plus, Funnel } from '@lucide/svelte';
+	import { ChevronDown, Copy, Plus, Funnel, ChevronRight, ChevronLeft } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { navigating, page as currentPage } from '$app/state';
@@ -95,6 +95,8 @@
 	let filterTimer: ReturnType<typeof setTimeout> | undefined;
 	const pageCount = $derived(Math.max(1, Math.ceil((totalRows ?? data.length) / pageSize)));
 	let showLoading = $state(false);
+	const maxButtons = 5;
+	let btnCount = $derived(Math.min(maxButtons, pageCount));
 
 	const paramKeys = (f: NonNullable<typeof filters>[number]) =>
 		f.type === 'date-range' ? [`${f.key}From`, `${f.key}To`] : [f.key];
@@ -300,16 +302,36 @@
 					</Dialog.Content>
 				</Dialog.Root>
 			{/if}
-
 			{#if onAddClick}
-				<Button class="w-fit" onclick={onAddClick}><Plus /> Create Staff</Button>
+				<Button onclick={onAddClick}><Plus /> Create Staff</Button>
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
+			<Select.Root
+				type="single"
+				bind:value={selectedPageSize}
+				onValueChange={() => {
+					if (!isMounted) return;
+					updateQuery({ size: selectedPageSize });
+				}}
+			>
+				<Select.Trigger>
+					<span class="text-muted-foreground">Results:</span>
+					<Select.Value />
+				</Select.Trigger>
+				<Select.Content align="start">
+					<Select.Item value="10">10</Select.Item>
+					<Select.Item value="25">25</Select.Item>
+					<Select.Item value="50">50</Select.Item>
+					<Select.Item value="100">100</Select.Item>
+				</Select.Content>
+			</Select.Root>
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} variant="outline" class="ms-auto">Columns <ChevronDown /></Button>
+						<Button {...props} variant="outline" class="ms-auto">
+							Columns <ChevronDown class="text-muted-foreground" />
+						</Button>
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end" class="w-max">
@@ -404,41 +426,38 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex items-center justify-between space-x-2 py-4">
-		<Select.Root
-			type="single"
-			bind:value={selectedPageSize}
-			onValueChange={() => {
-				if (!isMounted) return;
-				updateQuery({ size: selectedPageSize });
-			}}
-		>
-			<Select.Trigger size="sm">
-				Results: <Select.Value />
-			</Select.Trigger>
-			<Select.Content align="start">
-				<Select.Item value="10">10</Select.Item>
-				<Select.Item value="25">25</Select.Item>
-				<Select.Item value="50">50</Select.Item>
-				<Select.Item value="100">100</Select.Item>
-			</Select.Content>
-		</Select.Root>
-		<div>
+	<div class="flex items-center justify-center space-x-2 py-4">
+		<div class="flex items-center gap-1">
 			<Button
 				variant="outline"
-				size="sm"
+				size="icon-sm"
 				onclick={() => updateQuery({ page: String(page - 1) })}
 				disabled={page <= 1}
 			>
-				Previous
+				<ChevronLeft />
 			</Button>
+			{#each { length: btnCount }, i (i)}
+				{@const p =
+					page <= Math.floor(btnCount / 2)
+						? i + 1
+						: page >= pageCount - Math.floor(btnCount / 2)
+							? pageCount + i - btnCount + 1
+							: page + i - Math.floor(btnCount / 2)}
+				<Button
+					size="icon-sm"
+					variant={page === p ? 'default' : 'outline'}
+					onclick={() => updateQuery({ page: String(p) })}
+				>
+					{p}
+				</Button>
+			{/each}
 			<Button
 				variant="outline"
-				size="sm"
+				size="icon-sm"
 				onclick={() => updateQuery({ page: String(page + 1) })}
 				disabled={page >= pageCount}
 			>
-				Next
+				<ChevronRight />
 			</Button>
 		</div>
 	</div>
