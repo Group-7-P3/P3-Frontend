@@ -157,12 +157,13 @@
 			enableHiding: false
 		}),
 		// svelte-ignore state_referenced_locally
-		...columns.map((col) => {
+		...columns.map((col, i) => {
 			const label = camelToTitleCase(col);
 			const isTime = isTimestamp(col);
 
 			return columnHelper.accessor((row) => row[col as keyof TData], {
 				id: col,
+				enableHiding: i > 0,
 				header: ({ column }) => {
 					const sorted = column.getIsSorted();
 					const onclick = column.getToggleSortingHandler();
