@@ -5,6 +5,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { faker } from '@faker-js/faker';
 import * as schema from '../src/lib/server/db/schema';
+import type { Role, Severity, Log } from '../src/lib/types';
 
 const isDemo = process.env.DB_TARGET === 'demo';
 const connectionString = isDemo ? process.env.DEMO_DATABASE_URL : process.env.DATABASE_URL;
@@ -40,6 +41,7 @@ async function main() {
 
 	// Clear existing data (in reverse order of dependencies)
 	console.log('🧹 Cleaning existing data...');
+	await db.delete(schema.log);
 	await db.delete(schema.activity);
 	await db.delete(schema.subscriptionToProduct);
 	await db.delete(schema.subscription);
@@ -175,8 +177,54 @@ async function main() {
 	}));
 
 	const insertedActivities = await db.insert(schema.activity).values(dummyActivities).returning();
-
 	console.log(`✅ Successfully seeded ${insertedActivities.length} activities.`);
+
+	const staff: { name: string; role: Role; group: string }[] = [
+		{ name: 'Alice Owner', role: 'owner', group: 'INNOVAID' },
+		{ name: 'Anders Admin', role: 'admin', group: 'INNOVAID' },
+		{ name: 'Nora Admin', role: 'admin', group: 'Norway' },
+		{ name: 'Sofia Support', role: 'supporter', group: 'Italy' },
+		{ name: 'Lars Support', role: 'supporter', group: 'Norway' },
+		{ name: 'Marco Support', role: 'supporter', group: 'Italy' }
+	];
+
+	const severityByType: Record<Log, Severity> = {
+		create_user: 'minor',
+		update_user: 'minor',
+		create_product: 'minor',
+		update_product: 'medium',
+		create_subscription: 'medium',
+		update_subscription: 'medium',
+		update_staff: 'medium',
+		create_staff: 'major',
+		changed_email: 'major',
+		changed_password: 'major',
+		ran_query: 'major',
+		delete_staff: 'critical'
+	};
+	const actions = Object.keys(severityByType) as Log[];
+
+	function generateLog() {
+		const actor = faker.helpers.arrayElement(staff);
+		const type = faker.helpers.arrayElement(actions);
+
+		return {
+			by: actor.name,
+			group: actor.group,
+			severity: severityByType[type],
+			type,
+			createdAt: randomCopenhagenPast()
+		};
+	}
+
+	// Seed logs
+	console.log('📝 Inserting dummy logs...');
+	const dummyLogs = Array.from({ length: 500 })
+		.map(generateLog)
+		.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+	const insertedLogs = await db.insert(schema.log).values(dummyLogs).returning();
+	console.log(`✅ Successfully seeded ${insertedLogs.length} logs.`);
 
 	console.log('🎉 Seeding completed!');
 	await client.end();

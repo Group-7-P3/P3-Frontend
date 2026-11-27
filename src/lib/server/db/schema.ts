@@ -13,6 +13,21 @@ import {
 
 export const subscriptionType = pgEnum('subscription_type', ['home', 'home+', 'pro', 'pro+']);
 export const productStatus = pgEnum('product_status', ['inactive', 'active', 'archived']);
+export const severityType = pgEnum('severity_type', ['minor', 'medium', 'major', 'critical']);
+export const logType = pgEnum('log_type', [
+	'create_user',
+	'update_user',
+	'create_product',
+	'update_product',
+	'create_staff',
+	'update_staff',
+	'delete_staff',
+	'create_subscription',
+	'update_subscription',
+	'ran_query',
+	'changed_password',
+	'changed_email'
+]);
 
 export const user = pgTable(
 	'user',
@@ -69,6 +84,15 @@ export const group = pgTable('group', {
 export const productType = pgTable('product_type', {
 	id: integer('id').primaryKey(),
 	type: text('type').notNull()
+});
+
+export const log = pgTable('log', {
+	id: serial('id').primaryKey(),
+	by: text('by').notNull(),
+	group: text('group').notNull(),
+	severity: severityType('severity').default('minor').notNull(),
+	type: logType('type').notNull(),
+	createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow().notNull()
 });
 
 export const subscriptionToProduct = pgTable(

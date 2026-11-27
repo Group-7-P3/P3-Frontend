@@ -15,6 +15,13 @@
       "when": 1795774124461,
       "tag": "0001_staff-group-fk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795781129984,
+      "tag": "0002_logs",
+      "breakpoints": true
     }
   ]
 }
